@@ -1,0 +1,660 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		069EDD2EE15377711B332D98 /* Cipher Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 18DC90F5F3FCC6B18B4F8051 /* Cipher Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		11D61E6A4000A6499EF98D4F /* CipherApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67D746F83F06C811B1386295 /* CipherApp.swift */; };
+		126915D1E4A157135CB8153C /* ContentComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9FF3520CABD772A6F4F160 /* ContentComponents.swift */; };
+		15EFBEF3E43BCEBFADDD41D7 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155F574F70EEAEE63457F986 /* SharedComponents.swift */; };
+		180365BBDABA76DB01814563 /* DailyDrillView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DFC71A12660A704C875AB5 /* DailyDrillView.swift */; };
+		1C34D71D7D75EDBEC9EC451F /* LessonBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07CEAB7B799D89A0D3B0459A /* LessonBlockView.swift */; };
+		1DBE1B661FFFB8D8A5B0713E /* BlueTeamContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0798D5BF432D53A48A4CE85 /* BlueTeamContent.swift */; };
+		1DDEC160276F367FCF6FE2EE /* Flashcards.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5998BEC4E93F0882C07D3A6 /* Flashcards.swift */; };
+		26BC2C461BE10C40A58C0117 /* RedTeamContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B97EBC1F4F0C3522B8D0831 /* RedTeamContent.swift */; };
+		28271ED78F277AD797E1E993 /* EthicsGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF9C4C3199784DA9ECE933E4 /* EthicsGateView.swift */; };
+		2832BE2987226079BE02392E /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E04E220C83379035D1E2C1E /* Progress.swift */; };
+		2E475269B9AF214AD74113E1 /* Curriculum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E42F3EC85180B226D42F0F3 /* Curriculum.swift */; };
+		31F99C8D52CE8DD5F1EB4732 /* AnimationsRed.swift in Sources */ = {isa = PBXBuildFile; fileRef = E15092E688DFFA417B4D1090 /* AnimationsRed.swift */; };
+		45673BC90ADD98FFBCB5E7AB /* AnimationKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F88DFDACBA2ABCF71D8DB81 /* AnimationKit.swift */; };
+		48EC37A455B0266473E9E6B2 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4FECA14607AA9BC328FA79 /* RootView.swift */; };
+		532CE706516888F5A803C90F /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90ED2D85AA008A67C1EE718 /* Theme.swift */; };
+		68588EF2E572CEB7E3353728 /* AnimationRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98A4A04E2B40B8DD035A6F3 /* AnimationRegistry.swift */; };
+		68E34B8C1D5D509E3403A9C3 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90ED2D85AA008A67C1EE718 /* Theme.swift */; };
+		6F812F9B31339642901B136F /* CipherWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508EAFEAE1CFF42E877BDEF1 /* CipherWatchApp.swift */; };
+		711F4EA29990CE513459CFBE /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E04E220C83379035D1E2C1E /* Progress.swift */; };
+		75CEFBFD34FE5BB5988A5989 /* BlueTeamContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0798D5BF432D53A48A4CE85 /* BlueTeamContent.swift */; };
+		79A9262D4977A9044A4CF61C /* WatchRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C6D27C215F7080C80F484DC /* WatchRootView.swift */; };
+		7CC687F640E5B74B174B4FB7 /* AnimationGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D75DF7201A55C6D933D493A9 /* AnimationGalleryView.swift */; };
+		7D8714F4C367D8E7A5834095 /* FundamentalsContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6620E65F46D30F5C70BD65C3 /* FundamentalsContent.swift */; };
+		849423D88C4F160EA99B1DD5 /* Curriculum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E42F3EC85180B226D42F0F3 /* Curriculum.swift */; };
+		84F7D3D58E192074A60DC710 /* FundamentalsContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6620E65F46D30F5C70BD65C3 /* FundamentalsContent.swift */; };
+		8644CC0500F77FBFFCC48C66 /* QuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE2DC8F1441A0A9A2C6A4AB /* QuizView.swift */; };
+		91EDC594E0C19F5443569919 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04166D30254FCF0CDB1BDF4F /* DashboardView.swift */; };
+		93E78052A52EE7370A41C5DA /* TracksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B01B4C6F13DA1F3424FF12 /* TracksView.swift */; };
+		9E819F70EB414B7A5A510A12 /* AnimationsBlue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 927B7F5E621E5BBDDFE40BD2 /* AnimationsBlue.swift */; };
+		A170F91ABF4C339F8D118C54 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ACEAED0770FD0D7F7161F0D /* ProfileView.swift */; };
+		A82A414CBE900996C4A54274 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0B5D5CB8B14FE4A5A0F483DD /* Assets.xcassets */; };
+		A8D05D8B41067ABCAC65D385 /* TrackDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B301459343F8366D265A8D17 /* TrackDetailView.swift */; };
+		A954CB50D30718E7C54FC4A4 /* TermOfDayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A13F571ECDA1ECA432F8236 /* TermOfDayView.swift */; };
+		AAC7CB3AE74CCD4BB382BF80 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 94E2F13092F8C9B7B7DD96EF /* Assets.xcassets */; };
+		AAE7B5644FC6720814917443 /* GlossaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FEBE6EDE6BC0114F01559E6 /* GlossaryView.swift */; };
+		B00CB2C89E3E62186176203F /* Flashcards.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5998BEC4E93F0882C07D3A6 /* Flashcards.swift */; };
+		B19F319FA471AD131390687F /* LessonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86A60D803C4BB3888EE7F50B /* LessonView.swift */; };
+		CDBEE0DC4A6E1B2B9E0CE2BF /* AnimationsNetworkCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5412CD0E9A766E4B4115E8 /* AnimationsNetworkCrypto.swift */; };
+		D102E36AD71BEB5F67F5D6E2 /* WatchProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61FF6E93E34B881D4FFB4079 /* WatchProgressView.swift */; };
+		EAD48ED03B2BEA1DAB8C76E5 /* RedTeamContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B97EBC1F4F0C3522B8D0831 /* RedTeamContent.swift */; };
+		F1B7493C3663109AE20C4534 /* ListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046083BB1BA9D4ACFCD9F082 /* ListComponents.swift */; };
+		FE894BDD4D3548AADB2E9958 /* TerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F6AB3977C24010EE0805943 /* TerminalView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		1991BABC8EAF388EE6513B3D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1F430BC2083193437E18CF71 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0F1F49E190B6475ACC58E96D;
+			remoteInfo = "Cipher Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		34643D94B75E41EB4039FCBE /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				069EDD2EE15377711B332D98 /* Cipher Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		04166D30254FCF0CDB1BDF4F /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		046083BB1BA9D4ACFCD9F082 /* ListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListComponents.swift; sourceTree = "<group>"; };
+		07CEAB7B799D89A0D3B0459A /* LessonBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonBlockView.swift; sourceTree = "<group>"; };
+		0B5D5CB8B14FE4A5A0F483DD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		0B97EBC1F4F0C3522B8D0831 /* RedTeamContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedTeamContent.swift; sourceTree = "<group>"; };
+		0F9FF3520CABD772A6F4F160 /* ContentComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentComponents.swift; sourceTree = "<group>"; };
+		155F574F70EEAEE63457F986 /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
+		18DC90F5F3FCC6B18B4F8051 /* Cipher Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cipher Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1C6D27C215F7080C80F484DC /* WatchRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRootView.swift; sourceTree = "<group>"; };
+		23B01B4C6F13DA1F3424FF12 /* TracksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TracksView.swift; sourceTree = "<group>"; };
+		3E42F3EC85180B226D42F0F3 /* Curriculum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Curriculum.swift; sourceTree = "<group>"; };
+		3FEBE6EDE6BC0114F01559E6 /* GlossaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlossaryView.swift; sourceTree = "<group>"; };
+		4A13F571ECDA1ECA432F8236 /* TermOfDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermOfDayView.swift; sourceTree = "<group>"; };
+		4ACEAED0770FD0D7F7161F0D /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		4F88DFDACBA2ABCF71D8DB81 /* AnimationKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationKit.swift; sourceTree = "<group>"; };
+		508EAFEAE1CFF42E877BDEF1 /* CipherWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CipherWatchApp.swift; sourceTree = "<group>"; };
+		61FF6E93E34B881D4FFB4079 /* WatchProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchProgressView.swift; sourceTree = "<group>"; };
+		6620E65F46D30F5C70BD65C3 /* FundamentalsContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FundamentalsContent.swift; sourceTree = "<group>"; };
+		67D746F83F06C811B1386295 /* CipherApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CipherApp.swift; sourceTree = "<group>"; };
+		6EE2DC8F1441A0A9A2C6A4AB /* QuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizView.swift; sourceTree = "<group>"; };
+		86A60D803C4BB3888EE7F50B /* LessonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonView.swift; sourceTree = "<group>"; };
+		8F6AB3977C24010EE0805943 /* TerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalView.swift; sourceTree = "<group>"; };
+		927B7F5E621E5BBDDFE40BD2 /* AnimationsBlue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsBlue.swift; sourceTree = "<group>"; };
+		94E2F13092F8C9B7B7DD96EF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		9E04E220C83379035D1E2C1E /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
+		9F5412CD0E9A766E4B4115E8 /* AnimationsNetworkCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsNetworkCrypto.swift; sourceTree = "<group>"; };
+		B301459343F8366D265A8D17 /* TrackDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackDetailView.swift; sourceTree = "<group>"; };
+		B90ED2D85AA008A67C1EE718 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		C5998BEC4E93F0882C07D3A6 /* Flashcards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Flashcards.swift; sourceTree = "<group>"; };
+		C98A4A04E2B40B8DD035A6F3 /* AnimationRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationRegistry.swift; sourceTree = "<group>"; };
+		D1938A617BDD4FF40E303156 /* Cipher.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Cipher.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D75DF7201A55C6D933D493A9 /* AnimationGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationGalleryView.swift; sourceTree = "<group>"; };
+		DD4FECA14607AA9BC328FA79 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		DF9C4C3199784DA9ECE933E4 /* EthicsGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EthicsGateView.swift; sourceTree = "<group>"; };
+		E15092E688DFFA417B4D1090 /* AnimationsRed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsRed.swift; sourceTree = "<group>"; };
+		F0798D5BF432D53A48A4CE85 /* BlueTeamContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlueTeamContent.swift; sourceTree = "<group>"; };
+		F0DFC71A12660A704C875AB5 /* DailyDrillView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDrillView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		08CEA4439F9CE66FD5840F8B /* CipheriOS */ = {
+			isa = PBXGroup;
+			children = (
+				C4BA34EED065172C2CCEE541 /* Animations */,
+				6089651E3F8892430CE1572F /* Components */,
+				F4F3D2E91936868C876100EB /* Screens */,
+				94E2F13092F8C9B7B7DD96EF /* Assets.xcassets */,
+				67D746F83F06C811B1386295 /* CipherApp.swift */,
+			);
+			path = CipheriOS;
+			sourceTree = "<group>";
+		};
+		095CACE1620C22431B8CC780 /* Screens */ = {
+			isa = PBXGroup;
+			children = (
+				F0DFC71A12660A704C875AB5 /* DailyDrillView.swift */,
+				4A13F571ECDA1ECA432F8236 /* TermOfDayView.swift */,
+				61FF6E93E34B881D4FFB4079 /* WatchProgressView.swift */,
+			);
+			path = Screens;
+			sourceTree = "<group>";
+		};
+		156CE119EAA6096E0D94052B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				18DC90F5F3FCC6B18B4F8051 /* Cipher Watch App.app */,
+				D1938A617BDD4FF40E303156 /* Cipher.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		33792096CB9503677B43691F /* Content */ = {
+			isa = PBXGroup;
+			children = (
+				F0798D5BF432D53A48A4CE85 /* BlueTeamContent.swift */,
+				C5998BEC4E93F0882C07D3A6 /* Flashcards.swift */,
+				6620E65F46D30F5C70BD65C3 /* FundamentalsContent.swift */,
+				0B97EBC1F4F0C3522B8D0831 /* RedTeamContent.swift */,
+			);
+			path = Content;
+			sourceTree = "<group>";
+		};
+		50951348863505314CD40DAD /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				3E42F3EC85180B226D42F0F3 /* Curriculum.swift */,
+				9E04E220C83379035D1E2C1E /* Progress.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		6089651E3F8892430CE1572F /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				0F9FF3520CABD772A6F4F160 /* ContentComponents.swift */,
+				046083BB1BA9D4ACFCD9F082 /* ListComponents.swift */,
+				155F574F70EEAEE63457F986 /* SharedComponents.swift */,
+				8F6AB3977C24010EE0805943 /* TerminalView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		8D66EF354BDA288D0DDB1B2B /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				B90ED2D85AA008A67C1EE718 /* Theme.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		900A015060B8F4AB876FCF32 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				33792096CB9503677B43691F /* Content */,
+				8D66EF354BDA288D0DDB1B2B /* DesignSystem */,
+				50951348863505314CD40DAD /* Models */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		9511A7D438A9B8B2D56506CE /* CipherWatch */ = {
+			isa = PBXGroup;
+			children = (
+				095CACE1620C22431B8CC780 /* Screens */,
+				0B5D5CB8B14FE4A5A0F483DD /* Assets.xcassets */,
+				508EAFEAE1CFF42E877BDEF1 /* CipherWatchApp.swift */,
+				1C6D27C215F7080C80F484DC /* WatchRootView.swift */,
+			);
+			path = CipherWatch;
+			sourceTree = "<group>";
+		};
+		B5F7F5380A26F0A1477C08AC = {
+			isa = PBXGroup;
+			children = (
+				08CEA4439F9CE66FD5840F8B /* CipheriOS */,
+				9511A7D438A9B8B2D56506CE /* CipherWatch */,
+				900A015060B8F4AB876FCF32 /* Shared */,
+				156CE119EAA6096E0D94052B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C4BA34EED065172C2CCEE541 /* Animations */ = {
+			isa = PBXGroup;
+			children = (
+				4F88DFDACBA2ABCF71D8DB81 /* AnimationKit.swift */,
+				C98A4A04E2B40B8DD035A6F3 /* AnimationRegistry.swift */,
+				927B7F5E621E5BBDDFE40BD2 /* AnimationsBlue.swift */,
+				9F5412CD0E9A766E4B4115E8 /* AnimationsNetworkCrypto.swift */,
+				E15092E688DFFA417B4D1090 /* AnimationsRed.swift */,
+			);
+			path = Animations;
+			sourceTree = "<group>";
+		};
+		F4F3D2E91936868C876100EB /* Screens */ = {
+			isa = PBXGroup;
+			children = (
+				D75DF7201A55C6D933D493A9 /* AnimationGalleryView.swift */,
+				04166D30254FCF0CDB1BDF4F /* DashboardView.swift */,
+				DF9C4C3199784DA9ECE933E4 /* EthicsGateView.swift */,
+				3FEBE6EDE6BC0114F01559E6 /* GlossaryView.swift */,
+				07CEAB7B799D89A0D3B0459A /* LessonBlockView.swift */,
+				86A60D803C4BB3888EE7F50B /* LessonView.swift */,
+				4ACEAED0770FD0D7F7161F0D /* ProfileView.swift */,
+				6EE2DC8F1441A0A9A2C6A4AB /* QuizView.swift */,
+				DD4FECA14607AA9BC328FA79 /* RootView.swift */,
+				B301459343F8366D265A8D17 /* TrackDetailView.swift */,
+				23B01B4C6F13DA1F3424FF12 /* TracksView.swift */,
+			);
+			path = Screens;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0F1F49E190B6475ACC58E96D /* Cipher Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5CC207274C3BB5AE0E1444B4 /* Build configuration list for PBXNativeTarget "Cipher Watch App" */;
+			buildPhases = (
+				F84932253902723841C5F07A /* Sources */,
+				6F212B43E80A753F32C1EB1F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Cipher Watch App";
+			packageProductDependencies = (
+			);
+			productName = "Cipher Watch App";
+			productReference = 18DC90F5F3FCC6B18B4F8051 /* Cipher Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7BD020656EC36B97E8BB36CA /* Cipher */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8034498A12FA3DCAF5216EA7 /* Build configuration list for PBXNativeTarget "Cipher" */;
+			buildPhases = (
+				8DE450ED968554261457C7E6 /* Sources */,
+				DC4A279D5738C8B80404E6EB /* Resources */,
+				34643D94B75E41EB4039FCBE /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				245AC26EE81D8FFD72375215 /* PBXTargetDependency */,
+			);
+			name = Cipher;
+			packageProductDependencies = (
+			);
+			productName = Cipher;
+			productReference = D1938A617BDD4FF40E303156 /* Cipher.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1F430BC2083193437E18CF71 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					0F1F49E190B6475ACC58E96D = {
+						ProvisioningStyle = Automatic;
+					};
+					7BD020656EC36B97E8BB36CA = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = CFFD0DE5432687092554306E /* Build configuration list for PBXProject "Cipher" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = B5F7F5380A26F0A1477C08AC;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 156CE119EAA6096E0D94052B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7BD020656EC36B97E8BB36CA /* Cipher */,
+				0F1F49E190B6475ACC58E96D /* Cipher Watch App */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6F212B43E80A753F32C1EB1F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A82A414CBE900996C4A54274 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DC4A279D5738C8B80404E6EB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAC7CB3AE74CCD4BB382BF80 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8DE450ED968554261457C7E6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7CC687F640E5B74B174B4FB7 /* AnimationGalleryView.swift in Sources */,
+				45673BC90ADD98FFBCB5E7AB /* AnimationKit.swift in Sources */,
+				68588EF2E572CEB7E3353728 /* AnimationRegistry.swift in Sources */,
+				9E819F70EB414B7A5A510A12 /* AnimationsBlue.swift in Sources */,
+				CDBEE0DC4A6E1B2B9E0CE2BF /* AnimationsNetworkCrypto.swift in Sources */,
+				31F99C8D52CE8DD5F1EB4732 /* AnimationsRed.swift in Sources */,
+				1DBE1B661FFFB8D8A5B0713E /* BlueTeamContent.swift in Sources */,
+				11D61E6A4000A6499EF98D4F /* CipherApp.swift in Sources */,
+				126915D1E4A157135CB8153C /* ContentComponents.swift in Sources */,
+				849423D88C4F160EA99B1DD5 /* Curriculum.swift in Sources */,
+				91EDC594E0C19F5443569919 /* DashboardView.swift in Sources */,
+				28271ED78F277AD797E1E993 /* EthicsGateView.swift in Sources */,
+				B00CB2C89E3E62186176203F /* Flashcards.swift in Sources */,
+				7D8714F4C367D8E7A5834095 /* FundamentalsContent.swift in Sources */,
+				AAE7B5644FC6720814917443 /* GlossaryView.swift in Sources */,
+				1C34D71D7D75EDBEC9EC451F /* LessonBlockView.swift in Sources */,
+				B19F319FA471AD131390687F /* LessonView.swift in Sources */,
+				F1B7493C3663109AE20C4534 /* ListComponents.swift in Sources */,
+				A170F91ABF4C339F8D118C54 /* ProfileView.swift in Sources */,
+				2832BE2987226079BE02392E /* Progress.swift in Sources */,
+				8644CC0500F77FBFFCC48C66 /* QuizView.swift in Sources */,
+				26BC2C461BE10C40A58C0117 /* RedTeamContent.swift in Sources */,
+				48EC37A455B0266473E9E6B2 /* RootView.swift in Sources */,
+				15EFBEF3E43BCEBFADDD41D7 /* SharedComponents.swift in Sources */,
+				FE894BDD4D3548AADB2E9958 /* TerminalView.swift in Sources */,
+				68E34B8C1D5D509E3403A9C3 /* Theme.swift in Sources */,
+				A8D05D8B41067ABCAC65D385 /* TrackDetailView.swift in Sources */,
+				93E78052A52EE7370A41C5DA /* TracksView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F84932253902723841C5F07A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				75CEFBFD34FE5BB5988A5989 /* BlueTeamContent.swift in Sources */,
+				6F812F9B31339642901B136F /* CipherWatchApp.swift in Sources */,
+				2E475269B9AF214AD74113E1 /* Curriculum.swift in Sources */,
+				180365BBDABA76DB01814563 /* DailyDrillView.swift in Sources */,
+				1DDEC160276F367FCF6FE2EE /* Flashcards.swift in Sources */,
+				84F7D3D58E192074A60DC710 /* FundamentalsContent.swift in Sources */,
+				711F4EA29990CE513459CFBE /* Progress.swift in Sources */,
+				EAD48ED03B2BEA1DAB8C76E5 /* RedTeamContent.swift in Sources */,
+				A954CB50D30718E7C54FC4A4 /* TermOfDayView.swift in Sources */,
+				532CE706516888F5A803C90F /* Theme.swift in Sources */,
+				D102E36AD71BEB5F67F5D6E2 /* WatchProgressView.swift in Sources */,
+				79A9262D4977A9044A4CF61C /* WatchRootView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		245AC26EE81D8FFD72375215 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0F1F49E190B6475ACC58E96D /* Cipher Watch App */;
+			targetProxy = 1991BABC8EAF388EE6513B3D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		18191ACBE5EDD95897C5030E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				INFOPLIST_KEY_CFBundleDisplayName = Cipher;
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.at0mb0mb.cipher;
+				PRODUCT_BUNDLE_IDENTIFIER = com.at0mb0mb.cipher.watchkitapp;
+				PRODUCT_NAME = CipherWatch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+		194BAFE0185857893DBF1B9C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_KEY_CFBundleDisplayName = Cipher;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.at0mb0mb.cipher;
+				PRODUCT_NAME = Cipher;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		765B3414EB88A65C7AFF1A37 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		771DDDB7E8B28A2E5A731C99 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_KEY_CFBundleDisplayName = Cipher;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.at0mb0mb.cipher;
+				PRODUCT_NAME = Cipher;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8BEFBC76BB2808F3A745F6F5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				INFOPLIST_KEY_CFBundleDisplayName = Cipher;
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.at0mb0mb.cipher;
+				PRODUCT_BUNDLE_IDENTIFIER = com.at0mb0mb.cipher.watchkitapp;
+				PRODUCT_NAME = CipherWatch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		D9713ACB017A4B429D2B03DA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5CC207274C3BB5AE0E1444B4 /* Build configuration list for PBXNativeTarget "Cipher Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8BEFBC76BB2808F3A745F6F5 /* Debug */,
+				18191ACBE5EDD95897C5030E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8034498A12FA3DCAF5216EA7 /* Build configuration list for PBXNativeTarget "Cipher" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				771DDDB7E8B28A2E5A731C99 /* Debug */,
+				194BAFE0185857893DBF1B9C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CFFD0DE5432687092554306E /* Build configuration list for PBXProject "Cipher" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D9713ACB017A4B429D2B03DA /* Debug */,
+				765B3414EB88A65C7AFF1A37 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1F430BC2083193437E18CF71 /* Project object */;
+}
