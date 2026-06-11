@@ -18,7 +18,7 @@ The same ground professional programs charge thousands for — framed throughout
 ![SwiftUI](https://img.shields.io/badge/SwiftUI-100%25-FF4D6A?style=flat-square&logo=swift&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-3CE88B?style=flat-square)
 ![Offline](https://img.shields.io/badge/works-fully%20offline-2BE6C0?style=flat-square)
-![Content](https://img.shields.io/badge/30%20lessons%20%C2%B7%2022%20animations-9B8CFF?style=flat-square)
+![Content](https://img.shields.io/badge/43%20lessons%20%C2%B7%2035%20animations-9B8CFF?style=flat-square)
 
 </div>
 
@@ -36,13 +36,14 @@ The same ground professional programs charge thousands for — framed throughout
 
 | | |
 |---|---|
-| 📚 **3 tracks · 14 modules · 30 lessons** | Real, accurate, opinionated content — not placeholders. |
-| 🎬 **22 interactive animated explainers** | Every one **plays, pauses, scrubs and changes speed** — freeze an attack mid-step and drag through it frame by frame. |
-| 💻 **Simulated terminals** | Type out real commands (`nmap`, `hashcat`, `tcpdump`, `iptables`…) and print output line by line, like a live shell. |
+| 📚 **3 tracks · 18 modules · 43 lessons** | Real, accurate, opinionated content modelled on professional curricula (OSCP/OSWE/OSEP/OSED/OSWP) — not placeholders. |
+| 🎬 **35 interactive animated explainers** | Every one **plays, pauses, scrubs and changes speed** — freeze an attack mid-step and drag through it frame by frame. |
+| 💻 **Simulated terminals** | Type out real commands (`nmap`, `hashcat`, `secretsdump`, `responder`, `bloodhound-python`…) and print output line by line, like a live shell. |
 | 🧠 **Quizzes & knowledge checks** | Scored, explained, and physical — haptics, a shake on a wrong answer, a pop on a right one, and a confetti burst when you pass. |
 | 🏆 **Progress system** | XP, a 7-tier rank ladder (Initiate → Elite Operator), per-track completion rings, and a daily streak. |
+| 📖 **Built for the phone** | A reading-progress bar on every lesson, an **Up next** hand-off that chains lesson → lesson, and rich inline-formatted prose. |
 | ⌚ **Apple Watch companion** | A seeded daily flashcard drill, a "term of the day", and your streak/rank — sharing the same curriculum engine. |
-| 📖 **49-term searchable glossary** | Every key concept, one tap away. |
+| 📖 **82-term searchable glossary** | Every key concept, one tap away. |
 | ⚖️ **Ethics first** | A first-launch authorization pledge and reminders that everything here is for systems you own or are authorized to test. |
 
 ---
@@ -67,37 +68,45 @@ Built from a handful of reusable engines — `FlowStage` (node-to-node messaging
 
 ## 🗺️ Curriculum
 
-### 🟩 Fundamentals — *mindset, the shell, networks & crypto*
+### 🟩 Fundamentals — *mindset, the shell, networks, crypto, the web & Windows*
 - **Mindset & Ethics** — Hacking, Ethically (CIA triad, RoE) · How Attacks Actually Happen (the Cyber Kill Chain)
-- **Systems & the Shell** — Linux & the Command Line *(new)*
+- **Systems & the Shell** — Linux & the Command Line
 - **Networking for Hackers** — The OSI & TCP/IP Models · TCP, Ports & the 3-Way Handshake · Anatomy of a Packet
 - **Cryptography Essentials** — Symmetric & Public-Key Encryption · Hashing, Salting & Leaked Passwords
+- **How the Web Works** — HTTP, Cookies & Sessions *(new)*
+- **Windows & Active Directory** — Active Directory Foundations *(new)*
 
 ### 🟥 Red Team — *think like the adversary*
 - **Reconnaissance** — Passive Recon & OSINT · Active Scanning & Enumeration
 - **Initial Access & Exploitation** — Phishing & Social Engineering · Exploiting Services & Getting a Shell
-- **Web Application Attacks** — SQL Injection · Cross-Site Scripting (XSS) · Command Injection & SSRF *(new)*
+- **Web Application Attacks** — SQL Injection · Cross-Site Scripting (XSS) · Command Injection & SSRF · Broken Access Control & IDOR *(new)* · Path Traversal & File Inclusion *(new)* · SSTI, XXE & Insecure Deserialization *(new)*
 - **Post-Exploitation** — Privilege Escalation · Password Attacks & Cracking
-- **Active Directory & Lateral Movement** — Kerberoasting · Pivoting & Lateral Movement
-- **Advanced Exploitation & C2** — Stack Buffer Overflows · Command & Control
+- **Active Directory & Lateral Movement** — Kerberoasting · AS-REP Roasting, DCSync & Golden Tickets *(new)* · Attack Paths & ACL Abuse *(new)* · Pivoting & Lateral Movement
+- **Evasion & Defense Bypass** *(new)* — Antivirus, AMSI & EDR Evasion · Process Injection & Living Off the Land
+- **Wireless & Network Attacks** *(new)* — Wi-Fi Attacks: WPA2 & Evil Twin · Network Poisoning & MITM
+- **Advanced Exploitation & C2** — Stack Buffer Overflows · Defeating Mitigations: DEP, ASLR & ROP *(new)* · Command & Control
 
 ### 🟦 Blue Team — *detect, respond, outlast*
-- **Defensive Foundations** — Defense in Depth & the SOC · Network Security & Firewalls *(new)* · Logging, Telemetry & the SIEM
+- **Defensive Foundations** — Defense in Depth & the SOC · Network Security & Firewalls · Defending Active Directory *(new)* · Logging, Telemetry & the SIEM
 - **Detection Engineering** — MITRE ATT&CK for Defenders · Detection Engineering
 - **Threat Hunting & Incident Response** — Threat Hunting · Incident Response Lifecycle
 - **Forensics & Malware** — Digital Forensics Essentials · Intro to Malware Analysis
 
 <details>
-<summary><b>The 22 animated explainers</b></summary>
+<summary><b>The 35 animated explainers</b></summary>
 
 <br>
 
 `OSI Model` · `TCP Handshake` · `Anatomy of a Packet` · `Symmetric Encryption` ·
-`Public-Key Exchange` · `Hashing` · `Cyber Kill Chain` · `Port Scanning` ·
-`Phishing → Initial Access` · `SQL Injection` · `Cross-Site Scripting` ·
-`Privilege Escalation` · `Password Cracking` · `Kerberoasting` ·
-`Lateral Movement` · `Buffer Overflow` · `C2 Beacon` · `Defense in Depth` ·
-`SIEM Pipeline` · `Incident Response Lifecycle` · `MITRE ATT&CK` · `Threat Hunting`
+`Public-Key Exchange` · `Hashing` · `An HTTP Request` · `Active Directory Forest` ·
+`Cyber Kill Chain` · `Port Scanning` · `Phishing → Initial Access` · `SQL Injection` ·
+`Cross-Site Scripting` · `Broken Access Control (IDOR)` · `Path Traversal & File Inclusion` ·
+`Server-Side Template Injection` · `Privilege Escalation` · `Password Cracking` ·
+`Kerberoasting` · `DCSync → Golden Ticket` · `Attack Path (BloodHound)` ·
+`Lateral Movement` · `AMSI Bypass` · `Process Injection` · `WPA2 Handshake Capture` ·
+`ARP Poisoning (MITM)` · `Buffer Overflow` · `Return-Oriented Programming` · `C2 Beacon` ·
+`Defense in Depth` · `SIEM Pipeline` · `Incident Response Lifecycle` · `MITRE ATT&CK` ·
+`Threat Hunting` · `Tiered AD Administration`
 
 </details>
 

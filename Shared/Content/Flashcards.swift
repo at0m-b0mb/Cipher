@@ -33,6 +33,12 @@ enum Flashcards {
         Flashcard("Promiscuous Mode", "A NIC setting that captures all frames it sees, not just its own — enables sniffing.", .fundamentals),
         Flashcard("RST Packet", "A TCP reset that aborts a connection; a closed port answers a SYN with RST.", .fundamentals),
         Flashcard("ARP Spoofing", "A Layer-2 attack mapping the attacker's MAC to another host's IP for man-in-the-middle.", .fundamentals),
+        Flashcard("HTTP", "The stateless request/response protocol of the web: a method, path and headers in, a status code and body back.", .fundamentals),
+        Flashcard("Session Cookie", "A token the server sets after login and the browser returns on every request — it IS the logged-in session.", .fundamentals),
+        Flashcard("Same-Origin Policy", "The browser rule that script from one origin can't read another's responses — the boundary XSS, CSRF and CORS revolve around.", .fundamentals),
+        Flashcard("Active Directory", "Microsoft's central directory of users, computers and groups for a Windows domain — the prize in most internal tests.", .fundamentals),
+        Flashcard("Domain Controller", "The server running AD; it authenticates logons and holds NTDS.dit — every account's password hash.", .fundamentals),
+        Flashcard("Kerberos TGT", "A Ticket Granting Ticket issued at logon that proves your identity and is exchanged for per-service tickets.", .fundamentals),
 
         // Red team
         Flashcard("OSINT", "Open-source intelligence — recon from public data with no contact to the target's systems.", .redTeam),
@@ -54,6 +60,29 @@ enum Flashcards {
         Flashcard("NOP Sled", "A run of no-op instructions giving an imprecise jump room to slide into shellcode.", .redTeam),
         Flashcard("C2 Beacon", "An implant's periodic, jittered check-in to its command-and-control server.", .redTeam),
         Flashcard("Spear Phishing", "A highly targeted phish personalized to one individual using gathered intel.", .redTeam),
+        Flashcard("IDOR", "Insecure Direct Object Reference — change an object id in a request to read data that isn't yours. No ownership check.", .redTeam),
+        Flashcard("Broken Access Control", "Logged-in but under-restricted: the app forgets to check what you're authorized to do. OWASP's #1 risk.", .redTeam),
+        Flashcard("Path Traversal", "Using ../ to climb out of an intended folder and read arbitrary files the web process can access.", .redTeam),
+        Flashcard("LFI", "Local File Inclusion — the app loads and runs a file you choose; combined with log/upload poisoning it becomes RCE.", .redTeam),
+        Flashcard("SSTI", "Server-Side Template Injection — input the template engine evaluates ({{7*7}}→49), escalating to code execution.", .redTeam),
+        Flashcard("XXE", "XML External Entity — a permissive XML parser resolves entities to read local files or reach internal URLs (SSRF).", .redTeam),
+        Flashcard("Insecure Deserialization", "Rebuilding attacker-controlled bytes into live objects, letting a gadget chain reach remote code execution.", .redTeam),
+        Flashcard("AS-REP Roasting", "Requesting and cracking the AS-REP of accounts with Kerberos pre-auth disabled — often without any domain creds.", .redTeam),
+        Flashcard("DCSync", "Abusing directory-replication rights to ask a DC for any account's hash, including krbtgt. No code runs on the DC.", .redTeam),
+        Flashcard("Golden Ticket", "A forged TGT signed with the stolen krbtgt hash — valid as any user, domain-wide, until krbtgt is rotated twice.", .redTeam),
+        Flashcard("BloodHound", "Graphs AD users, groups and permissions to compute the shortest attack path to Domain Admin.", .redTeam),
+        Flashcard("ACL Abuse", "Exploiting over-permissive AD rights (GenericAll, WriteDACL, ForceChangePassword) as direct, patch-proof attack steps.", .redTeam),
+        Flashcard("AMSI Bypass", "Patching the in-process Antimalware Scan Interface so a payload it would block reports clean and runs.", .redTeam),
+        Flashcard("Process Injection", "Running shellcode inside a trusted process (e.g. explorer.exe) to inherit its identity and dodge detection.", .redTeam),
+        Flashcard("LOLBin", "A signed, built-in OS binary (certutil, rundll32, mshta) repurposed for attacker work so it blends in.", .redTeam),
+        Flashcard("Evil Twin", "A rogue access point cloning a trusted SSID to lure clients, harvest the passphrase and enable MITM.", .redTeam),
+        Flashcard("WPA2 Handshake", "The 4-way handshake captured on connect; cracked offline to recover a Wi-Fi pre-shared key.", .redTeam),
+        Flashcard("ARP Poisoning", "Forging IP→MAC replies so a victim's traffic to the gateway flows through the attacker — a LAN man-in-the-middle.", .redTeam),
+        Flashcard("Responder / LLMNR", "Answering unauthenticated LLMNR/NBT-NS name broadcasts to capture NetNTLMv2 hashes for cracking or relay.", .redTeam),
+        Flashcard("NTLM Relay", "Forwarding a captured authentication to another host (where SMB signing is off) to act as the victim — no cracking needed.", .redTeam),
+        Flashcard("ROP", "Return-Oriented Programming — chaining existing code 'gadgets' (each ending in ret) to bypass a non-executable stack (DEP).", .redTeam),
+        Flashcard("DEP / NX", "Marks the stack and heap non-executable so injected shellcode won't run — the mitigation that forces ROP.", .redTeam),
+        Flashcard("ASLR", "Randomizes module/stack base addresses so exploits can't hard-code targets; defeated with an info leak.", .redTeam),
 
         // Blue team
         Flashcard("Defense in Depth", "Layering independent controls so an attacker must defeat all of them.", .blueTeam),
@@ -73,7 +102,11 @@ enum Flashcards {
         Flashcard("Chain of Custody", "A documented, unbroken record proving evidence wasn't altered — key to admissibility.", .blueTeam),
         Flashcard("Static Analysis", "Examining malware without running it: strings, headers, disassembly.", .blueTeam),
         Flashcard("Dynamic Analysis", "Detonating malware in an isolated sandbox to observe its behavior.", .blueTeam),
-        Flashcard("MTTD / MTTR", "Mean time to detect / respond — core SOC effectiveness metrics.", .blueTeam)
+        Flashcard("MTTD / MTTR", "Mean time to detect / respond — core SOC effectiveness metrics.", .blueTeam),
+        Flashcard("Tiered Administration", "Isolating admin credentials by tier (Tier 0 = DCs/Domain Admins) so high-tier creds never land on low-tier hosts.", .blueTeam),
+        Flashcard("LAPS", "Local Administrator Password Solution — unique, rotating local-admin passwords per machine that defeat pass-the-hash reuse.", .blueTeam),
+        Flashcard("gMSA", "Group Managed Service Account — a service account with a long, auto-rotated password that makes Kerberoasting infeasible.", .blueTeam),
+        Flashcard("Honeypot Account", "A deceptive, never-used account (often with a tempting SPN) whose every login or ticket request is high-signal evidence of an attacker.", .blueTeam)
     ]
 
     static func cards(for category: TrackKind) -> [Flashcard] {

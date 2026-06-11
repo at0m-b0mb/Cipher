@@ -83,6 +83,8 @@ enum AnimationID: String, CaseIterable, Codable {
     case symmetricEncryption
     case publicKeyExchange
     case hashing
+    case httpRequest
+    case adForest
 
     // Red team
     case cyberKillChain
@@ -90,11 +92,21 @@ enum AnimationID: String, CaseIterable, Codable {
     case phishingFlow
     case sqlInjection
     case xssReflected
+    case accessControl
+    case fileInclusion
+    case templateInjection
     case privilegeEscalation
     case passwordCracking
     case kerberoasting
+    case dcsync
+    case attackPath
     case lateralMovement
+    case amsiBypass
+    case processInjection
+    case wifiHandshake
+    case arpPoisoning
     case bufferOverflow
+    case ropChain
     case c2Beacon
 
     // Blue team
@@ -103,6 +115,7 @@ enum AnimationID: String, CaseIterable, Codable {
     case incidentResponse
     case mitreAttack
     case threatHunting
+    case adTiering
 
     /// Short human label used in the lesson UI chrome.
     var label: String {
@@ -113,22 +126,35 @@ enum AnimationID: String, CaseIterable, Codable {
         case .symmetricEncryption: return "Symmetric Encryption"
         case .publicKeyExchange:   return "Public-Key Exchange"
         case .hashing:             return "Hashing"
+        case .httpRequest:         return "An HTTP Request"
+        case .adForest:            return "Active Directory Forest"
         case .cyberKillChain:      return "The Cyber Kill Chain"
         case .portScan:            return "Port Scanning"
         case .phishingFlow:        return "Phishing → Initial Access"
         case .sqlInjection:        return "SQL Injection"
         case .xssReflected:        return "Cross-Site Scripting"
+        case .accessControl:       return "Broken Access Control (IDOR)"
+        case .fileInclusion:       return "Path Traversal & File Inclusion"
+        case .templateInjection:   return "Server-Side Template Injection"
         case .privilegeEscalation: return "Privilege Escalation"
         case .passwordCracking:    return "Offline Password Cracking"
         case .kerberoasting:       return "Kerberoasting"
+        case .dcsync:              return "DCSync → Golden Ticket"
+        case .attackPath:          return "Attack Path (BloodHound)"
         case .lateralMovement:     return "Lateral Movement"
+        case .amsiBypass:          return "AMSI Bypass"
+        case .processInjection:    return "Process Injection"
+        case .wifiHandshake:       return "WPA2 Handshake Capture"
+        case .arpPoisoning:        return "ARP Poisoning (MITM)"
         case .bufferOverflow:      return "Stack Buffer Overflow"
+        case .ropChain:            return "Return-Oriented Programming"
         case .c2Beacon:            return "Command & Control Beacon"
         case .defenseInDepth:      return "Defense in Depth"
         case .siemPipeline:        return "SIEM Detection Pipeline"
         case .incidentResponse:    return "Incident Response Lifecycle"
         case .mitreAttack:         return "MITRE ATT&CK"
         case .threatHunting:       return "Threat Hunting Loop"
+        case .adTiering:           return "Tiered AD Administration"
         }
     }
 }
@@ -198,6 +224,13 @@ struct Module: Identifiable {
     var totalMinutes: Int { lessons.reduce(0) { $0 + $1.minutes } }
 }
 
+extension Lesson {
+    /// The module this lesson belongs to (for "up next" context labels).
+    var parentModule: Module? {
+        Curriculum.allModules.first { $0.lessons.contains { $0.id == id } }
+    }
+}
+
 enum TrackKind: String {
     case fundamentals, redTeam, blueTeam
 
@@ -265,5 +298,14 @@ enum Curriculum {
     /// The track a given lesson belongs to — used to colour lesson chrome.
     static func track(forLesson lessonID: String) -> Track? {
         tracks.first { $0.lessons.contains { $0.id == lessonID } }
+    }
+
+    /// The next lesson in curriculum order (track → module → lesson). Powers the
+    /// "Up next" hand-off at the end of a lesson so a learner can keep going on a
+    /// phone without backing out to the track list.
+    static func lessonAfter(id lessonID: String) -> Lesson? {
+        let all = allLessons
+        guard let idx = all.firstIndex(where: { $0.id == lessonID }), idx + 1 < all.count else { return nil }
+        return all[idx + 1]
     }
 }

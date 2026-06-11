@@ -16,9 +16,10 @@ struct LessonBlockView: View {
                 .padding(.top, 6)
 
         case .paragraph(let text):
-            Text(text)
+            Text(text.inlineMarkdown)
                 .font(.system(size: 15))
                 .foregroundStyle(Theme.textSecondary)
+                .tint(accent)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)

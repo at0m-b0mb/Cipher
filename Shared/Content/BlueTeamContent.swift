@@ -18,9 +18,9 @@ enum BlueTeamContent {
     private static let foundations = Module(
         id: "blue-foundations",
         title: "Defensive Foundations",
-        summary: "How defenders structure protection in layers, segment the network, and turn raw telemetry into alerts.",
+        summary: "How defenders structure protection in layers, segment the network, harden Active Directory, and turn raw telemetry into alerts.",
         systemImage: "shield.lefthalf.filled",
-        lessons: [defenseLesson, networkDefenseLesson, siemLesson]
+        lessons: [defenseLesson, networkDefenseLesson, adDefenseLesson, siemLesson]
     )
 
     private static let defenseLesson = Lesson(
@@ -71,6 +71,89 @@ enum BlueTeamContent {
                 ],
                 correct: 1,
                 why: "MTTD/MTTR quantify how quickly the team detects and contains incidents — core effectiveness metrics for security operations.")
+        ]
+    )
+
+    private static let adDefenseLesson = Lesson(
+        id: "blue-ad-defense",
+        title: "Defending Active Directory",
+        subtitle: "The other side of the AD attacks — tiered admin, hardening, and the events that catch each one.",
+        minutes: 12,
+        difficulty: .advanced,
+        blocks: [
+            .heading("Defending the thing attackers want most"),
+            .paragraph("The Red Team track turns Active Directory inside out — Kerberoasting, AS-REP Roasting, DCSync, Golden Tickets, ACL attack paths, NTLM relay. Defending AD isn't about patching those away; most are protocol features. It's about **architecture that limits them** and **telemetry that catches them**. Get the structure right and a single compromised laptop stops being a straight line to Domain Admin."),
+            .animation(.adTiering, caption: "Admin tiers keep Tier 0 (DCs, Domain Admins) credentials off lower-tier machines, so a stolen workstation credential can't climb to the domain's core."),
+            .heading("Architecture: the tiered model"),
+            .paragraph("The single highest-impact control is **tiered administration**. Split admin identities into tiers — Tier 0 (domain controllers, Domain Admins), Tier 1 (servers), Tier 2 (workstations) — and forbid a higher-tier credential from ever logging on to a lower tier. Now compromising a workstation can't yield Domain Admin creds, because they're never exposed there. It's the structural answer to credential theft and lateral movement."),
+            .keyPoints([
+                "Tiered admin — Tier 0 credentials never touch Tier 1/2 machines; separate accounts per tier.",
+                "LAPS — unique, rotating local-admin passwords per machine, killing pass-the-hash reuse.",
+                "gMSAs — long, auto-rotated service-account passwords that defeat Kerberoasting.",
+                "Protected Users group + Credential Guard — keep credentials out of memory and reach.",
+                "Disable LLMNR/NBT-NS and enforce SMB signing — shut down Responder and NTLM relay.",
+                "Least privilege on ACLs — prune the GenericAll/WriteDACL edges BloodHound would find."
+            ]),
+            .heading("Detection: the events that betray each attack"),
+            .paragraph("Each AD attack leaves a fingerprint if you're watching. The discipline is knowing which event maps to which technique — and alerting on the anomaly, not the everyday."),
+            .terminal(prompt: "splunk-spl",
+                      command: "index=wineventlog EventCode=4769 RC4_encryption | stats dc(Service) by Account",
+                      output: """
+Account        distinct_services
+svc_helpdesk   42     <-- one account requesting many RC4 service tickets → Kerberoasting
+"""),
+            .keyPoints([
+                "4769 (TGS requested), many services / RC4 from one account → Kerberoasting.",
+                "4768 AS-REQ without pre-auth → AS-REP Roasting attempt.",
+                "4662 replication (DRS) from a non-DC host → DCSync.",
+                "4624/4625 patterns, unusual logon types across hosts → lateral movement / spraying.",
+                "A honeypot account (fake SPN, never used) firing any event → a roaster caught red-handed."
+            ]),
+            .definition(term: "Tier 0", meaning: "The set of assets that control identity in the domain — Domain Controllers, the Domain Admins group, AD itself, and anything that can take over them. The entire defensive game is keeping Tier 0 credentials and access isolated from everything else."),
+            .callout(.tip, "Honeypot (deceptive) accounts are cheap and high-signal: create a tempting fake service account with an SPN and a weak-looking password that no legitimate process ever uses. Any ticket request or logon for it is almost certainly an attacker enumerating or roasting."),
+            .callout(.warning, "After a confirmed domain compromise, normal cleanup isn't enough. Golden Tickets persist until krbtgt is rotated twice, and DCSync rights may have been granted as backdoors. Recovery means resetting krbtgt (twice), auditing replication rights, and hunting for rogue ACLs and accounts."),
+            .checkpoint(QuizQuestion(
+                "Why does a tiered administration model blunt lateral movement to Domain Admin so effectively?",
+                options: [
+                    "It encrypts all passwords",
+                    "High-tier credentials are never exposed on lower-tier machines, so compromising a workstation can't harvest Domain Admin creds",
+                    "It blocks all network traffic",
+                    "It disables Kerberos"
+                ],
+                correct: 1,
+                why: "Lateral movement relies on finding privileged credentials on the machines you compromise. Tiering ensures Tier 0 creds never land on Tier 1/2 hosts, so a foothold there yields nothing that reaches the domain core."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Which control most directly defeats Kerberoasting of service accounts?",
+                options: [
+                    "Disabling DNS",
+                    "Group Managed Service Accounts (gMSAs) with long, auto-rotated passwords",
+                    "A longer screensaver timeout",
+                    "Blocking ICMP"
+                ],
+                correct: 1,
+                why: "Kerberoasting ends in offline cracking of a service account's password. gMSAs give 120+ character auto-rotated passwords, making the recovered ticket effectively uncrackable."),
+            QuizQuestion(
+                "Replication (event 4662 / DRS) originating from a host that isn't a Domain Controller most likely indicates…",
+                options: [
+                    "A normal backup",
+                    "A DCSync attack — something is impersonating a DC to pull hashes",
+                    "A failed login",
+                    "A DNS update"
+                ],
+                correct: 1,
+                why: "Only DCs should perform directory replication. A replication request from a workstation or server is a hallmark of DCSync and warrants immediate investigation."),
+            QuizQuestion(
+                "Disabling LLMNR/NBT-NS and enforcing SMB signing primarily defends against…",
+                options: [
+                    "Buffer overflows",
+                    "Responder-style poisoning and NTLM relay",
+                    "Phishing emails",
+                    "SQL injection"
+                ],
+                correct: 1,
+                why: "LLMNR/NBT-NS poisoning feeds Responder its captured hashes, and SMB signing blocks relaying them. Disabling the legacy fallbacks and enforcing signing removes both wins.")
         ]
     )
 

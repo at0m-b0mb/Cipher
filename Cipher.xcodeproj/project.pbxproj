@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		063D2EE16783CDFD3E356D0E /* AnimationsWeb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DD813155F5693877CB7D551 /* AnimationsWeb.swift */; };
 		069EDD2EE15377711B332D98 /* Cipher Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 18DC90F5F3FCC6B18B4F8051 /* Cipher Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		11D61E6A4000A6499EF98D4F /* CipherApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67D746F83F06C811B1386295 /* CipherApp.swift */; };
 		126915D1E4A157135CB8153C /* ContentComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9FF3520CABD772A6F4F160 /* ContentComponents.swift */; };
@@ -45,10 +46,12 @@
 		AAE7B5644FC6720814917443 /* GlossaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FEBE6EDE6BC0114F01559E6 /* GlossaryView.swift */; };
 		B00CB2C89E3E62186176203F /* Flashcards.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5998BEC4E93F0882C07D3A6 /* Flashcards.swift */; };
 		B19F319FA471AD131390687F /* LessonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86A60D803C4BB3888EE7F50B /* LessonView.swift */; };
+		B7E63265782C70605888A73D /* AnimationsOffense2.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0ED949A2970AADCA2F4257A /* AnimationsOffense2.swift */; };
 		CDBEE0DC4A6E1B2B9E0CE2BF /* AnimationsNetworkCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5412CD0E9A766E4B4115E8 /* AnimationsNetworkCrypto.swift */; };
 		D102E36AD71BEB5F67F5D6E2 /* WatchProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61FF6E93E34B881D4FFB4079 /* WatchProgressView.swift */; };
 		EAD48ED03B2BEA1DAB8C76E5 /* RedTeamContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B97EBC1F4F0C3522B8D0831 /* RedTeamContent.swift */; };
 		F1B7493C3663109AE20C4534 /* ListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046083BB1BA9D4ACFCD9F082 /* ListComponents.swift */; };
+		F95E2D205AE07ABEAFE29A9A /* AnimationsAD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E6246D7749388061B81944D /* AnimationsAD.swift */; };
 		FE894BDD4D3548AADB2E9958 /* TerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F6AB3977C24010EE0805943 /* TerminalView.swift */; };
 /* End PBXBuildFile section */
 
@@ -82,6 +85,7 @@
 		07CEAB7B799D89A0D3B0459A /* LessonBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonBlockView.swift; sourceTree = "<group>"; };
 		0B5D5CB8B14FE4A5A0F483DD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0B97EBC1F4F0C3522B8D0831 /* RedTeamContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedTeamContent.swift; sourceTree = "<group>"; };
+		0DD813155F5693877CB7D551 /* AnimationsWeb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsWeb.swift; sourceTree = "<group>"; };
 		0F9FF3520CABD772A6F4F160 /* ContentComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentComponents.swift; sourceTree = "<group>"; };
 		155F574F70EEAEE63457F986 /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
 		18DC90F5F3FCC6B18B4F8051 /* Cipher Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cipher Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -97,6 +101,7 @@
 		6620E65F46D30F5C70BD65C3 /* FundamentalsContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FundamentalsContent.swift; sourceTree = "<group>"; };
 		67D746F83F06C811B1386295 /* CipherApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CipherApp.swift; sourceTree = "<group>"; };
 		6EE2DC8F1441A0A9A2C6A4AB /* QuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizView.swift; sourceTree = "<group>"; };
+		7E6246D7749388061B81944D /* AnimationsAD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsAD.swift; sourceTree = "<group>"; };
 		86A60D803C4BB3888EE7F50B /* LessonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonView.swift; sourceTree = "<group>"; };
 		8F6AB3977C24010EE0805943 /* TerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalView.swift; sourceTree = "<group>"; };
 		927B7F5E621E5BBDDFE40BD2 /* AnimationsBlue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsBlue.swift; sourceTree = "<group>"; };
@@ -114,6 +119,7 @@
 		E15092E688DFFA417B4D1090 /* AnimationsRed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsRed.swift; sourceTree = "<group>"; };
 		F0798D5BF432D53A48A4CE85 /* BlueTeamContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlueTeamContent.swift; sourceTree = "<group>"; };
 		F0DFC71A12660A704C875AB5 /* DailyDrillView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyDrillView.swift; sourceTree = "<group>"; };
+		F0ED949A2970AADCA2F4257A /* AnimationsOffense2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsOffense2.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -223,9 +229,12 @@
 			children = (
 				4F88DFDACBA2ABCF71D8DB81 /* AnimationKit.swift */,
 				C98A4A04E2B40B8DD035A6F3 /* AnimationRegistry.swift */,
+				7E6246D7749388061B81944D /* AnimationsAD.swift */,
 				927B7F5E621E5BBDDFE40BD2 /* AnimationsBlue.swift */,
 				9F5412CD0E9A766E4B4115E8 /* AnimationsNetworkCrypto.swift */,
+				F0ED949A2970AADCA2F4257A /* AnimationsOffense2.swift */,
 				E15092E688DFFA417B4D1090 /* AnimationsRed.swift */,
+				0DD813155F5693877CB7D551 /* AnimationsWeb.swift */,
 			);
 			path = Animations;
 			sourceTree = "<group>";
@@ -355,9 +364,12 @@
 				7CC687F640E5B74B174B4FB7 /* AnimationGalleryView.swift in Sources */,
 				45673BC90ADD98FFBCB5E7AB /* AnimationKit.swift in Sources */,
 				68588EF2E572CEB7E3353728 /* AnimationRegistry.swift in Sources */,
+				F95E2D205AE07ABEAFE29A9A /* AnimationsAD.swift in Sources */,
 				9E819F70EB414B7A5A510A12 /* AnimationsBlue.swift in Sources */,
 				CDBEE0DC4A6E1B2B9E0CE2BF /* AnimationsNetworkCrypto.swift in Sources */,
+				B7E63265782C70605888A73D /* AnimationsOffense2.swift in Sources */,
 				31F99C8D52CE8DD5F1EB4732 /* AnimationsRed.swift in Sources */,
+				063D2EE16783CDFD3E356D0E /* AnimationsWeb.swift in Sources */,
 				1DBE1B661FFFB8D8A5B0713E /* BlueTeamContent.swift in Sources */,
 				11D61E6A4000A6499EF98D4F /* CipherApp.swift in Sources */,
 				126915D1E4A157135CB8153C /* ContentComponents.swift in Sources */,

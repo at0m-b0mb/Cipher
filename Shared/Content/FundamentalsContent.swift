@@ -10,7 +10,7 @@ enum FundamentalsContent {
         kind: .fundamentals,
         title: "Fundamentals",
         tagline: "Mindset, the shell, networks & crypto — the ground floor of everything.",
-        modules: [mindset, shell, networking, crypto]
+        modules: [mindset, shell, networking, crypto, web, windows]
     )
 
     // MARK: F-S — Systems & the shell
@@ -497,6 +497,166 @@ ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f  -
                 ],
                 correct: 2,
                 why: "A unique per-user salt guarantees identical passwords produce different hashes and renders rainbow tables useless. It doesn't encrypt or reverse anything.")
+        ]
+    )
+
+    // MARK: F4 — Web foundations
+
+    private static let web = Module(
+        id: "fund-web",
+        title: "How the Web Works",
+        summary: "HTTP, cookies and sessions — the request/response machinery every web attack in the Red Team track builds on.",
+        systemImage: "globe",
+        lessons: [webBasicsLesson]
+    )
+
+    private static let webBasicsLesson = Lesson(
+        id: "fund-web-basics",
+        title: "HTTP, Cookies & Sessions",
+        subtitle: "The request/response cycle — and how a stateless protocol still remembers who you are.",
+        minutes: 11,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Everything is a request and a response"),
+            .paragraph("The web runs on HTTP: your browser sends a **request** (a method, a path, some headers, maybe a body) and the server sends back a **response** (a status code, headers, and content). That's the entire conversation. Every web attack you'll learn — SQL injection, XSS, IDOR, SSRF — is just a crafted request that makes the server do something it shouldn't. Reading raw HTTP is the single most useful web-hacking skill."),
+            .animation(.httpRequest, caption: "A browser requests /login, the server replies and sets a cookie, then the browser proves who it is on the next request."),
+            .keyPoints([
+                "Methods — GET (read), POST (submit), PUT/PATCH (update), DELETE (remove).",
+                "Status codes — 200 OK, 301/302 redirect, 401/403 auth/forbidden, 404 missing, 500 server error.",
+                "Headers — metadata: Host, Cookie, Authorization, Content-Type, User-Agent.",
+                "Body — the payload (form fields, JSON) on POST/PUT requests.",
+                "An intercepting proxy (Burp Suite, OWASP ZAP) lets you pause and rewrite every request — your primary web-testing tool."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "curl -v https://shop.lab/login -d 'user=alice&pass=hunter2'",
+                      output: """
+> POST /login HTTP/1.1
+> Host: shop.lab
+> Content-Type: application/x-www-form-urlencoded
+< HTTP/1.1 302 Found
+< Set-Cookie: session=8f3b1c..; HttpOnly; Secure; SameSite=Lax
+< Location: /account
+"""),
+            .definition(term: "HTTP is stateless", meaning: "Each request stands alone — the server doesn't inherently remember your last one. To create a logged-in 'session', the server issues a cookie the browser sends back on every subsequent request. That cookie is your identity."),
+            .heading("Cookies & sessions — how the web remembers you"),
+            .paragraph("After you log in, the server replies with `Set-Cookie: session=…`. Your browser stores it and automatically attaches it to every future request to that site. The server looks up that random session ID to know you're Alice. This is why **stealing the session cookie is as good as stealing the password** — it *is* the logged-in session."),
+            .callout(.danger, "Three cookie flags are your defense: HttpOnly (JavaScript can't read it, blunting XSS theft), Secure (only sent over HTTPS), and SameSite (not sent on cross-site requests, blunting CSRF). A session cookie missing HttpOnly is a finding."),
+            .definition(term: "Same-Origin Policy (SOP)", meaning: "The browser rule that script from one origin (scheme + host + port) can't read responses from another. It's what stops evil.com's JavaScript from reading your bank's pages — and the boundary that CORS, XSS and CSRF all revolve around."),
+            .callout(.tip, "Learn to read a request like a sentence. 'GET /invoice?id=1042 with cookie session=… ' tells you the action (read), the object (invoice 1042), and the identity (the session). Web bugs live in the gap between what you're allowed to do and what the request lets you ask for."),
+            .checkpoint(QuizQuestion(
+                "An attacker steals a victim's `session` cookie via XSS. What can they do with it?",
+                options: [
+                    "Nothing — they still need the password",
+                    "Replay it to the site and act as the logged-in victim",
+                    "Only read the victim's email address",
+                    "Decrypt the victim's HTTPS traffic"
+                ],
+                correct: 1,
+                why: "The session cookie *is* the authenticated session. Replaying it makes the server treat the attacker as the victim — no password needed. HttpOnly exists precisely to stop script from reading it."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why does a web app need cookies at all if it has user accounts?",
+                options: [
+                    "To make pages load faster",
+                    "Because HTTP is stateless — the cookie carries the session identity across separate requests",
+                    "To encrypt the connection",
+                    "Cookies are only for advertising"
+                ],
+                correct: 1,
+                why: "HTTP doesn't remember prior requests. The session cookie is what lets the server tie many independent requests to one logged-in user."),
+            QuizQuestion(
+                "Which HTTP status code tells you a resource exists but you're not allowed to access it?",
+                options: ["200 OK", "301 Moved", "403 Forbidden", "500 Server Error"],
+                correct: 2,
+                why: "403 Forbidden means authenticated-but-unauthorized (or blocked). 401 is unauthenticated; 404 hides existence; 500 is a server fault."),
+            QuizQuestion(
+                "What does an intercepting proxy like Burp Suite let you do?",
+                options: [
+                    "Crack password hashes",
+                    "Pause, inspect and rewrite every HTTP request and response before it's sent",
+                    "Scan ports faster",
+                    "Encrypt your traffic"
+                ],
+                correct: 1,
+                why: "An intercepting proxy sits between browser and server so you can tamper with any request — the core workflow for finding and exploiting web vulnerabilities.")
+        ]
+    )
+
+    // MARK: F5 — Windows & Active Directory
+
+    private static let windows = Module(
+        id: "fund-windows",
+        title: "Windows & Active Directory",
+        summary: "How enterprise Windows networks are structured — the domain model every AD attack in the Red Team track exploits.",
+        systemImage: "building.2.fill",
+        lessons: [adBasicsLesson]
+    )
+
+    private static let adBasicsLesson = Lesson(
+        id: "fund-ad-basics",
+        title: "Active Directory Foundations",
+        subtitle: "Domains, the DC, and how Kerberos logs you in — the map for every enterprise attack.",
+        minutes: 12,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Why almost every enterprise runs Active Directory"),
+            .paragraph("Walk into any large company and the Windows machines are almost certainly joined to an **Active Directory (AD)** domain. AD is a central directory of every user, computer and group, plus the rules binding them. One login works everywhere, and admins manage thousands of machines from one place. That centralization is also exactly why AD is the prize in nearly every internal penetration test: compromise the domain, and you compromise everything in it."),
+            .animation(.adForest, caption: "A domain nests inside a forest, organized into OUs — and the Domain Controller at the centre stores every account's secrets."),
+            .keyPoints([
+                "Domain — a boundary of users, computers and groups under one authority (e.g. corp.local).",
+                "Domain Controller (DC) — the server running AD; it authenticates logons and holds the NTDS.dit database of every password hash.",
+                "Forest — one or more domains sharing trust; the true security boundary.",
+                "OU (Organizational Unit) — a folder for grouping objects and applying Group Policy.",
+                "Domain Admins — the god-mode group; owning it owns the domain."
+            ]),
+            .definition(term: "NTDS.dit", meaning: "The database on every Domain Controller holding all domain accounts and their password hashes (including krbtgt). Extracting it — physically or via DCSync — yields the keys to the entire domain. It is the crown jewel."),
+            .heading("How Kerberos logs you in"),
+            .paragraph("Modern AD authenticates with **Kerberos**, a ticket system. When you log on, the DC (acting as the Key Distribution Center) issues you a **Ticket Granting Ticket (TGT)**. To use a service — a file share, a database — you exchange the TGT for a **service ticket (TGS)** for that specific service. You never resend your password; you present tickets. This elegant design is also what AS-REP Roasting, Kerberoasting and Golden Tickets all abuse."),
+            .terminal(prompt: "PS C:\\>",
+                      command: "whoami /groups; nltest /dsgetdc:corp.local",
+                      output: """
+GROUP INFORMATION
+  CORP\\Domain Users        Group
+  CORP\\IT-Support          Group
+DC: \\\\DC01.corp.local
+Address: 10.10.10.10        <-- the Domain Controller
+"""),
+            .definition(term: "Kerberos TGT vs TGS", meaning: "The TGT proves who you are (issued at logon); a TGS grants access to one specific service. You trade your TGT to the DC for whatever service tickets you need — without ever re-entering your password."),
+            .callout(.tip, "Enumeration is the whole game in AD too. With one low-privileged domain account you can list every user, group, computer and trust — feeding tools like BloodHound that map the hidden paths from your account to Domain Admin."),
+            .callout(.warning, "AD security is about relationships, not just passwords. A normal user with the right to reset another user's password, or admin rights over the wrong machine, can be a direct stepping stone to the entire domain — even with everything 'patched'."),
+            .checkpoint(QuizQuestion(
+                "Why is the Domain Controller such a high-value target?",
+                options: [
+                    "It's the fastest server",
+                    "It authenticates logons and stores every account's password hash in NTDS.dit",
+                    "It hosts the company website",
+                    "It's the only machine with internet access"
+                ],
+                correct: 1,
+                why: "The DC is the authority for the whole domain and holds NTDS.dit — every hash, including krbtgt. Control it and you can authenticate as anyone in the domain."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "In Kerberos, what does a Ticket Granting Ticket (TGT) prove?",
+                options: [
+                    "That you are an administrator",
+                    "Your identity — it's issued at logon and exchanged for service tickets",
+                    "That a service is online",
+                    "That your password is strong"
+                ],
+                correct: 1,
+                why: "The TGT establishes who you are after logon. You present it to the DC to obtain service tickets (TGS) without resending your password."),
+            QuizQuestion(
+                "What is the security boundary in Active Directory?",
+                options: ["A single user", "An OU", "The forest", "A single computer"],
+                correct: 2,
+                why: "The forest — not the domain — is AD's true security boundary. Trusts within a forest mean compromising one domain can often lead to others."),
+            QuizQuestion(
+                "Owning which group is effectively game over for a domain?",
+                options: ["Domain Users", "Remote Desktop Users", "Domain Admins", "Authenticated Users"],
+                correct: 2,
+                why: "Domain Admins have full control over the domain. Reaching that group (or the DC itself) is the standard objective of an internal engagement.")
         ]
     )
 }

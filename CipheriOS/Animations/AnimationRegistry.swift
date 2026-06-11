@@ -26,17 +26,29 @@ struct AnimationView: View {
         case .symmetricEncryption: SymmetricEncryptionView()
         case .publicKeyExchange:   PublicKeyExchangeView()
         case .hashing:             HashingView()
+        case .httpRequest:         HTTPRequestView()
+        case .adForest:            ADForestView()
         // Red team
         case .cyberKillChain:      CyberKillChainView()
         case .portScan:            PortScanView()
         case .phishingFlow:        PhishingFlowView()
         case .sqlInjection:        SQLInjectionView()
         case .xssReflected:        XSSReflectedView()
+        case .accessControl:       AccessControlView()
+        case .fileInclusion:       FileInclusionView()
+        case .templateInjection:   TemplateInjectionView()
         case .privilegeEscalation: PrivilegeEscalationView()
         case .passwordCracking:    PasswordCrackingView()
         case .kerberoasting:       KerberoastingView()
+        case .dcsync:              DCSyncView()
+        case .attackPath:          AttackPathView()
         case .lateralMovement:     LateralMovementView()
+        case .amsiBypass:          AMSIBypassView()
+        case .processInjection:    ProcessInjectionView()
+        case .wifiHandshake:       WiFiHandshakeView()
+        case .arpPoisoning:        ARPPoisoningView()
         case .bufferOverflow:      BufferOverflowView()
+        case .ropChain:            ROPChainView()
         case .c2Beacon:            C2BeaconView()
         // Blue team
         case .defenseInDepth:      DefenseInDepthView()
@@ -44,6 +56,7 @@ struct AnimationView: View {
         case .incidentResponse:    IncidentResponseView()
         case .mitreAttack:         MITREAttackView()
         case .threatHunting:       ThreatHuntingView()
+        case .adTiering:           ADTieringView()
         }
     }
 }
@@ -54,11 +67,14 @@ enum AnimationCatalog {
 
     private static let redIDs: Set<AnimationID> = [
         .cyberKillChain, .portScan, .phishingFlow, .sqlInjection, .xssReflected,
-        .privilegeEscalation, .passwordCracking, .kerberoasting, .lateralMovement,
-        .bufferOverflow, .c2Beacon
+        .accessControl, .fileInclusion, .templateInjection,
+        .privilegeEscalation, .passwordCracking, .kerberoasting, .dcsync, .attackPath,
+        .lateralMovement, .amsiBypass, .processInjection, .wifiHandshake, .arpPoisoning,
+        .bufferOverflow, .ropChain, .c2Beacon
     ]
     private static let blueIDs: Set<AnimationID> = [
-        .defenseInDepth, .siemPipeline, .incidentResponse, .mitreAttack, .threatHunting
+        .defenseInDepth, .siemPipeline, .incidentResponse, .mitreAttack, .threatHunting,
+        .adTiering
     ]
 
     static func accent(_ id: AnimationID) -> Color {
@@ -71,8 +87,13 @@ enum AnimationCatalog {
         switch id {
         case .cyberKillChain:               return 300
         case .sqlInjection, .xssReflected:  return 300
+        case .accessControl, .fileInclusion, .templateInjection: return 296
+        case .amsiBypass:                   return 288
+        case .ropChain:                     return 286
         case .bufferOverflow:               return 282
+        case .attackPath:                   return 278
         case .defenseInDepth:               return 272
+        case .adForest, .adTiering:         return 272
         case .privilegeEscalation:          return 262
         default:                            return 250
         }
@@ -86,22 +107,35 @@ enum AnimationCatalog {
         case .symmetricEncryption: return "One shared key turns plaintext to ciphertext and back."
         case .publicKeyExchange:   return "A public key locks a message that only the private key can open."
         case .hashing:             return "A one-way fingerprint where a tiny change avalanches the output."
+        case .httpRequest:         return "A browser and server trade requests — and a cookie carries the session."
+        case .adForest:            return "How a domain nests under a forest, with every secret resting on the DC."
         case .cyberKillChain:      return "The seven stages of an intrusion — and where defenders break it."
         case .portScan:            return "Probing a host's ports to reveal open, closed and filtered services."
         case .phishingFlow:        return "From a phishing email to the attacker's first reverse shell."
         case .sqlInjection:        return "How injected input rewrites a SQL query into an auth bypass."
         case .xssReflected:        return "Injected script runs in a victim's browser and steals their session."
+        case .accessControl:       return "Tampering with an object id to read another user's data — IDOR."
+        case .fileInclusion:       return "Path traversal makes the server read and include files it shouldn't."
+        case .templateInjection:   return "Input the template engine evaluates — from {{7*7}} to code execution."
         case .privilegeEscalation: return "Climbing from a low-privilege foothold to full root access."
         case .passwordCracking:    return "Streaming a wordlist through a hash until a password matches."
         case .kerberoasting:       return "Requesting a service ticket and cracking it offline."
+        case .dcsync:              return "Replicating the krbtgt hash from the DC to forge a Golden Ticket."
+        case .attackPath:          return "A BloodHound chain of AD edges lighting up the path to Domain Admin."
         case .lateralMovement:     return "Hopping host to host with reused credentials toward the DC."
+        case .amsiBypass:          return "Patching the in-memory scanner so a blocked payload runs clean."
+        case .processInjection:    return "Hiding shellcode inside a trusted process to dodge detection."
+        case .wifiHandshake:       return "Deauth, capture the WPA2 4-way handshake, then crack the PSK offline."
+        case .arpPoisoning:        return "Poisoning ARP caches to sit in the middle of victim and gateway."
         case .bufferOverflow:      return "Overflowing a buffer to overwrite the return address and hijack execution."
+        case .ropChain:            return "Chaining existing code gadgets to bypass a non-executable stack."
         case .c2Beacon:            return "A covert implant beaconing home over jittered HTTPS check-ins."
         case .defenseInDepth:      return "Layered controls that slow an attacker and catch them in the act."
         case .siemPipeline:        return "Telemetry flowing into a SIEM until a rule fires an alert."
         case .incidentResponse:    return "The six-phase loop that turns a breach into a managed event."
         case .mitreAttack:         return "Plotting an intrusion across the ATT&CK tactics matrix."
         case .threatHunting:       return "The proactive loop: hypothesize, query, investigate, automate."
+        case .adTiering:           return "Admin tiers that stop a stolen low-tier credential reaching the DC."
         }
     }
 }

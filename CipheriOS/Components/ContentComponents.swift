@@ -17,9 +17,10 @@ struct CalloutView: View {
                 Text(kind.title.uppercased())
                     .font(Theme.mono(10, .bold)).tracking(1.2)
                     .foregroundStyle(kind.tint)
-                Text(text)
+                Text(text.inlineMarkdown)
                     .font(.system(size: 14))
                     .foregroundStyle(Theme.textPrimary)
+                    .tint(kind.tint)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -83,9 +84,10 @@ struct DefinitionCard: View {
                 Image(systemName: "character.book.closed.fill").font(.system(size: 13)).foregroundStyle(Theme.teal)
                 Text(term).font(Theme.rounded(15, .bold)).foregroundStyle(Theme.textPrimary)
             }
-            Text(meaning)
+            Text(meaning.inlineMarkdown)
                 .font(.system(size: 14))
                 .foregroundStyle(Theme.textSecondary)
+                .tint(Theme.teal)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -111,9 +113,10 @@ struct KeyPointsList: View {
                         .font(.system(size: 11, weight: .black))
                         .foregroundStyle(accent)
                         .padding(.top, 3)
-                    Text(points[i])
+                    Text(points[i].inlineMarkdown)
                         .font(.system(size: 14))
                         .foregroundStyle(Theme.textPrimary)
+                        .tint(accent)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .opacity(i < shown ? 1 : 0)
@@ -145,7 +148,7 @@ struct QuestionCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(question.prompt)
+            Text(question.prompt.inlineMarkdown)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -158,7 +161,7 @@ struct QuestionCard: View {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: isCorrect ? "checkmark.seal.fill" : "xmark.seal.fill")
                         .foregroundStyle(isCorrect ? Theme.green : Theme.red)
-                    Text(question.explanation)
+                    Text(question.explanation.inlineMarkdown)
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -208,7 +211,7 @@ struct QuestionCard: View {
                     else if answered && isPicked { Image(systemName: "xmark").font(.system(size: 11, weight: .black)).foregroundStyle(Theme.red) }
                     else { Text(String(UnicodeScalar(65 + i)!)).font(Theme.mono(11, .bold)).foregroundStyle(Theme.textSecondary) }
                 }
-                Text(question.options[i])
+                Text(question.options[i].inlineMarkdown)
                     .font(.system(size: 14))
                     .foregroundStyle(Theme.textPrimary)
                     .multilineTextAlignment(.leading)

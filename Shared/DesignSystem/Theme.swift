@@ -76,6 +76,21 @@ enum Theme {
     }
 }
 
+// MARK: - Inline markdown
+
+extension String {
+    /// Parse inline markdown (`**bold**`, `*italic*`, `` `code` ``) while keeping
+    /// whitespace, falling back to the raw string on any parse error. Lesson prose
+    /// is authored with light emphasis; rendering it through this makes that
+    /// emphasis show instead of leaking literal asterisks and backticks.
+    var inlineMarkdown: AttributedString {
+        (try? AttributedString(
+            markdown: self,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+            ?? AttributedString(self)
+    }
+}
+
 // MARK: - Reusable surface styling
 
 extension View {
