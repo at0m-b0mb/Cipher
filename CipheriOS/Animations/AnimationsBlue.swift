@@ -129,7 +129,8 @@ struct MITREAttackView: View {
     ]
 
     var body: some View {
-        PhaseAnimator(Array(0...columns.count)) { active in
+        LoopingTimeline(period: Double(columns.count + 1) * 1.0) { p in
+            let active = min(columns.count, Int(p * Double(columns.count + 1)))
             HStack(alignment: .top, spacing: 4) {
                 ForEach(columns.indices, id: \.self) { ci in
                     VStack(spacing: 5) {
@@ -152,6 +153,7 @@ struct MITREAttackView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
-        } animation: { _ in .easeInOut(duration: 0.45).delay(0.55) }
+            .animation(.easeInOut(duration: 0.45), value: active)
+        }
     }
 }

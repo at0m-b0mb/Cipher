@@ -12,30 +12,101 @@ import SwiftUI
     return x * x * (3 - 2 * x)
 }
 
+// MARK: - Playback model
+
+/// Per-card playback state shared between the explainer chrome and its stage:
+/// play/pause, speed, and scrubbing. Elapsed time is a pure function of an
+/// anchor + the wall clock, so nothing mutates per frame — pausing, scrubbing
+/// and speed changes just move the anchor.
+final class StagePlayback: ObservableObject {
+    @Published private(set) var isPlaying = true
+    @Published private(set) var speed: Double = 1
+
+    /// The loop length in seconds — registered by the stage's `LoopingTimeline`.
+    var period: Double = 6
+
+    private var anchorDate = Date()
+    private var anchorElapsed: Double = 0
+    private var resumeAfterScrub = false
+
+    func elapsed(at date: Date) -> Double {
+        isPlaying ? anchorElapsed + date.timeIntervalSince(anchorDate) * speed : anchorElapsed
+    }
+
+    /// Normalised loop progress `0..<1` at the given instant.
+    func progress(at date: Date) -> Double {
+        guard period > 0 else { return 0 }
+        let e = elapsed(at: date).truncatingRemainder(dividingBy: period)
+        return (e < 0 ? e + period : e) / period
+    }
+
+    func togglePlaying(at date: Date = Date()) {
+        anchorElapsed = elapsed(at: date)
+        anchorDate = date
+        isPlaying.toggle()
+    }
+
+    func cycleSpeed(at date: Date = Date()) {
+        anchorElapsed = elapsed(at: date)
+        anchorDate = date
+        switch speed {
+        case 1:  speed = 2
+        case 2:  speed = 0.5
+        default: speed = 1
+        }
+    }
+
+    func restart() {
+        anchorElapsed = 0
+        anchorDate = Date()
+        objectWillChange.send()
+    }
+
+    func beginScrub() {
+        guard isPlaying else { return }
+        resumeAfterScrub = true
+        togglePlaying()
+    }
+
+    func scrub(to p: Double) {
+        anchorElapsed = min(max(p, 0), 0.9999) * period
+        anchorDate = Date()
+        objectWillChange.send()
+    }
+
+    func endScrub() {
+        if resumeAfterScrub {
+            resumeAfterScrub = false
+            togglePlaying()
+        }
+    }
+}
+
 // MARK: - Looping timeline
 
 /// Drives a child with a normalised progress value `0..<1` that loops every
-/// `period` seconds. Pure function of progress → the animation is deterministic
-/// and restarts cleanly when the parent assigns a new `.id`.
+/// `period` seconds. Progress comes from the enclosing card's `StagePlayback`,
+/// so every stage built on this picks up play/pause, speed and scrubbing for
+/// free. Must live inside an `AnimatedExplainer` (which injects the model).
 struct LoopingTimeline<Content: View>: View {
     let period: Double
     @ViewBuilder var content: (Double) -> Content
-    @State private var start = Date()
+    @EnvironmentObject private var playback: StagePlayback
 
     var body: some View {
-        TimelineView(.animation) { ctx in
-            let elapsed = ctx.date.timeIntervalSince(start)
-            let p = period > 0 ? (elapsed.truncatingRemainder(dividingBy: period)) / period : 0
-            content(p)
+        TimelineView(.animation(minimumInterval: nil, paused: !playback.isPlaying)) { ctx in
+            content(playback.progress(at: ctx.date))
         }
+        .onAppear { playback.period = period }
     }
 }
 
 // MARK: - Explainer chrome
 
 /// The card every animation lives in: a titled header with a replay button, a
-/// dark "stage" with a faint grid and accent glow, then the caption. Replaying
-/// re-seeds the inner view's state via `.id`.
+/// dark "stage" with a faint grid and accent glow, a transport bar (play/pause,
+/// scrubber, speed), then the caption. Tapping the stage toggles playback;
+/// dragging the bar scrubs through the loop frame by frame.
 struct AnimatedExplainer<Content: View>: View {
     let id: AnimationID
     let caption: String
@@ -43,17 +114,20 @@ struct AnimatedExplainer<Content: View>: View {
     var height: CGFloat = 250
     @ViewBuilder var content: () -> Content
     @State private var token = 0
+    @State private var scrubbing = false
+    @StateObject private var playback = StagePlayback()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                LiveDot(color: accent)
+                LiveDot(color: accent, active: playback.isPlaying)
                 Text(id.label)
                     .font(Theme.mono(12, .bold))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Button {
                     withAnimation { token += 1 }
+                    playback.restart()
                 } label: {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 13, weight: .bold))
@@ -76,21 +150,102 @@ struct AnimatedExplainer<Content: View>: View {
             .frame(height: height)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(accent.opacity(0.35), lineWidth: 1))
+            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .onTapGesture { playback.togglePlaying() }
+
+            transport
 
             Text(caption)
                 .font(.system(size: 12.5))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .environmentObject(playback)
+    }
+
+    // MARK: Transport bar
+
+    private var transport: some View {
+        HStack(spacing: 10) {
+            Button { playback.togglePlaying() } label: {
+                Image(systemName: playback.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundStyle(.black)
+                    .frame(width: 26, height: 26)
+                    .background(accent, in: Circle())
+                    .shadow(color: accent.opacity(0.5), radius: 4)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(playback.isPlaying ? "Pause animation" : "Play animation")
+
+            scrubber
+
+            Button { playback.cycleSpeed() } label: {
+                Text(speedLabel)
+                    .font(Theme.mono(10, .bold))
+                    .foregroundStyle(accent)
+                    .frame(width: 36, height: 22)
+                    .background(accent.opacity(0.14), in: Capsule())
+                    .overlay(Capsule().strokeBorder(accent.opacity(0.35), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Playback speed \(speedLabel)")
+        }
+    }
+
+    private var speedLabel: String {
+        playback.speed == 2 ? "2×" : playback.speed == 1 ? "1×" : "½×"
+    }
+
+    /// Slim draggable timeline: drag to scrub, release to resume.
+    private var scrubber: some View {
+        GeometryReader { geo in
+            let w = max(geo.size.width, 1)
+            TimelineView(.animation(minimumInterval: nil, paused: !playback.isPlaying)) { ctx in
+                let p = CGFloat(playback.progress(at: ctx.date))
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Theme.surfaceHi).frame(height: 5)
+                    Capsule()
+                        .fill(Theme.accentGradient(accent))
+                        .frame(width: max(5, p * w), height: 5)
+                        .shadow(color: accent.opacity(0.6), radius: 3)
+                    Circle()
+                        .fill(accent)
+                        .frame(width: scrubbing ? 15 : 11, height: scrubbing ? 15 : 11)
+                        .shadow(color: accent.opacity(0.8), radius: scrubbing ? 6 : 3)
+                        .offset(x: p * w - (scrubbing ? 7.5 : 5.5))
+                        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: scrubbing)
+                }
+                .frame(width: w, height: geo.size.height, alignment: .leading)
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { v in
+                        if !scrubbing {
+                            scrubbing = true
+                            playback.beginScrub()
+                        }
+                        playback.scrub(to: Double(v.location.x / w))
+                    }
+                    .onEnded { _ in
+                        scrubbing = false
+                        playback.endScrub()
+                    }
+            )
+        }
+        .frame(height: 26)
+        .accessibilityLabel("Animation timeline")
     }
 }
 
-/// Small pulsing "live" indicator.
+/// Small pulsing "live" indicator; sits still and dim while playback is paused.
 struct LiveDot: View {
     let color: Color
+    var active: Bool = true
     var body: some View {
-        TimelineView(.animation) { ctx in
-            let p = (sin(ctx.date.timeIntervalSinceReferenceDate * 3) + 1) / 2
+        TimelineView(.animation(minimumInterval: nil, paused: !active)) { ctx in
+            let p = active ? (sin(ctx.date.timeIntervalSinceReferenceDate * 3) + 1) / 2 : 0
             Circle()
                 .fill(color)
                 .frame(width: 7, height: 7)
@@ -259,7 +414,8 @@ struct SequenceStage: View {
     var breakLabel: String = "Defender breaks the chain"
 
     var body: some View {
-        PhaseAnimator(Array(0...steps.count)) { active in
+        LoopingTimeline(period: Double(steps.count + 1) * 0.9) { p in
+            let active = min(steps.count, Int(p * Double(steps.count + 1)))
             VStack(spacing: 0) {
                 ForEach(steps.indices, id: \.self) { i in
                     HStack(spacing: 12) {
@@ -298,7 +454,8 @@ struct SequenceStage: View {
                     .frame(height: 30)
                 }
             }
-        } animation: { _ in .easeInOut(duration: 0.45).delay(0.45) }
+            .animation(.easeInOut(duration: 0.45), value: active)
+        }
     }
 }
 
@@ -324,7 +481,8 @@ struct CycleStage: View {
             let w = geo.size.width, h = geo.size.height
             let radius = min(w, h) / 2 - 36
             let c = CGPoint(x: w / 2, y: h / 2)
-            PhaseAnimator(Array(0..<nodes.count)) { active in
+            LoopingTimeline(period: Double(nodes.count) * 1.05) { p in
+                let active = min(nodes.count - 1, Int(p * Double(nodes.count)))
                 ZStack {
                     Circle()
                         .strokeBorder(Theme.stroke, style: StrokeStyle(lineWidth: 1.5, dash: [3, 6]))
@@ -362,7 +520,8 @@ struct CycleStage: View {
                         .position(pt)
                     }
                 }
-            } animation: { _ in .easeInOut(duration: 0.5).delay(0.55) }
+                .animation(.easeInOut(duration: 0.5), value: active)
+            }
         }
     }
 }
@@ -387,7 +546,8 @@ struct LadderStage: View {
             let w = geo.size.width, h = geo.size.height
             let n = rungs.count
             let stepH = h / CGFloat(n)
-            PhaseAnimator(Array(0..<n)) { active in
+            LoopingTimeline(period: Double(n) * 1.0) { p in
+                let active = min(n - 1, Int(p * Double(n)))
                 ZStack {
                     ForEach(rungs.indices, id: \.self) { i in
                         let reached = (n - 1 - i) <= active   // index 0 is bottom; active counts from bottom
@@ -421,7 +581,8 @@ struct LadderStage: View {
                         .shadow(color: Theme.amber, radius: 8)
                         .position(x: w - 24, y: ty)
                 }
-            } animation: { _ in .easeInOut(duration: 0.5).delay(0.5) }
+                .animation(.easeInOut(duration: 0.5), value: active)
+            }
         }
     }
 }

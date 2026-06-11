@@ -299,9 +299,11 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					0F1F49E190B6475ACC58E96D = {
+						DevelopmentTeam = MXA2HAFVNC;
 						ProvisioningStyle = Automatic;
 					};
 					7BD020656EC36B97E8BB36CA = {
+						DevelopmentTeam = MXA2HAFVNC;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -489,6 +491,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = MXA2HAFVNC;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -592,6 +595,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = MXA2HAFVNC;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;

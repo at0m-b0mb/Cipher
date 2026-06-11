@@ -153,3 +153,130 @@ struct GridPattern: Shape {
         return p
     }
 }
+
+// MARK: - Shake effect
+
+/// Horizontal shake driven by an incrementing counter — animate the counter
+/// change and the view rattles. Used for wrong quiz answers.
+struct ShakeEffect: GeometryEffect {
+    var travel: CGFloat = 7
+    var shakesPerUnit: CGFloat = 3
+    var animatableData: CGFloat
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        ProjectionTransform(CGAffineTransform(
+            translationX: travel * sin(animatableData * .pi * shakesPerUnit * 2), y: 0))
+    }
+}
+
+// MARK: - Decode text
+
+/// Title text that "decrypts" into place: glyphs churn like a cracking tool,
+/// then resolve left to right into the real string. The final string renders
+/// invisibly underneath so the layout never jumps.
+struct DecodeText: View {
+    let text: String
+    var font: Font = Theme.rounded(27, .bold)
+    var color: Color = Theme.textPrimary
+
+    @State private var revealed = 0
+    @State private var churn = 0
+
+    private static let glyphs = Array("█▓▒░<>/\\|10#$%&@?")
+
+    var body: some View {
+        Text(text)
+            .font(font)
+            .opacity(0)
+            .overlay(alignment: .topLeading) {
+                Text(display)
+                    .font(font)
+                    .foregroundStyle(color)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .task { await run() }
+            .accessibilityLabel(text)
+    }
+
+    private var display: String {
+        let chars = Array(text)
+        guard revealed < chars.count else { return text }
+        let head = String(chars.prefix(revealed))
+        let tail = chars.suffix(from: revealed).map { c -> Character in
+            c == " " ? " " : (Self.glyphs.randomElement() ?? c)
+        }
+        return head + String(tail)
+    }
+
+    private func run() async {
+        let count = text.count
+        guard count > 0 else { return }
+        // ~0.7s total regardless of title length.
+        let perChar = max(12, 700 / count)
+        for i in 0...count {
+            guard !Task.isCancelled else { return }
+            revealed = i
+            churn += 1
+            try? await Task.sleep(for: .milliseconds(perChar))
+        }
+    }
+}
+
+// MARK: - Confetti
+
+/// A one-shot confetti burst rendered in a Canvas. Every particle's path is a
+/// pure function of time and its seed, so the whole burst costs one draw pass
+/// per frame and stops ticking when it finishes.
+struct ConfettiBurst: View {
+    var colors: [Color] = [Theme.teal, Theme.green, Theme.amber, Theme.red,
+                           Theme.blue, Theme.violet, Theme.magenta]
+    var count: Int = 80
+    var duration: Double = 3.0
+
+    @State private var start = Date()
+    @State private var finished = false
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: nil, paused: finished)) { ctx in
+            Canvas { context, size in
+                let t = ctx.date.timeIntervalSince(start)
+                guard t < duration else { return }
+                for i in 0..<count {
+                    let r1 = rand(i, 1), r2 = rand(i, 2), r3 = rand(i, 3), r4 = rand(i, 4)
+                    let delay = r4 * 0.25
+                    let life = max(0, t - delay)
+                    guard life > 0 else { continue }
+
+                    let x0 = size.width * (0.15 + 0.7 * r1)
+                    let vx = (r2 - 0.5) * 160
+                    let vy = -(220 + 240 * r3)
+                    let x = x0 + vx * life
+                    let y = size.height * 0.55 + vy * life + 420 * life * life
+
+                    let fade = min(1, max(0, (duration - delay - life) / 0.6))
+                    let spin = Angle.radians(life * (2 + 8 * r2) * (r1 > 0.5 ? 1 : -1))
+                    let w = 5 + 5 * r3, h = 8 + 4 * r2
+
+                    var piece = context
+                    piece.translateBy(x: x, y: y)
+                    piece.rotate(by: spin)
+                    piece.opacity = fade
+                    piece.fill(
+                        Path(roundedRect: CGRect(x: -w / 2, y: -h / 2, width: w, height: h), cornerRadius: 1.5),
+                        with: .color(colors[i % colors.count]))
+                }
+            }
+        }
+        .allowsHitTesting(false)
+        .task {
+            try? await Task.sleep(for: .seconds(duration))
+            finished = true
+        }
+    }
+
+    /// Cheap deterministic pseudo-random in 0..<1 from a particle index.
+    private func rand(_ i: Int, _ salt: Int) -> Double {
+        let x = sin(Double(i) * 12.9898 + Double(salt) * 78.233) * 43758.5453
+        return x - x.rounded(.down)
+    }
+}

@@ -103,7 +103,8 @@ struct SQLInjectionView: View {
     private let rows = ["admin   ·  ********", "alice   ·  ********", "bob     ·  ********"]
 
     var body: some View {
-        PhaseAnimator(Array(0...3)) { step in
+        LoopingTimeline(period: 4 * 1.2) { p in
+            let step = min(3, Int(p * 4))
             VStack(alignment: .leading, spacing: 14) {
                 // Input field
                 VStack(alignment: .leading, spacing: 3) {
@@ -153,7 +154,8 @@ struct SQLInjectionView: View {
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-        } animation: { _ in .easeInOut(duration: 0.4).delay(0.8) }
+            .animation(.easeInOut(duration: 0.4), value: step)
+        }
     }
 }
 
@@ -161,7 +163,8 @@ struct SQLInjectionView: View {
 
 struct XSSReflectedView: View {
     var body: some View {
-        PhaseAnimator(Array(0...3)) { step in
+        LoopingTimeline(period: 4 * 1.25) { p in
+            let step = min(3, Int(p * 4))
             VStack(alignment: .leading, spacing: 12) {
                 // URL
                 VStack(alignment: .leading, spacing: 3) {
@@ -205,7 +208,8 @@ struct XSSReflectedView: View {
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-        } animation: { _ in .easeInOut(duration: 0.4).delay(0.85) }
+            .animation(.easeInOut(duration: 0.4), value: step)
+        }
     }
 }
 

@@ -137,6 +137,8 @@ struct QuestionCard: View {
     var onAnswered: ((Bool) -> Void)? = nil
 
     @State private var selected: Int? = nil
+    @State private var shakes: CGFloat = 0
+    @State private var popped = false
 
     private var answered: Bool { selected != nil }
     private var isCorrect: Bool { selected == question.correctIndex }
@@ -185,8 +187,19 @@ struct QuestionCard: View {
 
         return Button {
             guard !answered else { return }
+            let correct = i == question.correctIndex
+            UINotificationFeedbackGenerator().notificationOccurred(correct ? .success : .error)
             withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { selected = i }
-            onAnswered?(i == question.correctIndex)
+            if correct {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.5)) { popped = true }
+                Task {
+                    try? await Task.sleep(for: .milliseconds(220))
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { popped = false }
+                }
+            } else {
+                withAnimation(.linear(duration: 0.45)) { shakes += 1 }
+            }
+            onAnswered?(correct)
         } label: {
             HStack(spacing: 10) {
                 ZStack {
@@ -208,6 +221,8 @@ struct QuestionCard: View {
         }
         .buttonStyle(.plain)
         .disabled(answered)
+        .scaleEffect(isPicked && isAnswer && popped ? 1.03 : 1)
+        .modifier(ShakeEffect(travel: isPicked && !isAnswer ? 7 : 0, animatableData: shakes))
     }
 }
 

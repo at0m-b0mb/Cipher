@@ -1,19 +1,20 @@
 import SwiftUI
 
 /// A simulated terminal block. Types the command out character-by-character,
-/// then reveals the output — so lessons *feel* like watching a real shell.
-/// Tap to replay.
+/// then prints the output line by line — so lessons *feel* like watching a
+/// real shell. Tap to replay.
 struct TerminalView: View {
     let prompt: String
     let command: String
     let output: String
 
     @State private var typed = 0
-    @State private var showOutput = false
+    @State private var shownLines = 0
     @State private var replay = 0
 
     private var commandShown: String { String(command.prefix(typed)) }
     private var isTyping: Bool { typed < command.count }
+    private var lines: [String] { output.components(separatedBy: "\n") }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -28,8 +29,8 @@ struct TerminalView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if showOutput {
-                    Text(output)
+                if shownLines > 0 {
+                    Text(lines.prefix(shownLines).joined(separator: "\n"))
                         .font(Theme.mono(12))
                         .foregroundStyle(Theme.green.opacity(0.9))
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -64,7 +65,7 @@ struct TerminalView: View {
 
     private func run() async {
         typed = 0
-        showOutput = false
+        shownLines = 0
         try? await Task.sleep(for: .milliseconds(280))
         let count = command.count
         for i in 0...count {
@@ -74,7 +75,10 @@ struct TerminalView: View {
             try? await Task.sleep(for: .milliseconds(24))
         }
         try? await Task.sleep(for: .milliseconds(280))
-        guard !Task.isCancelled else { return }
-        withAnimation(.easeOut(duration: 0.4)) { showOutput = true }
+        for i in 1...lines.count {
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.18)) { shownLines = i }
+            try? await Task.sleep(for: .milliseconds(80))
+        }
     }
 }

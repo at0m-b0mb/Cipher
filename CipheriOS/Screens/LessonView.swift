@@ -20,8 +20,10 @@ struct LessonView: View {
                         header(lesson)
                         ForEach(Array(lesson.blocks.enumerated()), id: \.offset) { _, block in
                             LessonBlockView(block: block, accent: accent)
+                                .scrollEntrance()
                         }
                         quizCTA(lesson)
+                            .scrollEntrance()
                     }
                     .padding(18)
                     .padding(.bottom, 36)
@@ -50,10 +52,7 @@ struct LessonView: View {
                     Image(systemName: "checkmark.seal.fill").foregroundStyle(Theme.green)
                 }
             }
-            Text(lesson.title)
-                .font(Theme.rounded(27, .bold))
-                .foregroundStyle(Theme.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+            DecodeText(text: lesson.title)
             Text(lesson.subtitle)
                 .font(.system(size: 15))
                 .foregroundStyle(Theme.textSecondary)
@@ -104,5 +103,19 @@ struct LessonView: View {
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(accent.opacity(0.4), lineWidth: 1))
         .padding(.top, 8)
+    }
+}
+
+private extension View {
+    /// Content blocks drift up and fade in as they scroll into view, and fade
+    /// slightly as they leave — keeps long lessons feeling alive without
+    /// distracting from reading.
+    func scrollEntrance() -> some View {
+        scrollTransition(.interactive) { content, phase in
+            content
+                .opacity(phase.isIdentity ? 1 : 0.25)
+                .offset(y: phase == .bottomTrailing ? 16 : 0)
+                .scaleEffect(phase.isIdentity ? 1 : 0.985)
+        }
     }
 }

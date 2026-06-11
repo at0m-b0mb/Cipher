@@ -287,9 +287,9 @@ uid=33(www-data) gid=33(www-data)
     private static let web = Module(
         id: "red-web",
         title: "Web Application Attacks",
-        summary: "The internet's biggest attack surface — injecting into queries and into other users' browsers.",
+        summary: "The internet's biggest attack surface — injecting into queries, into other users' browsers, and into the server's own commands and requests.",
         systemImage: "globe",
-        lessons: [sqliLesson, xssLesson]
+        lessons: [sqliLesson, xssLesson, cmdiLesson]
     )
 
     private static let sqliLesson = Lesson(
@@ -405,6 +405,93 @@ SELECT * FROM users WHERE user='admin'-- ' AND pass='x'
     )
 
     // MARK: R4 — Post-exploitation
+
+    private static let cmdiLesson = Lesson(
+        id: "red-cmdi",
+        title: "Command Injection & SSRF",
+        subtitle: "When the server runs your input as a command — or fetches a URL you control.",
+        minutes: 11,
+        difficulty: .advanced,
+        blocks: [
+            .heading("Two bugs, one root cause: trusting input"),
+            .paragraph("SQL injection put your input inside a *database query*. Two close cousins put your input somewhere even more dangerous. **Command injection** lands it inside a shell command the server runs. **Server-Side Request Forgery (SSRF)** makes the server send a request to a URL you choose. Both come from the same mistake — taking user input and handing it to a powerful function without validation."),
+            .heading("Command injection: borrowing the server's shell"),
+            .paragraph("Imagine a 'ping this host' tool that builds a command by gluing your input into a string: `ping -c 1 <your input>`. If you supply `8.8.8.8; id`, the shell runs ping *and then* runs `id` — as the web server's user. Shell metacharacters (`;`, `|`, `&&`, backticks, `$()`) are the keys here."),
+            .terminal(prompt: "attacker",
+                      command: "curl 'http://shop.lab/ping?host=8.8.8.8;id'",
+                      output: """
+PING 8.8.8.8: 56 data bytes
+64 bytes from 8.8.8.8: icmp_seq=0 ttl=117 time=11.4 ms
+uid=33(www-data) gid=33(www-data) groups=33(www-data)   <-- command ran!
+"""),
+            .keyPoints([
+                "Separators — `;` `&&` `||` chain a second command; `|` pipes into one.",
+                "Substitution — `$(cmd)` and backticks run a command and paste its output.",
+                "Blind injection — no output returned? Confirm with a time delay (`; sleep 5`) or an out-of-band callback (force a DNS lookup you control).",
+                "The goal is usually a reverse shell — turn the single command into interactive access."
+            ]),
+            .definition(term: "Reverse shell", meaning: "Instead of you connecting to the victim (which a firewall blocks inbound), you make the victim connect *out* to you. A listener on your box (`nc -lvnp 443`) catches it and you get an interactive shell on the target."),
+            .heading("SSRF: making the server your proxy"),
+            .paragraph("Many apps fetch URLs on your behalf — a webhook tester, a 'preview this link' feature, an avatar-by-URL uploader. If you can control that URL, you can make the server request things *you* can't reach directly: internal admin panels, other services on localhost, and — most dangerously — cloud metadata endpoints that hand out credentials."),
+            .terminal(prompt: "attacker",
+                      command: "curl 'http://shop.lab/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/'",
+                      output: """
+web-app-role
+# Then fetch that role:
+# .../iam/security-credentials/web-app-role  ->  AWS keys leaked!
+"""),
+            .callout(.danger, "169.254.169.254 is the cloud metadata service on AWS/GCP/Azure. A classic SSRF makes the server query it and return temporary cloud credentials — turning a 'harmless' URL-preview feature into a full cloud compromise. This exact bug caused the 2019 Capital One breach."),
+            .heading("How they're fixed"),
+            .keyPoints([
+                "Command injection — never build shell strings from input; use parameterized APIs (e.g. `subprocess` with an argument list, no shell). Validate against a strict allowlist.",
+                "SSRF — validate and allowlist destination URLs, block private/link-local IP ranges, and require the metadata service to use session tokens (IMDSv2).",
+                "Defense in depth — run the web process as an unprivileged user with minimal network egress so a successful injection reaches as little as possible."
+            ]),
+            .callout(.warning, "Allowlisting by hostname is harder than it looks: attackers bypass naive filters with redirects, DNS rebinding, alternate IP encodings (`0x7f.0.0.1`), and IPv6. Block by resolved IP range, not by string matching the URL."),
+            .checkpoint(QuizQuestion(
+                "A web form lets you enter a server to 'check uptime' and shows the ping result. You enter `127.0.0.1 && whoami` and see a username in the output. What vulnerability is this?",
+                options: [
+                    "SQL injection",
+                    "Cross-site scripting",
+                    "Command injection",
+                    "SSRF"
+                ],
+                correct: 2,
+                why: "Your input was concatenated into a shell command, and `&&` let you run a second command (`whoami`) on the server. That's command injection — code execution on the host, not in a database or a browser."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why is SSRF against a cloud app especially dangerous?",
+                options: [
+                    "It deletes the database",
+                    "It can reach the internal metadata service and steal temporary cloud credentials",
+                    "It only affects the attacker's own browser",
+                    "It slows the server down"
+                ],
+                correct: 1,
+                why: "SSRF lets the server request internal-only endpoints, including the cloud metadata service (169.254.169.254), which can return IAM credentials — escalating a web bug into cloud account takeover."),
+            QuizQuestion(
+                "What is the most robust fix for command injection?",
+                options: [
+                    "Blocking the word 'shell' in input",
+                    "Avoiding the shell entirely — call programs with a parameterized argument list and validate input against an allowlist",
+                    "Running the server as root so it has fewer errors",
+                    "Hiding the error messages"
+                ],
+                correct: 1,
+                why: "Blacklisting characters is brittle. The durable fix is to never pass user input to a shell: invoke the program directly with separate arguments, and constrain input to a strict allowlist."),
+            QuizQuestion(
+                "An injection returns no output, but adding `; sleep 5` makes the page take five seconds longer. This confirms…",
+                options: [
+                    "The server is just slow",
+                    "A blind command injection — you can't see output, but timing proves your command ran",
+                    "An XSS vulnerability",
+                    "Nothing useful"
+                ],
+                correct: 1,
+                why: "When there's no visible output, a measurable time delay is proof the injected command executed. This 'blind' technique (also used in blind SQLi) confirms exploitability without needing the result echoed back.")
+        ]
+    )
 
     private static let post = Module(
         id: "red-post",

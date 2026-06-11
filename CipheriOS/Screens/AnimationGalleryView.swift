@@ -20,7 +20,7 @@ struct AnimationGalleryView: View {
                 LazyVStack(alignment: .leading, spacing: 24) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Animations").font(Theme.rounded(30, .bold)).foregroundStyle(Theme.textPrimary)
-                        Text("\(AnimationID.allCases.count) interactive explainers. Tap replay on any of them; every one also appears inside its lesson.")
+                        Text("\(AnimationID.allCases.count) interactive explainers. Play, pause, scrub and change speed on any of them; every one also appears inside its lesson.")
                             .font(.system(size: 14)).foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }

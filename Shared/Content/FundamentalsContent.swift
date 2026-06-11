@@ -9,8 +9,112 @@ enum FundamentalsContent {
         id: "fundamentals",
         kind: .fundamentals,
         title: "Fundamentals",
-        tagline: "Mindset, networks & crypto — the ground floor of everything.",
-        modules: [mindset, networking, crypto]
+        tagline: "Mindset, the shell, networks & crypto — the ground floor of everything.",
+        modules: [mindset, shell, networking, crypto]
+    )
+
+    // MARK: F-S — Systems & the shell
+
+    private static let shell = Module(
+        id: "fund-shell",
+        title: "Systems & the Shell",
+        summary: "The Linux command line is the cockpit of security work — learn to move, inspect and control a system from the terminal.",
+        systemImage: "terminal",
+        lessons: [linuxLesson]
+    )
+
+    private static let linuxLesson = Lesson(
+        id: "fund-linux",
+        title: "Linux & the Command Line",
+        subtitle: "Why hackers live in the terminal — and the commands that get you everywhere.",
+        minutes: 12,
+        difficulty: .foundational,
+        blocks: [
+            .heading("The terminal is a superpower"),
+            .paragraph("Almost every server on earth runs Linux, almost every security tool is built for it, and almost everything you'll do in this course happens at a shell prompt. A graphical desktop hides the system from you; the command line hands you the controls. Learn to read and drive it and the rest of cybersecurity stops feeling like magic."),
+            .definition(term: "The shell", meaning: "A program (commonly bash or zsh) that reads commands you type and asks the operating system to run them. The `$` prompt means it's your turn; `#` means you're running as root — the all-powerful admin user."),
+            .heading("Finding your way around"),
+            .paragraph("The filesystem is a single tree starting at `/` (root). You're always sitting in one directory — three commands tell you where you are and what's around you."),
+            .terminal(prompt: "kali@lab",
+                      command: "pwd && ls -la /etc | head -4",
+                      output: """
+/home/kali
+total 1112
+drwxr-xr-x 133 root root 12288 Jun  9 10:02 .
+-rw-r--r--   1 root root  2981 Apr 18 09:11 passwd
+-rw-r-----   1 root shadow 1810 Apr 18 09:11 shadow
+"""),
+            .keyPoints([
+                "pwd — print working directory (where am I?).",
+                "ls -la — list everything, including hidden dotfiles, with permissions and owners.",
+                "cd /path — change directory; `cd ..` goes up, `cd ~` goes home.",
+                "cat / less — read a file; `less` lets you scroll and search large ones."
+            ]),
+            .heading("Reading permissions"),
+            .paragraph("That `drwxr-xr-x` string is the single most useful thing to understand on a Linux box. The first character is the type (`d` directory, `-` file, `l` link). The next nine are three groups of read/write/execute permissions — for the **owner**, the **group**, and **everyone else**. Misconfigured permissions are one of the most common ways a low-privilege foothold becomes root."),
+            .definition(term: "rwx", meaning: "read (view contents), write (modify), execute (run as a program / enter a directory). Shown per owner/group/other, e.g. `rwxr-xr--` = owner full, group read+execute, others read-only."),
+            .callout(.tip, "`chmod` changes permissions and `chown` changes ownership. The numeric shorthand is worth memorizing: 7=rwx, 6=rw-, 5=r-x, 4=r--. So `chmod 644 file` means owner rw-, group and others r--."),
+            .heading("Finding things and chaining commands"),
+            .paragraph("The real power of the shell is composition: small tools piped together. `grep` filters lines, `find` locates files, and the pipe `|` feeds one command's output into the next. This one habit — chaining — is what makes the terminal faster than any GUI."),
+            .terminal(prompt: "kali@lab",
+                      command: "find / -perm -4000 -type f 2>/dev/null | grep -v snap",
+                      output: """
+/usr/bin/sudo
+/usr/bin/passwd
+/usr/bin/pkexec
+/usr/bin/find          <-- unusual SUID — a privesc lead!
+"""),
+            .keyPoints([
+                "grep pattern — keep only lines that match; add -i for case-insensitive, -r to recurse.",
+                "find / -name '*.conf' — search the whole tree by name, type, size or permission.",
+                "cmd | other — pipe output into the next command; stack as many as you like.",
+                "2>/dev/null — throw away error noise so the real results stand out.",
+                "man cmd — the built-in manual for any command; your first stop when stuck."
+            ]),
+            .callout(.danger, "That `find` command searches for SUID binaries — programs that run as their owner (often root) regardless of who launches them. A SUID binary that shouldn't be one is a classic privilege-escalation path you'll exploit in the Red Team track."),
+            .checkpoint(QuizQuestion(
+                "A file shows permissions `-rwxr-xr--`. What can a user who is *not* the owner and *not* in the file's group do with it?",
+                options: [
+                    "Read, write and execute it",
+                    "Read and execute it",
+                    "Only read it",
+                    "Nothing at all"
+                ],
+                correct: 2,
+                why: "The last three characters `r--` apply to 'others'. They grant read only — no write, no execute. The owner (rwx) and group (r-x) have more."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "A shell prompt ending in `#` instead of `$` tells you that…",
+                options: [
+                    "The command failed",
+                    "You are running as the root (administrator) user",
+                    "You are in a comment",
+                    "The shell is bash, not zsh"
+                ],
+                correct: 1,
+                why: "By convention `$` is an unprivileged user prompt and `#` is root. Seeing `#` means commands run with full administrative power — handle with care."),
+            QuizQuestion(
+                "What does the pipe character `|` do in `cat log.txt | grep error`?",
+                options: [
+                    "Runs the two commands at the same time independently",
+                    "Sends the output of the first command as the input to the second",
+                    "Saves the output to a file named grep",
+                    "Comments out the second command"
+                ],
+                correct: 1,
+                why: "A pipe connects commands: the left command's standard output becomes the right command's standard input. Here, every line of log.txt is filtered down to those containing 'error'."),
+            QuizQuestion(
+                "Which command would you use to locate every file named `config.php` under `/var/www`?",
+                options: [
+                    "grep -r config.php /var/www",
+                    "find /var/www -name config.php",
+                    "ls -la config.php",
+                    "cat /var/www/config.php"
+                ],
+                correct: 1,
+                why: "`find <path> -name <pattern>` walks a directory tree searching by filename. grep searches *inside* files for text; ls and cat only act on paths you already know.")
+        ]
     )
 
     // MARK: F1 — Security mindset & ethics

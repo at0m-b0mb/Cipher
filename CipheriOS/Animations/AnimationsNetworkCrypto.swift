@@ -15,7 +15,8 @@ struct OSIModelView: View {
     ]
 
     var body: some View {
-        PhaseAnimator(Array(0...8)) { step in
+        LoopingTimeline(period: 9 * 0.9) { p in
+            let step = min(8, Int(p * 9))
             let encapsulating = step <= 4
             let revealed = max(0, encapsulating ? step : 8 - step)
             VStack(spacing: 18) {
@@ -53,7 +54,8 @@ struct OSIModelView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } animation: { _ in .easeInOut(duration: 0.45).delay(0.45) }
+            .animation(.easeInOut(duration: 0.45), value: step)
+        }
     }
 }
 
@@ -90,7 +92,8 @@ struct PacketTravelView: View {
     ]
 
     var body: some View {
-        PhaseAnimator(Array(0..<4)) { active in
+        LoopingTimeline(period: 4 * 1.25) { p in
+            let active = min(3, Int(p * 4))
             HStack(spacing: 16) {
                 ZStack {
                     ForEach(frames.indices, id: \.self) { i in
@@ -119,7 +122,8 @@ struct PacketTravelView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-        } animation: { _ in .easeInOut(duration: 0.4).delay(0.85) }
+            .animation(.easeInOut(duration: 0.4), value: active)
+        }
     }
 }
 
@@ -209,7 +213,8 @@ struct HashingView: View {
     ]
 
     var body: some View {
-        PhaseAnimator(Array(0..<3)) { active in
+        LoopingTimeline(period: 3 * 1.1) { p in
+            let active = min(2, Int(p * 3))
             GeometryReader { geo in
                 let w = geo.size.width, h = geo.size.height
                 ZStack {
@@ -242,7 +247,8 @@ struct HashingView: View {
                         .font(Theme.mono(8)).foregroundStyle(Theme.textDim)
                         .position(x: w * 0.5, y: h * 0.92)
                 }
+                .animation(.easeInOut(duration: 0.4), value: active)
             }
-        } animation: { _ in .easeInOut(duration: 0.4).delay(0.7) }
+        }
     }
 }

@@ -18,9 +18,9 @@ enum BlueTeamContent {
     private static let foundations = Module(
         id: "blue-foundations",
         title: "Defensive Foundations",
-        summary: "How defenders structure protection in layers, and how a SOC turns raw telemetry into alerts.",
+        summary: "How defenders structure protection in layers, segment the network, and turn raw telemetry into alerts.",
         systemImage: "shield.lefthalf.filled",
-        lessons: [defenseLesson, siemLesson]
+        lessons: [defenseLesson, networkDefenseLesson, siemLesson]
     )
 
     private static let defenseLesson = Lesson(
@@ -131,6 +131,79 @@ src_ip          count
                 ],
                 correct: 1,
                 why: "4625 is the Windows failed-logon event. A burst from one IP across accounts is a classic brute-force/spray signature.")
+        ]
+    )
+
+    private static let networkDefenseLesson = Lesson(
+        id: "blue-network-defense",
+        title: "Network Security & Firewalls",
+        subtitle: "Shape the battlefield: segment the network so one foothold isn't game over.",
+        minutes: 11,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Architecture is a control"),
+            .paragraph("Detection catches attackers; architecture *limits* them. How you carve up a network decides how far a single compromised laptop can reach. The defender's goal is to make the easy attacker moves — scanning the whole network, pivoting host to host — slow, noisy, and walled off. You met this from the attacker's side as lateral movement; this is how the blue team strangles it."),
+            .animation(.defenseInDepth, caption: "An intruder pushes inward through layered controls — and gets detected and contained before reaching the crown-jewel data."),
+            .heading("Firewalls: the default-deny rule"),
+            .paragraph("A firewall decides which traffic is allowed between zones. The single most important principle is **default deny**: block everything, then explicitly permit only what's needed. A rule set that ends in 'allow any any' has thrown away most of its value. Equally important — and far more often forgotten — is **egress filtering**: controlling what can leave. Most C2 and data exfiltration walks straight out an unrestricted outbound connection."),
+            .terminal(prompt: "fw-admin",
+                      command: "iptables -L OUTPUT -v --line-numbers",
+                      output: """
+Chain OUTPUT (policy DROP)
+num  target  prot  dpt     comment
+1    ACCEPT  tcp   443     /* allow HTTPS to update servers */
+2    ACCEPT  udp   53      /* allow DNS to internal resolver */
+3    DROP    all   --      /* everything else leaves nothing */
+"""),
+            .keyPoints([
+                "Default deny — start by blocking all, then allowlist required flows only.",
+                "Egress filtering — restrict outbound traffic; it's how you starve C2 and exfil.",
+                "Stateful inspection — track connection state so replies are allowed but unsolicited inbound is not.",
+                "A firewall is necessary but not sufficient — it doesn't see encrypted payloads or inside-the-perimeter movement."
+            ]),
+            .heading("Segmentation: blast-radius control"),
+            .paragraph("A flat network — where every device can reach every other — means one phished workstation can talk directly to the domain controller, the database, and the backups. **Segmentation** splits the network into zones (user VLANs, server tiers, a DMZ for internet-facing services) with firewalls between them. Now an attacker who lands in the user zone hits a wall trying to reach the servers, and every attempt crosses a chokepoint you can monitor."),
+            .definition(term: "DMZ (Demilitarized Zone)", meaning: "An isolated network segment for systems that must be reachable from the internet (web servers, mail). If one is compromised, segmentation stops the attacker from reaching the trusted internal network behind it."),
+            .definition(term: "Zero Trust", meaning: "A model that drops the idea of a trusted 'inside'. Every request is authenticated and authorized regardless of network location — 'never trust, always verify' — so being on the LAN grants nothing by itself."),
+            .callout(.tip, "Microsegmentation takes this to the extreme: policy per workload, so even two servers in the same tier can't talk unless explicitly allowed. It's the architectural answer to lateral movement."),
+            .callout(.warning, "Segmentation is only real if it's enforced and tested. 'VLANs exist' is not segmentation if the firewall between them permits any-to-any. Validate it: try to reach the server zone from the user zone and confirm it's blocked."),
+            .checkpoint(QuizQuestion(
+                "An attacker phishes a user in the corporate VLAN and immediately tries to RDP to a database server in a separate, firewalled server zone — and fails. Which control stopped them?",
+                options: [
+                    "Antivirus on the workstation",
+                    "Network segmentation between the user and server zones",
+                    "A stronger password policy",
+                    "Disk encryption"
+                ],
+                correct: 1,
+                why: "The firewall between segments blocked the cross-zone connection. Segmentation contains the blast radius so a foothold in one zone can't freely reach another."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why is egress (outbound) filtering so valuable against an active intrusion?",
+                options: [
+                    "It speeds up the network",
+                    "It restricts the outbound channels attackers use for C2 and data exfiltration",
+                    "It encrypts internal traffic",
+                    "It replaces the need for logging"
+                ],
+                correct: 1,
+                why: "Implants beacon out and stolen data leaves over outbound connections. Tightly controlling what's allowed to egress starves C2 and blocks exfiltration, even after a host is compromised."),
+            QuizQuestion(
+                "What is the core principle of a well-configured firewall rule set?",
+                options: [
+                    "Allow everything, then block known-bad",
+                    "Default deny — block all, then explicitly permit only what's required",
+                    "Only filter inbound traffic",
+                    "Trust any device on the local network"
+                ],
+                correct: 1,
+                why: "Default deny minimizes attack surface: nothing is permitted unless there's an explicit, justified rule. 'Allow then blocklist' inevitably misses something."),
+            QuizQuestion(
+                "The 'never trust, always verify' approach that grants no implicit trust based on network location is called…",
+                options: ["Defense in depth", "Zero Trust", "A DMZ", "Default allow"],
+                correct: 1,
+                why: "Zero Trust authenticates and authorizes every request regardless of where it originates, removing the assumption that being 'inside' the network confers trust.")
         ]
     )
 
@@ -380,7 +453,7 @@ Timestamp            DeviceName   InitiatingProcess  FileName
     )
 
     private static let forensicsLesson = Lesson(
-        id: "blue-forensics",
+        id: "blue-forensics-essentials",
         title: "Digital Forensics Essentials",
         subtitle: "Every action leaves a trace — learn to read the evidence.",
         minutes: 10,
