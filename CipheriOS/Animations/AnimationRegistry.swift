@@ -37,18 +37,29 @@ struct AnimationView: View {
         case .accessControl:       AccessControlView()
         case .fileInclusion:       FileInclusionView()
         case .templateInjection:   TemplateInjectionView()
+        case .csrf:                CSRFView()
+        case .jwtAttack:           JWTAttackView()
+        case .sourceReview:        SourceReviewView()
+        case .clientSide:          ClientSideView()
         case .privilegeEscalation: PrivilegeEscalationView()
         case .passwordCracking:    PasswordCrackingView()
         case .kerberoasting:       KerberoastingView()
         case .dcsync:              DCSyncView()
         case .attackPath:          AttackPathView()
+        case .delegation:          DelegationView()
+        case .forestTrust:         ForestTrustView()
         case .lateralMovement:     LateralMovementView()
+        case .tunneling:           TunnelingView()
         case .amsiBypass:          AMSIBypassView()
         case .processInjection:    ProcessInjectionView()
+        case .applockerBypass:     AppLockerBypassView()
         case .wifiHandshake:       WiFiHandshakeView()
         case .arpPoisoning:        ARPPoisoningView()
         case .bufferOverflow:      BufferOverflowView()
         case .ropChain:            ROPChainView()
+        case .sehOverflow:         SEHOverflowView()
+        case .formatString:        FormatStringView()
+        case .heapExploit:         HeapExploitView()
         case .c2Beacon:            C2BeaconView()
         // Blue team
         case .defenseInDepth:      DefenseInDepthView()
@@ -67,10 +78,12 @@ enum AnimationCatalog {
 
     private static let redIDs: Set<AnimationID> = [
         .cyberKillChain, .portScan, .phishingFlow, .sqlInjection, .xssReflected,
-        .accessControl, .fileInclusion, .templateInjection,
+        .accessControl, .fileInclusion, .templateInjection, .csrf, .jwtAttack,
+        .sourceReview, .clientSide,
         .privilegeEscalation, .passwordCracking, .kerberoasting, .dcsync, .attackPath,
-        .lateralMovement, .amsiBypass, .processInjection, .wifiHandshake, .arpPoisoning,
-        .bufferOverflow, .ropChain, .c2Beacon
+        .delegation, .forestTrust, .lateralMovement, .tunneling,
+        .amsiBypass, .processInjection, .applockerBypass, .wifiHandshake, .arpPoisoning,
+        .bufferOverflow, .ropChain, .sehOverflow, .formatString, .heapExploit, .c2Beacon
     ]
     private static let blueIDs: Set<AnimationID> = [
         .defenseInDepth, .siemPipeline, .incidentResponse, .mitreAttack, .threatHunting,
@@ -88,10 +101,13 @@ enum AnimationCatalog {
         case .cyberKillChain:               return 300
         case .sqlInjection, .xssReflected:  return 300
         case .accessControl, .fileInclusion, .templateInjection: return 296
+        case .jwtAttack, .clientSide, .formatString, .heapExploit: return 296
+        case .applockerBypass:              return 292
         case .amsiBypass:                   return 288
-        case .ropChain:                     return 286
+        case .ropChain, .sehOverflow:       return 286
         case .bufferOverflow:               return 282
-        case .attackPath:                   return 278
+        case .attackPath, .forestTrust:     return 278
+        case .sourceReview:                 return 270
         case .defenseInDepth:               return 272
         case .adForest, .adTiering:         return 272
         case .privilegeEscalation:          return 262
@@ -117,18 +133,29 @@ enum AnimationCatalog {
         case .accessControl:       return "Tampering with an object id to read another user's data — IDOR."
         case .fileInclusion:       return "Path traversal makes the server read and include files it shouldn't."
         case .templateInjection:   return "Input the template engine evaluates — from {{7*7}} to code execution."
+        case .csrf:                return "An attacker page rides the victim's cookie to forge a real request."
+        case .jwtAttack:           return "Tampering a JWT's claims and dropping the signature to forge admin."
+        case .sourceReview:        return "Tracing untrusted input from its source to a dangerous sink."
+        case .clientSide:          return "A macro-enabled document that runs code the moment it's opened."
         case .privilegeEscalation: return "Climbing from a low-privilege foothold to full root access."
         case .passwordCracking:    return "Streaming a wordlist through a hash until a password matches."
         case .kerberoasting:       return "Requesting a service ticket and cracking it offline."
         case .dcsync:              return "Replicating the krbtgt hash from the DC to forge a Golden Ticket."
         case .attackPath:          return "A BloodHound chain of AD edges lighting up the path to Domain Admin."
+        case .delegation:          return "Abusing S4U delegation to impersonate an admin to a target service."
+        case .forestTrust:         return "Crossing a domain trust with a forged SID-history ticket to own the forest."
         case .lateralMovement:     return "Hopping host to host with reused credentials toward the DC."
+        case .tunneling:           return "Routing tools through a pivot host to reach a hidden internal subnet."
         case .amsiBypass:          return "Patching the in-memory scanner so a blocked payload runs clean."
         case .processInjection:    return "Hiding shellcode inside a trusted process to dodge detection."
+        case .applockerBypass:     return "Running blocked code through a trusted, whitelisted Microsoft binary."
         case .wifiHandshake:       return "Deauth, capture the WPA2 4-way handshake, then crack the PSK offline."
         case .arpPoisoning:        return "Poisoning ARP caches to sit in the middle of victim and gateway."
         case .bufferOverflow:      return "Overflowing a buffer to overwrite the return address and hijack execution."
         case .ropChain:            return "Chaining existing code gadgets to bypass a non-executable stack."
+        case .sehOverflow:         return "Clobbering the SEH chain so a thrown exception hijacks execution."
+        case .formatString:        return "A format string that leaks the stack and then writes anywhere."
+        case .heapExploit:         return "A use-after-free where freed memory is reclaimed with attacker data."
         case .c2Beacon:            return "A covert implant beaconing home over jittered HTTPS check-ins."
         case .defenseInDepth:      return "Layered controls that slow an attacker and catch them in the act."
         case .siemPipeline:        return "Telemetry flowing into a SIEM until a rule fires an alert."

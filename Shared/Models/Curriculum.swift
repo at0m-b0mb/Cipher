@@ -95,18 +95,29 @@ enum AnimationID: String, CaseIterable, Codable {
     case accessControl
     case fileInclusion
     case templateInjection
+    case csrf
+    case jwtAttack
+    case sourceReview
+    case clientSide
     case privilegeEscalation
     case passwordCracking
     case kerberoasting
     case dcsync
     case attackPath
+    case delegation
+    case forestTrust
     case lateralMovement
+    case tunneling
     case amsiBypass
     case processInjection
+    case applockerBypass
     case wifiHandshake
     case arpPoisoning
     case bufferOverflow
     case ropChain
+    case sehOverflow
+    case formatString
+    case heapExploit
     case c2Beacon
 
     // Blue team
@@ -136,18 +147,29 @@ enum AnimationID: String, CaseIterable, Codable {
         case .accessControl:       return "Broken Access Control (IDOR)"
         case .fileInclusion:       return "Path Traversal & File Inclusion"
         case .templateInjection:   return "Server-Side Template Injection"
+        case .csrf:                return "Cross-Site Request Forgery"
+        case .jwtAttack:           return "JWT Token Attacks"
+        case .sourceReview:        return "Source-to-Sink (White-Box)"
+        case .clientSide:          return "Client-Side Attack"
         case .privilegeEscalation: return "Privilege Escalation"
         case .passwordCracking:    return "Offline Password Cracking"
         case .kerberoasting:       return "Kerberoasting"
         case .dcsync:              return "DCSync → Golden Ticket"
         case .attackPath:          return "Attack Path (BloodHound)"
+        case .delegation:          return "Kerberos Delegation Abuse"
+        case .forestTrust:         return "Forest Trust Abuse"
         case .lateralMovement:     return "Lateral Movement"
+        case .tunneling:           return "Tunneling & Pivoting"
         case .amsiBypass:          return "AMSI Bypass"
         case .processInjection:    return "Process Injection"
+        case .applockerBypass:     return "AppLocker Bypass"
         case .wifiHandshake:       return "WPA2 Handshake Capture"
         case .arpPoisoning:        return "ARP Poisoning (MITM)"
         case .bufferOverflow:      return "Stack Buffer Overflow"
         case .ropChain:            return "Return-Oriented Programming"
+        case .sehOverflow:         return "SEH Overflow"
+        case .formatString:        return "Format String Exploit"
+        case .heapExploit:         return "Heap Exploitation"
         case .c2Beacon:            return "Command & Control Beacon"
         case .defenseInDepth:      return "Defense in Depth"
         case .siemPipeline:        return "SIEM Detection Pipeline"

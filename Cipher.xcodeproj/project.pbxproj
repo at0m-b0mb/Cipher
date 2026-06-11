@@ -24,6 +24,8 @@
 		45673BC90ADD98FFBCB5E7AB /* AnimationKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F88DFDACBA2ABCF71D8DB81 /* AnimationKit.swift */; };
 		48EC37A455B0266473E9E6B2 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4FECA14607AA9BC328FA79 /* RootView.swift */; };
 		532CE706516888F5A803C90F /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90ED2D85AA008A67C1EE718 /* Theme.swift */; };
+		6032B5FA6B3AF90AB0A4AF3B /* AnimationsWeb2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FB5A09F834622E033D7956A /* AnimationsWeb2.swift */; };
+		6317DC8C19C76EF4CC6C83F2 /* AnimationsBinexp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270D52C64D8488D41368E1AF /* AnimationsBinexp.swift */; };
 		68588EF2E572CEB7E3353728 /* AnimationRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98A4A04E2B40B8DD035A6F3 /* AnimationRegistry.swift */; };
 		68E34B8C1D5D509E3403A9C3 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90ED2D85AA008A67C1EE718 /* Theme.swift */; };
 		6F812F9B31339642901B136F /* CipherWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508EAFEAE1CFF42E877BDEF1 /* CipherWatchApp.swift */; };
@@ -52,6 +54,7 @@
 		EAD48ED03B2BEA1DAB8C76E5 /* RedTeamContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B97EBC1F4F0C3522B8D0831 /* RedTeamContent.swift */; };
 		F1B7493C3663109AE20C4534 /* ListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046083BB1BA9D4ACFCD9F082 /* ListComponents.swift */; };
 		F95E2D205AE07ABEAFE29A9A /* AnimationsAD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E6246D7749388061B81944D /* AnimationsAD.swift */; };
+		FAE8E7EBDABC1B8DDE501454 /* AnimationsAdvanced.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA2AF06D987B63B72AC6C53B /* AnimationsAdvanced.swift */; };
 		FE894BDD4D3548AADB2E9958 /* TerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F6AB3977C24010EE0805943 /* TerminalView.swift */; };
 /* End PBXBuildFile section */
 
@@ -91,7 +94,9 @@
 		18DC90F5F3FCC6B18B4F8051 /* Cipher Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cipher Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1C6D27C215F7080C80F484DC /* WatchRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRootView.swift; sourceTree = "<group>"; };
 		23B01B4C6F13DA1F3424FF12 /* TracksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TracksView.swift; sourceTree = "<group>"; };
+		270D52C64D8488D41368E1AF /* AnimationsBinexp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsBinexp.swift; sourceTree = "<group>"; };
 		3E42F3EC85180B226D42F0F3 /* Curriculum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Curriculum.swift; sourceTree = "<group>"; };
+		3FB5A09F834622E033D7956A /* AnimationsWeb2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsWeb2.swift; sourceTree = "<group>"; };
 		3FEBE6EDE6BC0114F01559E6 /* GlossaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlossaryView.swift; sourceTree = "<group>"; };
 		4A13F571ECDA1ECA432F8236 /* TermOfDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermOfDayView.swift; sourceTree = "<group>"; };
 		4ACEAED0770FD0D7F7161F0D /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -110,6 +115,7 @@
 		9F5412CD0E9A766E4B4115E8 /* AnimationsNetworkCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsNetworkCrypto.swift; sourceTree = "<group>"; };
 		B301459343F8366D265A8D17 /* TrackDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackDetailView.swift; sourceTree = "<group>"; };
 		B90ED2D85AA008A67C1EE718 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		BA2AF06D987B63B72AC6C53B /* AnimationsAdvanced.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsAdvanced.swift; sourceTree = "<group>"; };
 		C5998BEC4E93F0882C07D3A6 /* Flashcards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Flashcards.swift; sourceTree = "<group>"; };
 		C98A4A04E2B40B8DD035A6F3 /* AnimationRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationRegistry.swift; sourceTree = "<group>"; };
 		D1938A617BDD4FF40E303156 /* Cipher.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Cipher.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -230,11 +236,14 @@
 				4F88DFDACBA2ABCF71D8DB81 /* AnimationKit.swift */,
 				C98A4A04E2B40B8DD035A6F3 /* AnimationRegistry.swift */,
 				7E6246D7749388061B81944D /* AnimationsAD.swift */,
+				BA2AF06D987B63B72AC6C53B /* AnimationsAdvanced.swift */,
+				270D52C64D8488D41368E1AF /* AnimationsBinexp.swift */,
 				927B7F5E621E5BBDDFE40BD2 /* AnimationsBlue.swift */,
 				9F5412CD0E9A766E4B4115E8 /* AnimationsNetworkCrypto.swift */,
 				F0ED949A2970AADCA2F4257A /* AnimationsOffense2.swift */,
 				E15092E688DFFA417B4D1090 /* AnimationsRed.swift */,
 				0DD813155F5693877CB7D551 /* AnimationsWeb.swift */,
+				3FB5A09F834622E033D7956A /* AnimationsWeb2.swift */,
 			);
 			path = Animations;
 			sourceTree = "<group>";
@@ -365,11 +374,14 @@
 				45673BC90ADD98FFBCB5E7AB /* AnimationKit.swift in Sources */,
 				68588EF2E572CEB7E3353728 /* AnimationRegistry.swift in Sources */,
 				F95E2D205AE07ABEAFE29A9A /* AnimationsAD.swift in Sources */,
+				FAE8E7EBDABC1B8DDE501454 /* AnimationsAdvanced.swift in Sources */,
+				6317DC8C19C76EF4CC6C83F2 /* AnimationsBinexp.swift in Sources */,
 				9E819F70EB414B7A5A510A12 /* AnimationsBlue.swift in Sources */,
 				CDBEE0DC4A6E1B2B9E0CE2BF /* AnimationsNetworkCrypto.swift in Sources */,
 				B7E63265782C70605888A73D /* AnimationsOffense2.swift in Sources */,
 				31F99C8D52CE8DD5F1EB4732 /* AnimationsRed.swift in Sources */,
 				063D2EE16783CDFD3E356D0E /* AnimationsWeb.swift in Sources */,
+				6032B5FA6B3AF90AB0A4AF3B /* AnimationsWeb2.swift in Sources */,
 				1DBE1B661FFFB8D8A5B0713E /* BlueTeamContent.swift in Sources */,
 				11D61E6A4000A6499EF98D4F /* CipherApp.swift in Sources */,
 				126915D1E4A157135CB8153C /* ContentComponents.swift in Sources */,

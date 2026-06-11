@@ -11,7 +11,7 @@ enum RedTeamContent {
         kind: .redTeam,
         title: "Red Team",
         tagline: "Think like the adversary — recon to root, the offensive way.",
-        modules: [recon, access, web, post, activeDirectory, evasion, wireless, advanced]
+        modules: [recon, access, web, post, activeDirectory, adAdvanced, evasion, wireless, advanced, binexp]
     )
 
     // MARK: R1 — Reconnaissance
@@ -157,9 +157,9 @@ enum RedTeamContent {
     private static let access = Module(
         id: "red-access",
         title: "Initial Access & Exploitation",
-        summary: "Turn a foothold into a shell — by manipulating people, and by exploiting vulnerable services.",
+        summary: "Turn a foothold into a shell — by manipulating people, weaponizing documents they open, and exploiting vulnerable services.",
         systemImage: "key.fill",
-        lessons: [phishingLesson, exploitationLesson]
+        lessons: [phishingLesson, clientSideLesson, exploitationLesson]
     )
 
     private static let phishingLesson = Lesson(
@@ -209,6 +209,69 @@ enum RedTeamContent {
                 options: ["Curiosity", "Urgency", "Reciprocity", "Scarcity of product"],
                 correct: 1,
                 why: "A countdown manufactures urgency, pushing the target to act before they think critically — a hallmark of effective social engineering.")
+        ]
+    )
+
+    private static let clientSideLesson = Lesson(
+        id: "red-client-side",
+        title: "Client-Side Attacks",
+        subtitle: "Don't attack the hardened server — attack the user's application that opens your file.",
+        minutes: 10,
+        difficulty: .advanced,
+        blocks: [
+            .heading("When the perimeter is solid, aim at the desktop"),
+            .paragraph("Sometimes there's no exposed vulnerable service — just a well-patched perimeter and people. Client-side attacks target the software on the *user's* machine: the Office suite, the PDF reader, the browser. You deliver a file (often via the phishing you already studied), and when the victim opens it, *their* application runs your code. The exploit executes in the user's context, on the inside of the network."),
+            .animation(.clientSide, caption: "A macro-enabled document lures the user to 'Enable Content'; the VBA macro spawns PowerShell, which pulls a payload and beacons home."),
+            .heading("The malicious document"),
+            .paragraph("The workhorse is the **macro-enabled document**. A Word/Excel file carries a VBA macro that runs on open (once the user clicks 'Enable Content'), typically launching PowerShell to download and run a payload in memory. When macros are locked down, attackers pivot to other client-side vectors: HTA files, LNK shortcuts, ISO/container files that bypass mark-of-the-web, and DLL **library hijacking** where a trusted app loads an attacker DLL from a writable path."),
+            .terminal(prompt: "VBA macro",
+                      command: "Sub AutoOpen()\n  Shell \"powershell -w hidden -enc <base64 payload>\", vbHide\nEnd Sub",
+                      output: """
+# fires the moment the document opens (after 'Enable Content')
+# powershell runs the stager in memory → beacon to the operator
+"""),
+            .keyPoints([
+                "Macro documents (.docm/.xlsm) — AutoOpen/Workbook_Open runs VBA → PowerShell stager.",
+                "HTA / LNK / ISO — alternative containers when macros are blocked or to dodge mark-of-the-web.",
+                "DLL & library hijacking — drop a malicious DLL where a trusted app searches first.",
+                "Browser & reader exploits — memory-corruption in the client app itself (rarer, higher-end).",
+                "The payload runs as the *user* — exactly the foothold privilege escalation then builds on."
+            ]),
+            .definition(term: "Mark-of-the-Web (MOTW)", meaning: "A flag Windows attaches to files downloaded from the internet, triggering extra warnings and blocking macros by default. Attackers use container formats (ISO, 7z) that historically didn't propagate MOTW to smuggle a 'clean'-looking file past those protections."),
+            .callout(.danger, "This is delivered by the social-engineering you studied — and it works because it sidesteps the server entirely. The strongest defenses are organizational: block macros from the internet by policy, strip risky attachments, application allow-listing, and user training."),
+            .callout(.tip, "Blue team: Office spawning a script interpreter (winword.exe → powershell.exe) is a hallmark detection you built in the Detection Engineering lesson. Client-side attacks are loud on the endpoint precisely because the process lineage is so abnormal."),
+            .checkpoint(QuizQuestion(
+                "Why do attackers turn to client-side attacks when a target has no exposed vulnerable services?",
+                options: [
+                    "Because servers can't be exploited",
+                    "They target the software on the user's machine — opening a crafted document runs code in the user's context, inside the network",
+                    "Because it requires no delivery",
+                    "Because it needs Domain Admin first"
+                ],
+                correct: 1,
+                why: "When the perimeter is hardened, the user's applications become the target. A weaponized document executes in the user's context when opened, giving a foothold without touching a server service."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What triggers the payload in a classic malicious Office document?",
+                options: [
+                    "Saving the file",
+                    "A VBA macro (e.g. AutoOpen) running once the user enables content",
+                    "Renaming the file",
+                    "Printing it"
+                ],
+                correct: 1,
+                why: "An auto-executing macro (AutoOpen/Workbook_Open) runs when the document opens and macros are enabled, typically launching PowerShell to stage the payload."),
+            QuizQuestion(
+                "Why do attackers deliver payloads inside ISO or container files?",
+                options: [
+                    "They compress better",
+                    "Such containers historically bypass Mark-of-the-Web, dodging the macro-blocking and warnings applied to internet downloads",
+                    "They run faster",
+                    "They encrypt the payload"
+                ],
+                correct: 1,
+                why: "Mark-of-the-Web drives Windows' protections (macro blocking, SmartScreen). Container formats that didn't propagate MOTW let the inner file appear local and trusted, sidestepping those defenses.")
         ]
     )
 
@@ -287,9 +350,9 @@ uid=33(www-data) gid=33(www-data)
     private static let web = Module(
         id: "red-web",
         title: "Web Application Attacks",
-        summary: "The internet's biggest attack surface — injecting into queries and browsers, abusing broken access control, reading the server's files, and reaching code execution through templates and deserialization.",
+        summary: "The internet's biggest attack surface — injection, broken access control, file disclosure, template/deserialization RCE, request forgery, token attacks, and the white-box review that finds them.",
         systemImage: "globe",
-        lessons: [sqliLesson, xssLesson, cmdiLesson, accessControlLesson, fileInclusionLesson, webAdvancedLesson]
+        lessons: [sqliLesson, xssLesson, cmdiLesson, accessControlLesson, fileInclusionLesson, webAdvancedLesson, csrfLesson, jwtLesson, sourceReviewLesson]
     )
 
     private static let sqliLesson = Lesson(
@@ -719,12 +782,199 @@ Hello uid=33(www-data) gid=33(www-data) groups=33(www-data)
         ]
     )
 
+    private static let csrfLesson = Lesson(
+        id: "red-csrf",
+        title: "Cross-Site Request Forgery (CSRF)",
+        subtitle: "Make the victim's own browser fire a state-changing request they never intended.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Riding someone else's session"),
+            .paragraph("CSRF abuses a simple browser behavior: cookies are attached to requests *automatically*, based on the destination — not on who triggered them. So if a logged-in victim visits an attacker's page, that page can quietly send a request to a site the victim is authenticated to, and the browser includes their session cookie. The server sees a perfectly valid, authenticated request and acts on it."),
+            .animation(.csrf, caption: "The victim visits an attacker page that auto-submits a hidden form to their bank; the browser attaches the bank cookie, so the transfer looks genuine."),
+            .terminal(prompt: "attacker page",
+                      command: "<form action='https://bank.example/transfer' method='POST' id='x'>\n  <input name='to' value='attacker'><input name='amount' value='5000'>\n</form><script>document.x.submit()</script>",
+                      output: """
+// victim merely loads the page → browser POSTs to bank WITH their cookie
+// bank: 200 OK — $5000 transferred (no attacker code ran on the bank)
+"""),
+            .keyPoints([
+                "CSRF changes state (transfer, change email, add admin) — it doesn't read data back (the SOP blocks that).",
+                "It works because cookies are sent based on destination, not origin of the request.",
+                "GET-based actions are trivially forgeable with an <img> tag; POST with an auto-submitting form.",
+                "Pairs nastily with a stored XSS or a self-XSS to bypass weak defenses.",
+                "Different from XSS: XSS runs script in the site; CSRF forges a request from outside it."
+            ]),
+            .definition(term: "Anti-CSRF token", meaning: "A secret, per-session (or per-request) random value the server embeds in its own forms and verifies on submit. An attacker's cross-site page can't read or guess it (the Same-Origin Policy blocks reading the page), so the forged request lacks it and is rejected."),
+            .callout(.danger, "The defenses are concrete: a synchronizer (anti-CSRF) token on every state-changing request, plus `SameSite=Lax/Strict` cookies so the browser won't attach them to cross-site requests in the first place. Checking the Origin/Referer header is a useful secondary control."),
+            .callout(.tip, "Modern browsers default cookies to `SameSite=Lax`, which blunts the classic cross-site POST — but it isn't a complete fix (GET-based state changes, same-site subdomains, and lax's top-level-navigation exception all leave gaps). Tokens remain the primary defense."),
+            .checkpoint(QuizQuestion(
+                "Why does a CSRF attack succeed even though the attacker never sees the bank's responses?",
+                options: [
+                    "It cracks the session cookie",
+                    "The browser auto-attaches the victim's cookie to the forged request, and CSRF only needs to *cause* a state change, not read the reply",
+                    "It exploits a buffer overflow",
+                    "It disables the Same-Origin Policy"
+                ],
+                correct: 1,
+                why: "CSRF is a blind, state-changing attack. The Same-Origin Policy stops the attacker reading the response, but the request still executes with the victim's cookie — which is all a transfer or settings change needs."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the primary, robust defense against CSRF?",
+                options: [
+                    "Hiding the form fields",
+                    "A per-session anti-CSRF token the attacker's page can't read or guess, plus SameSite cookies",
+                    "Using HTTPS",
+                    "A longer password"
+                ],
+                correct: 1,
+                why: "An unpredictable synchronizer token tied to the session, validated server-side, defeats forged requests; SameSite cookies stop the browser attaching credentials cross-site as defense in depth."),
+            QuizQuestion(
+                "How does CSRF fundamentally differ from XSS?",
+                options: [
+                    "They are the same",
+                    "XSS runs attacker script within the trusted site; CSRF forges a request to the site from elsewhere without running script there",
+                    "CSRF only works on HTTP",
+                    "XSS can't steal cookies"
+                ],
+                correct: 1,
+                why: "XSS executes in the victim's session inside the site (and can read data); CSRF triggers an authenticated action from an external page but can't read the response.")
+        ]
+    )
+
+    private static let jwtLesson = Lesson(
+        id: "red-jwt",
+        title: "JWT & Token Attacks",
+        subtitle: "When the server trusts a token it should have verified — forge your way to admin.",
+        minutes: 10,
+        difficulty: .advanced,
+        blocks: [
+            .heading("A token is only as good as its verification"),
+            .paragraph("Modern apps often replace server-side sessions with a **JSON Web Token (JWT)**: a self-contained, signed blob holding your identity and claims (`user`, `role`, `exp`). The server trusts it *because* the signature proves it issued it. Every JWT attack is a way to make the server trust a token it shouldn't — by breaking, stripping, or sidestepping that signature check."),
+            .animation(.jwtAttack, caption: "Tamper the payload to role:admin, switch the algorithm to none, drop the signature — and a server that doesn't verify properly accepts it."),
+            .heading("A JWT is three base64 parts"),
+            .paragraph("`header.payload.signature` — and crucially, the header and payload are merely **base64url-encoded, not encrypted**. Anyone can decode and read them. Security rests entirely on the signature, computed over header+payload with a secret (HMAC) or a private key (RSA/EC)."),
+            .terminal(prompt: "kali@lab",
+                      command: "echo $JWT | cut -d. -f2 | base64 -d",
+                      output: """
+{"user":"alice","role":"user","exp":1750000000}
+# readable! only the signature stops you changing role to admin
+"""),
+            .keyPoints([
+                "alg:none — set the header algorithm to \"none\" and strip the signature; weak libraries accept it.",
+                "Weak HMAC secret — brute-force the signing key offline (hashcat -m 16500), then sign your own tokens.",
+                "alg confusion (RS256→HS256) — sign with the public key as an HMAC secret if the server doesn't pin the algorithm.",
+                "Unverified claims — tamper role/user/exp when the server reads claims without checking the signature at all.",
+                "kid injection / jku — point the key id or key URL at attacker-controlled material."
+            ]),
+            .definition(term: "alg:none attack", meaning: "JWT's spec allows an algorithm of \"none\" (an unsigned token). If a server's library honors it, an attacker sets `alg:none`, edits the payload freely, and removes the signature — and the server accepts the forged token. Libraries must reject \"none\" and pin the expected algorithm."),
+            .callout(.danger, "Never put secrets in a JWT payload — it's readable by anyone holding the token. And never trust claims without verifying the signature with a pinned algorithm and a strong key. 'Decode' is not 'verify'."),
+            .callout(.tip, "Defensively: pin the exact algorithm server-side, use a long random HMAC secret (or proper key management for RSA), validate `exp`/`aud`/`iss`, and keep tokens short-lived with a revocation story. For high-value sessions, server-side sessions are still a perfectly good choice."),
+            .checkpoint(QuizQuestion(
+                "You decode a JWT and can read `\"role\":\"user\"` in plaintext. What does that tell you?",
+                options: [
+                    "The token is encrypted and useless to you",
+                    "The payload is only base64-encoded — readable, and forgeable if you can defeat the signature (alg:none, weak secret, alg confusion)",
+                    "The server is already compromised",
+                    "JWTs can't carry roles"
+                ],
+                correct: 1,
+                why: "JWT header/payload are base64url, not encrypted. Reading them is expected; the attack is making the server accept a tampered payload by breaking or bypassing the signature check."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Which part of a JWT actually provides its security?",
+                options: [
+                    "The header",
+                    "The signature over the header and payload",
+                    "The base64 encoding",
+                    "The expiry claim"
+                ],
+                correct: 1,
+                why: "Header and payload are just encoded (readable). The signature is what proves the token is authentic and unmodified — so every attack targets the signature verification."),
+            QuizQuestion(
+                "A server accepts a token whose header says `alg:none` and which has no signature. What's the flaw?",
+                options: [
+                    "Nothing — that's normal",
+                    "The library honors unsigned tokens, so an attacker can forge any claims with no signature",
+                    "The token expired",
+                    "The base64 is malformed"
+                ],
+                correct: 1,
+                why: "Honoring `alg:none` means no signature is required. An attacker edits the payload (e.g. role:admin) and submits it unsigned. Libraries must reject 'none' and pin the algorithm.")
+        ]
+    )
+
+    private static let sourceReviewLesson = Lesson(
+        id: "red-source-review",
+        title: "White-Box: Source Code Review",
+        subtitle: "The OSWE method — read the code, trace untrusted input from source to dangerous sink.",
+        minutes: 12,
+        difficulty: .expert,
+        blocks: [
+            .heading("When you have the source, read it like an attacker"),
+            .paragraph("Black-box testing pokes a running app from outside. **White-box** testing reads its source — the approach OffSec's OSWE is built on. With the code in front of you, vulnerabilities that are nearly invisible from outside (a subtle auth bypass, a blind injection, a deserialization path) become findable by following one question: *where does untrusted input go, and what dangerous thing does it eventually reach?*"),
+            .animation(.sourceReview, caption: "Trace a request parameter (the source) as it flows through the code untouched into a query or command (the sink) — the path that is the vulnerability."),
+            .heading("Sources and sinks"),
+            .paragraph("A **source** is anywhere attacker-controlled data enters: request params, headers, cookies, uploaded files, message queues. A **sink** is a dangerous operation: a SQL query, an OS command, a file path, `eval`, a deserializer, an HTML response. A vulnerability exists when data flows from a source to a sink **without adequate validation or encoding** in between. White-box review is the disciplined practice of tracing those flows."),
+            .keyPoints([
+                "Grep for the sinks first — query/exec/system, eval, unserialize/pickle/readObject, include, render-from-string, file ops.",
+                "Then trace backward: is any of that sink's input reachable from a source, unsanitized?",
+                "Map the auth model — find every route, then which ones skip the auth middleware (the bypass is usually an omission).",
+                "Read the framework's defaults: what's auto-escaped, what isn't, where ORM raw queries creep in.",
+                "Chain primitives — a file write + an LFI, or an info leak + a deserializer, often combine into RCE."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "grep -rnE \"exec\\(|system\\(|eval\\(|unserialize\\(|\\.raw\\(\" src/",
+                      output: """
+src/api/report.js:88:  db.raw(`SELECT * FROM r WHERE id=${req.query.id}`)  <-- source→sink, no param!
+src/util/run.js:12:    exec('convert ' + req.body.file)                    <-- command injection
+"""),
+            .definition(term: "Taint analysis", meaning: "Tracking 'tainted' (attacker-influenced) data as it propagates through a program to see whether it reaches a sensitive sink unsanitized. It's the mental model — and the basis of static-analysis tools (CodeQL, Semgrep) — behind white-box vulnerability hunting."),
+            .callout(.tip, "Auth bypasses are found by reading, not fuzzing. Enumerate every endpoint and ask 'what enforces access here?' The bug is typically a route that forgot the middleware, an `==` that should be `===` (type juggling), or a check that can be satisfied with an unexpected input type."),
+            .callout(.lab, "Practice on deliberately vulnerable open-source apps with the source checked out: pick a sink, trace it to a source, write the exploit, then confirm it. Tools like Semgrep/CodeQL automate the first pass — but understanding the data flow is what writes the exploit."),
+            .checkpoint(QuizQuestion(
+                "In white-box review, you find `db.raw(\"… WHERE id=\" + req.query.id)`. Why is this a finding?",
+                options: [
+                    "Raw queries are always faster",
+                    "Untrusted input (a source, req.query.id) reaches a SQL sink (raw query) without parameterization — a clear injection flow",
+                    "It uses the wrong database",
+                    "req.query is encrypted"
+                ],
+                correct: 1,
+                why: "The request parameter (source) is concatenated straight into a raw SQL query (sink) with no parameterization or validation. Tracing that source-to-sink flow is exactly how white-box review surfaces injection."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is a 'sink' in source-code review?",
+                options: [
+                    "Where attacker input enters the app",
+                    "A dangerous operation (SQL query, exec, deserialize) that input can reach to cause harm",
+                    "A logging function",
+                    "The login page"
+                ],
+                correct: 1,
+                why: "A sink is the sensitive operation. A vulnerability is data flowing from a source (input) into a sink without adequate sanitization in between."),
+            QuizQuestion(
+                "Why are authentication bypasses often easier to find white-box than black-box?",
+                options: [
+                    "They aren't",
+                    "Reading the code reveals which routes skip the auth check or use flawed comparisons — omissions invisible from outside",
+                    "The source contains the password",
+                    "Black-box tools always find them"
+                ],
+                correct: 1,
+                why: "Auth bypasses are usually missing or flawed checks. Enumerating routes and their guards in source makes the omission obvious, whereas from outside it's a needle in a haystack.")
+        ]
+    )
+
     private static let post = Module(
         id: "red-post",
         title: "Post-Exploitation",
-        summary: "You have a shell — now become root, and turn captured hashes into plaintext passwords.",
+        summary: "You have a shell — now become root, turn captured hashes into plaintext, and tunnel deeper into the network.",
         systemImage: "arrow.up.forward.app.fill",
-        lessons: [privescLesson, crackingLesson]
+        lessons: [privescLesson, crackingLesson, tunnelingLesson]
     )
 
     private static let privescLesson = Lesson(
@@ -848,6 +1098,68 @@ Speed.#1.......: 12834 H/s   (sha512crypt — deliberately slow)
                 ],
                 correct: 1,
                 why: "Rules transform each wordlist entry into many realistic variants (Password → P@ssw0rd123), dramatically increasing hits at little cost.")
+        ]
+    )
+
+    private static let tunnelingLesson = Lesson(
+        id: "red-tunneling",
+        title: "Tunneling & Port Forwarding",
+        subtitle: "Turn one foothold into a route — reach internal services that aren't directly reachable.",
+        minutes: 11,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The foothold is a doorway into a hidden network"),
+            .paragraph("Your first compromised host usually sits at a boundary — a DMZ web server reachable from outside, with a second interface into an internal subnet you can't touch directly. **Tunneling** (and **port forwarding**) turn that host into a relay, routing your tools through it so you can scan and attack the internal network as if you were on it. You met pivoting briefly in lateral movement; this is the mechanics."),
+            .animation(.tunneling, caption: "An SSH dynamic tunnel turns the pivot into a SOCKS proxy; proxychains then routes scans and exploits into the hidden internal subnet."),
+            .heading("The three SSH forwards"),
+            .keyPoints([
+                "Local (-L) — open a port on YOUR box that forwards to a host:port reachable from the pivot. Pull one service to you.",
+                "Remote (-R) — open a port on the PIVOT that forwards back to you. Push a service out (great when you can't connect inbound).",
+                "Dynamic (-D) — turn the pivot into a SOCKS proxy; combined with proxychains, route ALL your tools through it.",
+                "Wrap any tool: `proxychains nmap -sT 10.10.20.0/24` scans the internal subnet through the pivot.",
+                "Modern tooling — chisel (HTTP/WS tunnels through firewalls), ligolo-ng, sshuttle — when SSH isn't available."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "ssh -D 1080 user@pivot   # dynamic SOCKS proxy on :1080\nproxychains nmap -sT -Pn 10.10.20.5",
+                      output: """
+[proxychains] Strict chain ... 127.0.0.1:1080 ... 10.10.20.5:445 <--socket OK
+445/tcp open  microsoft-ds   <-- a host invisible from the internet, now in reach
+"""),
+            .definition(term: "Pivoting", meaning: "Using a compromised host as a relay to reach networks you can't route to directly. Port forwarding moves a single port; a SOCKS proxy (dynamic forward) routes arbitrary tools — together they extend your reach hop by hop into segmented networks."),
+            .callout(.tip, "Use a `-sT` (full TCP connect) scan through a proxy — SYN scans don't work over SOCKS. And go slow: tunneled scans are noisy and slow, so target what enumeration told you matters instead of sweeping everything."),
+            .callout(.warning, "Tunnels are a top detection opportunity for the blue team: long-lived SSH with port-forward flags, a DMZ host suddenly initiating connections deep into the network, or unusual SOCKS traffic. Egress filtering and segmentation (the Blue Team track) are what make pivoting hard."),
+            .checkpoint(QuizQuestion(
+                "You compromise a DMZ web server that can reach an internal database the internet can't. Which SSH option turns that host into a proxy so all your tools can reach the internal subnet?",
+                options: [
+                    "-L (local forward)",
+                    "-D (dynamic / SOCKS proxy), used with proxychains",
+                    "-R (remote forward)",
+                    "-N (no command)"
+                ],
+                correct: 1,
+                why: "A dynamic forward (-D) makes the pivot a SOCKS proxy. Paired with proxychains, it routes arbitrary tools through the pivot into the otherwise-unreachable internal network — full pivoting, not just one port."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does SSH local forwarding (-L) do?",
+                options: [
+                    "Turns the pivot into a SOCKS proxy",
+                    "Opens a port on your machine that forwards through the pivot to a host:port the pivot can reach",
+                    "Pushes a service from the pivot back to you",
+                    "Encrypts your disk"
+                ],
+                correct: 1,
+                why: "-L creates a local listener on your box tunneled through the pivot to a specific internal host:port — pulling one remote service to you."),
+            QuizQuestion(
+                "Why must you use a TCP connect scan (-sT) rather than a SYN scan through a SOCKS proxy?",
+                options: [
+                    "SYN scans are illegal",
+                    "SOCKS proxies relay full TCP connections, not raw SYN packets, so only connect scans work",
+                    "Connect scans are stealthier",
+                    "There's no difference"
+                ],
+                correct: 1,
+                why: "A SOCKS proxy operates at the TCP connection level. Half-open SYN scanning needs raw packet control the proxy can't relay, so you fall back to full connect (-sT) scans.")
         ]
     )
 
@@ -1146,14 +1458,149 @@ SMB  10.10.10.10  [+] CORP\\admin (Pwn3d!)   <-- domain controller
         ]
     )
 
+    // MARK: R5b — Advanced Active Directory
+
+    private static let adAdvanced = Module(
+        id: "red-ad-advanced",
+        title: "Advanced Active Directory",
+        summary: "Past the basics — abuse Kerberos delegation, then ride domain and forest trusts to own everything.",
+        systemImage: "person.2.badge.gearshape.fill",
+        lessons: [delegationLesson, trustLesson]
+    )
+
+    private static let delegationLesson = Lesson(
+        id: "red-delegation",
+        title: "Kerberos Delegation Abuse",
+        subtitle: "Delegation lets services act as you — and misconfigured, it lets attackers act as anyone.",
+        minutes: 13,
+        difficulty: .expert,
+        blocks: [
+            .heading("A feature for services, weaponized"),
+            .paragraph("Real applications often need to access a back-end *on your behalf* — a web app querying a database as you. **Kerberos delegation** grants that: a service can reuse your identity to reach another service. The three flavors (unconstrained, constrained, resource-based) are each powerful, and each is a well-trodden escalation path when configured carelessly. This is core OSEP / CRTP material."),
+            .animation(.delegation, caption: "A service with constrained delegation uses S4U2Self then S4U2Proxy to obtain a ticket as the Administrator to a target service — impersonating a user who never logged in."),
+            .heading("The three kinds"),
+            .keyPoints([
+                "Unconstrained — the service stores the TGT of anyone who authenticates to it. Compromise that host, harvest a Domain Admin's TGT, become them. (Printer Bug / coercion forces a DA to connect.)",
+                "Constrained (S4U) — the service may request tickets to *specific* services as any user, via S4U2Self + S4U2Proxy. Control it and you impersonate anyone to those services.",
+                "Resource-Based Constrained Delegation (RBCD) — set on the *target*; if you can write its msDS-AllowedToActOnBehalfOfOtherIdentity, you grant a computer you control the right to impersonate to it.",
+                "A common chain: gain write over a computer object → configure RBCD → impersonate Administrator to its CIFS/HOST service → SYSTEM."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "# constrained delegation impersonation (impacket)\ngetST.py -spn cifs/fs01.corp.local -impersonate Administrator corp.local/svc_web:Pass",
+                      output: """
+[*] Requesting S4U2self ; Requesting S4U2Proxy
+[*] Saving ticket in Administrator@cifs_fs01.ccache
+# now use that ticket → access FS01 as Administrator
+"""),
+            .definition(term: "S4U2Self / S4U2Proxy", meaning: "The two Kerberos extensions behind constrained delegation. S4U2Self lets a service obtain a ticket to itself as any user; S4U2Proxy then exchanges that for a ticket to an allowed back-end service — so a compromised delegating account can impersonate arbitrary users to those services."),
+            .callout(.danger, "Unconstrained delegation is the most dangerous: any account that authenticates to that host leaves its TGT in memory. Attackers coerce a Domain Controller or Domain Admin to authenticate (printer bug, PetitPotam) and harvest a TGT that owns the domain."),
+            .callout(.tip, "Blue team: mark Tier 0 accounts 'sensitive and cannot be delegated' (or add them to Protected Users), audit unconstrained delegation (there should be almost none), and tightly control who can write the delegation/RBCD attributes on computer objects."),
+            .checkpoint(QuizQuestion(
+                "An attacker compromises a server configured for *unconstrained* delegation and then coerces a Domain Controller to authenticate to it. What have they gained?",
+                options: [
+                    "Nothing useful",
+                    "The DC's TGT, cached on the unconstrained host — letting them act as the domain controller / Domain Admin",
+                    "Only the server's local password",
+                    "A reverse shell on the DC"
+                ],
+                correct: 1,
+                why: "Unconstrained delegation caches the TGT of anyone who authenticates. Coercing a DC to connect leaves its TGT on the attacker's host, which can be reused to impersonate the DC — effectively domain takeover."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the core risk of *unconstrained* delegation?",
+                options: [
+                    "It encrypts tickets twice",
+                    "Any account authenticating to the host leaves its TGT cached there, ready to be stolen and reused",
+                    "It disables Kerberos",
+                    "It only affects local logons"
+                ],
+                correct: 1,
+                why: "Unconstrained delegation stores the full TGT of every authenticating principal on the host. Compromising it (plus coercing a privileged account to connect) yields tickets that can impersonate those accounts."),
+            QuizQuestion(
+                "Resource-Based Constrained Delegation (RBCD) is configured where, and why does that matter to an attacker?",
+                options: [
+                    "On the attacker's laptop only",
+                    "On the *target* object — so write access to a computer's delegation attribute lets an attacker grant themselves impersonation to it",
+                    "On the domain controller exclusively",
+                    "It can't be abused"
+                ],
+                correct: 1,
+                why: "RBCD lives on the target's msDS-AllowedToActOnBehalfOfOtherIdentity. If an attacker can write that attribute, they authorize a computer they control to impersonate users to the target — a common modern escalation.")
+        ]
+    )
+
+    private static let trustLesson = Lesson(
+        id: "red-trusts",
+        title: "Domain & Forest Trust Attacks",
+        subtitle: "Compromising one domain is rarely the end — trusts are bridges to the rest of the forest.",
+        minutes: 11,
+        difficulty: .expert,
+        blocks: [
+            .heading("The forest is the real boundary"),
+            .paragraph("Big organizations run multiple domains linked by **trusts** so users in one can access resources in another. You learned the forest — not the domain — is AD's security boundary; trusts are why. Compromise a child domain and the parent (and the rest of the forest) is often one well-known technique away, because domains in a forest inherently trust each other's authentication."),
+            .animation(.forestTrust, caption: "A child-domain admin forges an inter-realm ticket carrying the Enterprise Admins SID; the trust accepts it, handing over the forest root."),
+            .heading("Climbing from child to forest root"),
+            .paragraph("The classic escalation: you're Domain Admin of a child domain and want the forest root. Because the parent trusts the child, you forge a ticket that asserts membership in the parent's **Enterprise Admins** group using **SID history**. The trust honors the SID, and you're effectively Enterprise Admin. The inter-realm trust key (extractable as a child DA) is what lets you sign that cross-domain ticket."),
+            .keyPoints([
+                "SID history — a ticket can carry extra SIDs; injecting a high-privilege parent SID (Enterprise Admins) escalates across the trust.",
+                "Trust key — the shared key between two domains; a child DA can extract it and forge inter-realm (trust) tickets.",
+                "SID filtering is the defense — and within a single forest it is *not* enforced by default, which is why intra-forest escalation works.",
+                "Cross-forest trusts DO filter SIDs by default, but misconfigurations (TGT delegation, foreign group memberships) still create paths.",
+                "Map trusts early (nltest, BloodHound) — they reveal which compromises cascade into others."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "# child DA → forest root via SID history (mimikatz golden ticket)\nkerberos::golden /user:Administrator /domain:child.corp.local \\\n  /sid:<child> /sids:<root>-519 /krbtgt:<hash> /ptt",
+                      output: """
+# /sids ...-519 = Enterprise Admins of the parent
+[*] Golden ticket built and injected → access to corp.local as Enterprise Admin
+"""),
+            .definition(term: "SID history", meaning: "An attribute (and ticket field) that lets an account retain SIDs from a previous domain during migrations. Attackers abuse it to smuggle a privileged SID (e.g. Enterprise Admins, RID 519) into a forged ticket; because intra-forest trusts don't filter SIDs by default, the target honors it."),
+            .callout(.warning, "Treat the whole forest as one blast radius. If a low-trust child domain is breached, the crown-jewel root domain should be considered at risk. True isolation requires a separate forest with selective authentication — not just a separate domain."),
+            .callout(.tip, "Blue team: enable SID filtering on trusts where the trusted domain isn't fully trusted, monitor for golden/inter-realm tickets with foreign SIDs, and minimize cross-domain privileged group memberships that quietly bridge trust boundaries."),
+            .checkpoint(QuizQuestion(
+                "Why can a Domain Admin of a child domain often escalate to Enterprise Admin of the forest root?",
+                options: [
+                    "Child DAs are automatically Enterprise Admins",
+                    "Intra-forest trusts don't filter SIDs by default, so a forged ticket carrying the Enterprise Admins SID is honored by the parent",
+                    "The forest root has no password",
+                    "They share the same Administrator account"
+                ],
+                correct: 1,
+                why: "Within a forest, SID filtering is off by default. A child DA can extract the trust/krbtgt material and forge a ticket with the parent's Enterprise Admins SID in SID history, which the trust accepts — escalating across the boundary."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the true security boundary in Active Directory, and why?",
+                options: [
+                    "The domain — domains never trust each other",
+                    "The forest — domains within it inherently trust each other, so a breach can cascade across the forest",
+                    "The OU",
+                    "A single server"
+                ],
+                correct: 1,
+                why: "Forests, not domains, are the boundary. Intra-forest trusts and the lack of default SID filtering mean compromising one domain frequently leads to the whole forest."),
+            QuizQuestion(
+                "SID filtering on a trust does what?",
+                options: [
+                    "Encrypts the trust",
+                    "Strips foreign/unexpected SIDs (like an injected Enterprise Admins SID) from tickets crossing the trust",
+                    "Speeds up authentication",
+                    "Disables Kerberos across domains"
+                ],
+                correct: 1,
+                why: "SID filtering removes SIDs that don't belong to the trusted domain, defeating SID-history injection. It's enforced across forest trusts by default but not within a single forest.")
+        ]
+    )
+
     // MARK: R6 — Evasion & defense bypass
 
     private static let evasion = Module(
         id: "red-evasion",
         title: "Evasion & Defense Bypass",
-        summary: "Modern endpoints fight back — get past antivirus, AMSI and EDR, and run code where the defenders aren't looking.",
+        summary: "Modern endpoints fight back — get past antivirus, AMSI, application whitelisting and EDR, and run code where the defenders aren't looking.",
         systemImage: "eye.slash.fill",
-        lessons: [avEvasionLesson, processInjectionLesson]
+        lessons: [avEvasionLesson, processInjectionLesson, applockerLesson]
     )
 
     private static let avEvasionLesson = Lesson(
@@ -1304,6 +1751,68 @@ CertUtil: -URLCache command completed successfully.
                 ],
                 correct: 1,
                 why: "There's nothing foreign to match a signature against — it's trusted software. Detection has to come from behavioral context (who ran it, with what arguments, doing what).")
+        ]
+    )
+
+    private static let applockerLesson = Lesson(
+        id: "red-applocker",
+        title: "Application Whitelisting Bypass",
+        subtitle: "When only approved programs may run, abuse an approved program to run yours.",
+        minutes: 10,
+        difficulty: .expert,
+        blocks: [
+            .heading("The allow-list model"),
+            .paragraph("Application whitelisting (AppLocker, Windows Defender Application Control) flips the usual model: instead of blocking known-bad, it permits *only* explicitly-approved programs and blocks everything else. Drop `evil.exe` and it simply won't run. It's a strong control — and the OSEP-style bypass is elegant: don't run your own binary at all, make an *already-approved* one run your code."),
+            .animation(.applockerBypass, caption: "A blocked executable in a user folder is denied; the same payload runs when invoked through a signed, whitelisted Microsoft binary like InstallUtil."),
+            .heading("Trusted binaries and writable paths"),
+            .keyPoints([
+                "LOLBins as runners — signed Microsoft binaries (InstallUtil, MSBuild, regsvr32, mshta, rundll32) execute attacker code while being on the allow-list.",
+                "Writable whitelisted paths — default rules often allow all of C:\\Windows; find a writable subfolder there and your binary is permitted.",
+                "DLLs over EXEs — many policies enforce EXEs but not DLLs or scripts; reach code execution through those gaps.",
+                "Living off the land — combine with the LOLBin techniques from the injection lesson; the goal is 'no disallowed binary ever runs'.",
+                "The LOLBAS project catalogs which trusted binaries can execute, download, or bypass — for attackers and defenders alike."
+            ]),
+            .terminal(prompt: "C:\\>",
+                      command: "MSBuild.exe evil.xml   :: signed MS binary compiles & runs inline C# task",
+                      output: """
+Microsoft (R) Build Engine version 4.8 ...
+Build started. <-- attacker C# in the .xml runs, fully whitelisted
+"""),
+            .definition(term: "LOLBAS", meaning: "Living Off the Land Binaries, Scripts and Libraries — a curated catalog of trusted, signed components already on Windows that can be abused to execute code, download files, or bypass controls like AppLocker. The defender's hunting list and the attacker's bypass menu are the same document."),
+            .callout(.warning, "Whitelisting bypass usually needs a foothold already (you're running as a user, just constrained). It's about defeating a containment control, not initial access — and like all evasion, it's strictly for authorized, scoped engagements."),
+            .callout(.tip, "Blue team: AppLocker is far stronger with DLL rules enabled and the known-bypass binaries (InstallUtil, MSBuild, regsvr32, mshta…) explicitly blocked. Microsoft's recommended block-rules list exists precisely to close these LOLBin holes; WDAC with enforced DLL/script policy is stronger still."),
+            .checkpoint(QuizQuestion(
+                "AppLocker blocks your `evil.exe`, but `InstallUtil.exe /U evil.dll` runs your code. Why does that work?",
+                options: [
+                    "InstallUtil disables AppLocker",
+                    "InstallUtil is a signed, whitelisted Microsoft binary, so the policy permits it — and it executes the attacker code you hand it",
+                    "The DLL is encrypted",
+                    "AppLocker doesn't run on that machine"
+                ],
+                correct: 1,
+                why: "Whitelisting trusts approved binaries. InstallUtil is signed and allowed, so running it satisfies the policy — and because it can execute the code in your DLL, your payload runs without any disallowed binary ever launching."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the core idea behind bypassing application whitelisting?",
+                options: [
+                    "Brute-forcing the admin password",
+                    "Getting an already-approved (signed/whitelisted) program to execute your code, instead of running your own binary",
+                    "Disabling the antivirus",
+                    "Overflowing a buffer"
+                ],
+                correct: 1,
+                why: "Whitelisting permits approved programs. The bypass abuses a trusted, allowed binary (a LOLBin) to run attacker code, so nothing disallowed ever has to launch."),
+            QuizQuestion(
+                "Why is enabling DLL rules important for AppLocker to be effective?",
+                options: [
+                    "DLLs are faster",
+                    "Without DLL/script rules, attackers reach execution through DLLs and scripts even when EXEs are controlled",
+                    "DLL rules encrypt the disk",
+                    "They aren't important"
+                ],
+                correct: 1,
+                why: "Many policies only enforce executables, leaving DLL and script execution paths open. Enabling DLL/script rules (and blocking known bypass binaries) closes the common holes.")
         ]
     )
 
@@ -1663,6 +2172,182 @@ msf-pattern_offset -l 600 -q 39694438
                 ],
                 correct: 1,
                 why: "Redirectors sit between victims and the team server, masking the true C2 location and making takedown and attribution harder.")
+        ]
+    )
+
+    // MARK: R9 — Binary exploitation deep-dive
+
+    private static let binexp = Module(
+        id: "red-binexp",
+        title: "Binary Exploitation",
+        summary: "Deeper memory corruption — SEH overwrites, format strings and the heap, the territory of OSED and OSEE.",
+        systemImage: "memorychip.fill",
+        lessons: [sehLesson, formatStringLesson, heapLesson]
+    )
+
+    private static let sehLesson = Lesson(
+        id: "red-seh",
+        title: "SEH Overflows & Egghunters",
+        subtitle: "Hijack Windows' exception-handling chain — and find your shellcode in a cramped buffer.",
+        minutes: 12,
+        difficulty: .expert,
+        blocks: [
+            .heading("Overflowing into the exception handler"),
+            .paragraph("The stack overflow you learned overwrote the saved return address. But on Windows, many overflows trip an exception *before* the function returns — and Windows keeps a linked list of **Structured Exception Handlers (SEH)** on the stack to deal with that. A classic Windows technique overflows far enough to clobber that SEH record, so when the program faults, *your* handler runs."),
+            .animation(.sehOverflow, caption: "The overflow clobbers the nSEH / handler pair; the thrown exception runs a pop-pop-ret gadget that lands back on nSEH's short jump into the shellcode."),
+            .heading("The nSEH / SEH dance"),
+            .paragraph("An SEH record is two values on the stack: a pointer to the **next** handler (nSEH) and a pointer to the **current** handler. You overwrite the handler with the address of a **`pop pop ret`** gadget. When the exception fires, Windows calls your handler; `pop pop ret` realigns the stack and *returns into nSEH* — which you've set to a short jump (`jmp +6`) that hops over the handler into your shellcode."),
+            .keyPoints([
+                "Overwrite SEH with a pop pop ret gadget (from a module without SafeSEH).",
+                "Set nSEH to a short jump that skips the 4-byte handler into your shellcode.",
+                "SafeSEH / SEHOP are the mitigations; bypass needs a gadget in a non-SafeSEH module.",
+                "Egghunter — when the buffer is too small, plant a tiny stager that searches memory for an 'egg' (a tag like w00tw00t) marking your real, larger shellcode.",
+                "Bad characters still matter — null bytes, 0x0a, 0x0d routinely break the payload."
+            ]),
+            .definition(term: "Egghunter", meaning: "A small (≈32-byte) piece of shellcode that scans process memory for a unique marker (the 'egg', e.g. w00tw00t) prefixed to your real payload, then jumps to it. It solves the problem of a controlled buffer too small to hold full shellcode by finding the larger payload elsewhere in memory."),
+            .callout(.warning, "SEH exploitation is Windows-specific and mitigation-sensitive: SafeSEH validates handlers, and SEHOP checks the chain's integrity. Real targets need a gadget from a module compiled without SafeSEH — finding that module is half the work."),
+            .callout(.tip, "The structure mirrors the stack overflow you already know — control execution at a saved pointer — but routed through the exception mechanism. Master the return-address case first; SEH is the same idea with one extra hop (`pop pop ret` → nSEH → jump)."),
+            .checkpoint(QuizQuestion(
+                "In an SEH overflow, what is the purpose of overwriting the handler with a `pop pop ret` gadget?",
+                options: [
+                    "To crash the program cleanly",
+                    "When the exception fires, pop pop ret realigns the stack and returns into the attacker-controlled nSEH (a short jump to shellcode)",
+                    "To disable DEP",
+                    "To leak a memory address"
+                ],
+                correct: 1,
+                why: "Windows calls the (overwritten) handler on the exception. A pop pop ret gadget pops two values and returns to the address sitting at nSEH — which the attacker set to a short jump into their shellcode."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does an egghunter solve?",
+                options: [
+                    "Defeating ASLR",
+                    "A controlled buffer too small for full shellcode — it searches memory for a tagged larger payload and jumps to it",
+                    "Cracking passwords",
+                    "Bypassing a firewall"
+                ],
+                correct: 1,
+                why: "When your injectable space is tiny, an egghunter is a small stager that scans memory for a unique marker prefixing your real shellcode, then transfers execution there."),
+            QuizQuestion(
+                "Which mitigation specifically validates exception handlers to thwart SEH overwrites?",
+                options: ["DEP", "ASLR", "SafeSEH (and SEHOP)", "A stack canary"],
+                correct: 2,
+                why: "SafeSEH validates that a handler is in a registered list; SEHOP verifies the integrity of the SEH chain. Both target SEH-overwrite exploitation specifically.")
+        ]
+    )
+
+    private static let formatStringLesson = Lesson(
+        id: "red-format-string",
+        title: "Format String Vulnerabilities",
+        subtitle: "One missing format specifier turns a print statement into an arbitrary read and write.",
+        minutes: 10,
+        difficulty: .expert,
+        blocks: [
+            .heading("The bug is a missing \"%s\""),
+            .paragraph("`printf(user_input)` looks harmless and is catastrophic. The format family (`printf`, `sprintf`, `fprintf`…) reads its format string for specifiers like `%s` and `%x` and pulls matching arguments off the stack. If the *user* controls the format string, they control which specifiers run — letting them read the stack, and with `%n`, **write** to memory. The correct call is `printf(\"%s\", user_input)`."),
+            .animation(.formatString, caption: "User-controlled %x specifiers leak stack memory; a %n turns the same bug into an arbitrary write to an address of the attacker's choosing."),
+            .heading("Read with %x, write with %n"),
+            .keyPoints([
+                "%x / %p — print stack words: a memory-disclosure primitive that can leak canaries and addresses (defeating ASLR).",
+                "%s — dereference a stack value as a pointer and print the string there: read arbitrary memory.",
+                "%n — write the number of bytes printed so far *to an address taken from the stack*: an arbitrary write.",
+                "Direct parameter access (%7$x) selects which stack slot, making exploitation precise.",
+                "Combine: leak an address with %x, then use %n to overwrite a saved return address or GOT entry."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "./vuln $'\\xc0\\xa0\\x04\\x08%7$n'   # write to 0x0804a0c0 via the 7th arg slot",
+                      output: """
+# bytes-printed value written to the chosen address
+# point it at a GOT entry → next library call jumps to attacker code
+"""),
+            .definition(term: "%n primitive", meaning: "The %n format specifier writes the count of characters output so far into the integer pointed to by the corresponding argument. With a user-controlled format string, the attacker supplies that pointer on the stack, turning %n into a write-what-where — overwrite a return address, GOT entry, or function pointer."),
+            .callout(.danger, "Format string bugs give both an info-leak (read) and an arbitrary write from a single vulnerability — enough to defeat ASLR and redirect execution. They're a compiler warning away from prevention: modern toolchains flag non-literal format strings (-Wformat-security)."),
+            .callout(.tip, "The fix is trivial and absolute: never pass user input as the format string. Use `printf(\"%s\", input)`. Defensively, compile with format-string warnings as errors — this class of bug is fully preventable at build time."),
+            .checkpoint(QuizQuestion(
+                "Why is `printf(user_controlled_string)` dangerous?",
+                options: [
+                    "It's just slow",
+                    "The user controls the format specifiers, so %x/%s read the stack and %n writes to memory — an arbitrary read/write",
+                    "It only prints text",
+                    "It encrypts the output"
+                ],
+                correct: 1,
+                why: "When the format string is attacker-controlled, its specifiers act on the stack: %x/%s leak memory and %n writes to an attacker-chosen address. The fix is printf(\"%s\", input)."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Which format specifier provides the arbitrary-write primitive?",
+                options: ["%x", "%s", "%n", "%d"],
+                correct: 2,
+                why: "%n writes the number of bytes printed so far to the address given by its argument. With a controlled format string, that becomes a write-what-where primitive."),
+            QuizQuestion(
+                "What is the complete fix for a format string vulnerability?",
+                options: [
+                    "Filter the % character",
+                    "Never pass user input as the format string — use a fixed format like printf(\"%s\", input)",
+                    "Run as a lower-privileged user",
+                    "Hide the binary"
+                ],
+                correct: 1,
+                why: "Passing user data only as an *argument* to a fixed format string removes all attacker control over specifiers. Compiler format-security warnings catch the mistake at build time.")
+        ]
+    )
+
+    private static let heapLesson = Lesson(
+        id: "red-heap",
+        title: "Heap Exploitation",
+        subtitle: "No return address here — corrupt the allocator's own structures and the objects living in them.",
+        minutes: 13,
+        difficulty: .expert,
+        blocks: [
+            .heading("Beyond the stack"),
+            .paragraph("Stack overflows target saved return addresses. But long-lived programs keep most of their data on the **heap** — dynamically allocated objects, buffers, and the allocator's own bookkeeping. Heap exploitation (the realm of OSEE and modern browser/kernel bugs) corrupts that memory to hijack a pointer the program will later trust: a function pointer, a C++ vtable, or the allocator's free-list metadata."),
+            .animation(.heapExploit, caption: "An object is freed but a pointer to it lingers; the attacker reallocates the slot with crafted data, so the dangling call jumps to their code — a use-after-free."),
+            .heading("The common primitives"),
+            .keyPoints([
+                "Heap overflow — overrun one chunk into the next, corrupting its data or the allocator's chunk header.",
+                "Use-after-free (UAF) — memory is freed but a stale pointer is still used; reclaim the slot with attacker data, then the dangling call lands in your control.",
+                "Double free — free the same chunk twice to corrupt free-list links and trick the allocator into returning an attacker-chosen address.",
+                "Heap grooming / Feng Shui — shape allocations so the chunk you corrupt sits right before the object you want to overwrite.",
+                "The target is usually a pointer the program dereferences: a C++ vtable, a callback, or function pointer → control of execution."
+            ]),
+            .definition(term: "Use-after-free", meaning: "A bug where memory is freed but a pointer to it keeps being used. An attacker allocates an object of the same size to reclaim that freed slot, fills it with controlled data (e.g. a fake vtable), and when the program follows the dangling pointer, it executes attacker-chosen code. The dominant bug class in modern browser and kernel exploitation."),
+            .callout(.warning, "Heap exploitation is allocator- and version-specific: glibc's tcache/fastbins, Windows' segment/LFH, and each browser's allocator behave differently. Reliability comes from heap grooming — deterministically arranging memory — which is as much art as science."),
+            .callout(.tip, "Defenses raise the bar a lot: hardened allocators with safe-unlinking and pointer checks, heap cookies, ASLR, and memory-safe languages (Rust) that prevent UAF/overflows by construction. Most new high-severity bugs are still memory-safety issues — which is the whole argument for memory-safe languages."),
+            .callout(.lab, "Build intuition on a deliberately vulnerable heap challenge (the classic 'heap notes' CTF style): allocate, free, and re-allocate objects while watching the chunks in a debugger to *see* a freed slot get reclaimed with your data. Authorized lab targets only."),
+            .checkpoint(QuizQuestion(
+                "In a use-after-free, how does an attacker turn a freed object into code execution?",
+                options: [
+                    "By freeing it again immediately",
+                    "Reclaim the freed slot with a controlled allocation (e.g. a fake vtable), so the program's stale pointer dereference jumps to attacker code",
+                    "By overflowing the stack",
+                    "By leaking the password"
+                ],
+                correct: 1,
+                why: "After the free, the pointer dangles. Allocating an object of the same size reuses that memory; filling it with a crafted vtable/function pointer means the next use of the dangling pointer calls attacker-controlled code."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why does heap exploitation target pointers like C++ vtables or function pointers rather than a return address?",
+                options: [
+                    "Return addresses don't exist",
+                    "Heap objects don't store return addresses; control comes from corrupting a pointer the program will later call through",
+                    "Vtables are encrypted",
+                    "It's faster"
+                ],
+                correct: 1,
+                why: "The heap holds data and objects, not saved return addresses. Hijacking execution means corrupting a pointer the program dereferences/calls — a vtable entry, callback, or function pointer."),
+            QuizQuestion(
+                "What is 'heap grooming' (heap feng shui)?",
+                options: [
+                    "Cleaning up memory leaks",
+                    "Deliberately arranging heap allocations so the chunk you can corrupt sits adjacent to the object you want to control",
+                    "Encrypting the heap",
+                    "A type of port scan"
+                ],
+                correct: 1,
+                why: "Grooming shapes the heap layout — through chosen allocation/free patterns — so the overflow or reclaimed slot lands exactly next to or on top of the target object, making exploitation reliable.")
         ]
     )
 }
