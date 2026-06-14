@@ -27,6 +27,7 @@ struct AnimationView: View {
         case .symmetricEncryption: SymmetricEncryptionView()
         case .publicKeyExchange:   PublicKeyExchangeView()
         case .hashing:             HashingView()
+        case .blockCipherModes:    BlockCipherModesView()
         case .httpRequest:         HTTPRequestView()
         case .adForest:            ADForestView()
         // Red team
@@ -46,6 +47,11 @@ struct AnimationView: View {
         case .clientSide:          ClientSideView()
         case .cloudMetadata:       CloudMetadataView()
         case .containerEscape:     ContainerEscapeView()
+        case .subdomainTakeover:   SubdomainTakeoverView()
+        case .requestSmuggling:    RequestSmugglingView()
+        case .raceCondition:       RaceConditionView()
+        case .fileUpload:          FileUploadView()
+        case .mobileSecurity:      MobileSecurityView()
         case .privilegeEscalation: PrivilegeEscalationView()
         case .passwordCracking:    PasswordCrackingView()
         case .kerberoasting:       KerberoastingView()
@@ -75,6 +81,8 @@ struct AnimationView: View {
         case .adTiering:           ADTieringView()
         case .threatIntel:         ThreatIntelView()
         case .zeroTrust:           ZeroTrustView()
+        case .emailAuth:           EmailAuthView()
+        case .honeyToken:          HoneyTokenView()
         }
     }
 }
@@ -87,6 +95,7 @@ enum AnimationCatalog {
         .cyberKillChain, .portScan, .phishingFlow, .sqlInjection, .xssReflected,
         .accessControl, .fileInclusion, .templateInjection, .csrf, .jwtAttack,
         .apiBola, .oauthFlow, .sourceReview, .clientSide, .cloudMetadata, .containerEscape,
+        .subdomainTakeover, .requestSmuggling, .raceCondition, .fileUpload, .mobileSecurity,
         .privilegeEscalation, .passwordCracking, .kerberoasting, .dcsync, .attackPath,
         .delegation, .forestTrust, .lateralMovement, .tunneling,
         .amsiBypass, .processInjection, .applockerBypass, .wifiHandshake, .arpPoisoning,
@@ -94,7 +103,7 @@ enum AnimationCatalog {
     ]
     private static let blueIDs: Set<AnimationID> = [
         .defenseInDepth, .siemPipeline, .incidentResponse, .mitreAttack, .threatHunting,
-        .adTiering, .threatIntel, .zeroTrust
+        .adTiering, .threatIntel, .zeroTrust, .emailAuth, .honeyToken
     ]
 
     static func accent(_ id: AnimationID) -> Color {
@@ -110,6 +119,10 @@ enum AnimationCatalog {
         case .accessControl, .fileInclusion, .templateInjection: return 296
         case .jwtAttack, .clientSide, .formatString, .heapExploit: return 296
         case .apiBola, .containerEscape:    return 300
+        case .subdomainTakeover, .requestSmuggling, .fileUpload: return 300
+        case .mobileSecurity:               return 296
+        case .raceCondition, .emailAuth:    return 286
+        case .blockCipherModes:             return 272
         case .encodingLayers:               return 288
         case .zeroTrust:                    return 286
         case .threatIntel:                  return 274
@@ -135,6 +148,7 @@ enum AnimationCatalog {
         case .symmetricEncryption: return "One shared key turns plaintext to ciphertext and back."
         case .publicKeyExchange:   return "A public key locks a message that only the private key can open."
         case .hashing:             return "A one-way fingerprint where a tiny change avalanches the output."
+        case .blockCipherModes:    return "Why ECB leaks structure — identical blocks encrypt identically — and CBC/GCM don't."
         case .httpRequest:         return "A browser and server trade requests — and a cookie carries the session."
         case .adForest:            return "How a domain nests under a forest, with every secret resting on the DC."
         case .cyberKillChain:      return "The seven stages of an intrusion — and where defenders break it."
@@ -153,6 +167,11 @@ enum AnimationCatalog {
         case .clientSide:          return "A macro-enabled document that runs code the moment it's opened."
         case .cloudMetadata:       return "An SSRF walks the cloud metadata service back to temporary IAM keys."
         case .containerEscape:     return "A mounted Docker socket turns a container foothold into root on the node."
+        case .subdomainTakeover:   return "A dangling DNS record lets an attacker claim a subdomain's abandoned service."
+        case .requestSmuggling:    return "Front-end and back-end disagree on a request's length, poisoning the next visitor."
+        case .raceCondition:       return "Parallel requests slip through the check-then-act gap to redeem a card five times."
+        case .fileUpload:          return "A disguised script slips past an upload filter and runs as a web shell."
+        case .mobileSecurity:      return "Plaintext token storage and a bypassed pin lay the app's API bare to a proxy."
         case .privilegeEscalation: return "Climbing from a low-privilege foothold to full root access."
         case .passwordCracking:    return "Streaming a wordlist through a hash until a password matches."
         case .kerberoasting:       return "Requesting a service ticket and cracking it offline."
@@ -181,6 +200,8 @@ enum AnimationCatalog {
         case .adTiering:           return "Admin tiers that stop a stolen low-tier credential reaching the DC."
         case .threatIntel:         return "The intelligence lifecycle turning raw data into decisions, then back again."
         case .zeroTrust:           return "Every request scored on identity, device and risk before least-privilege access."
+        case .emailAuth:           return "A spoofed sender fails SPF, DKIM and DMARC — and never reaches the inbox."
+        case .honeyToken:          return "A planted canary file fires a silent, near-zero-false-positive alert when touched."
         }
     }
 }

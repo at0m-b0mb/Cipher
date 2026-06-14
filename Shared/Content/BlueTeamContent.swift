@@ -20,7 +20,7 @@ enum BlueTeamContent {
         title: "Defensive Foundations",
         summary: "How defenders structure protection in layers, segment the network, harden Active Directory, and turn raw telemetry into alerts.",
         systemImage: "shield.lefthalf.filled",
-        lessons: [defenseLesson, networkDefenseLesson, adDefenseLesson, siemLesson]
+        lessons: [defenseLesson, networkDefenseLesson, emailAuthLesson, adDefenseLesson, siemLesson]
     )
 
     private static let defenseLesson = Lesson(
@@ -660,7 +660,7 @@ schtasks /create /tn Updater   <-- persistence (scheduled task)
         title: "Modern Defense",
         summary: "Defending today's environment — turning adversary data into intelligence, prioritising the vulnerabilities that matter, and the zero-trust model that assumes the perimeter has already failed.",
         systemImage: "shield.checkerboard",
-        lessons: [threatIntelLesson, vulnMgmtLesson, zeroTrustLesson]
+        lessons: [threatIntelLesson, vulnMgmtLesson, deceptionLesson, zeroTrustLesson]
     )
 
     private static let threatIntelLesson = Lesson(
@@ -835,6 +835,128 @@ domain evil-c2  -> registered 3 days ago, fast-flux
                 ],
                 correct: 1,
                 why: "Microsegmentation forces a policy check between zones, so compromising one host doesn't grant reach to the rest — directly constraining lateral movement and shrinking the blast radius.")
+        ]
+    )
+
+    // MARK: B1+ — Email authentication (defensive foundations)
+
+    private static let emailAuthLesson = Lesson(
+        id: "blue-email-auth",
+        title: "Email Authentication: SPF, DKIM & DMARC",
+        subtitle: "Email had no built-in proof of sender — these three records add it, and shut the door on domain spoofing.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Email was born trusting everyone"),
+            .paragraph("The `From:` address on an email is just text the sender writes — by default nothing stops anyone claiming to be `ceo@yourbank.com`. That's the root of so much phishing and business email compromise. Three layered DNS-based controls fix it: **SPF**, **DKIM**, and **DMARC**. Together they let a receiving server verify a message really came from a domain's authorized infrastructure — the direct counter to the phishing you studied on the offensive side."),
+            .animation(.emailAuth, caption: "A spoofed message claiming to be from corp.com fails SPF, then DKIM, and DMARC's reject policy drops it before it ever reaches the inbox."),
+            .heading("The three records, in plain terms"),
+            .keyPoints([
+                "SPF (Sender Policy Framework) — a DNS list of IPs/servers allowed to send mail for the domain. Receiver checks the sending IP is on it.",
+                "DKIM (DomainKeys Identified Mail) — the sending server cryptographically signs the message; the receiver verifies the signature with a public key in DNS, proving integrity and origin.",
+                "DMARC — ties SPF/DKIM to the visible From: domain (alignment) and tells receivers what to do on failure: none, quarantine, or reject — plus sends the domain owner reports.",
+                "Defense in depth: SPF can break on forwarding; DKIM survives it; DMARC makes the policy enforceable and visible.",
+                "Set DMARC to p=reject once you've confirmed legitimate mail passes — that's what actually stops spoofing."
+            ]),
+            .definition(term: "DMARC alignment", meaning: "DMARC requires that the domain validated by SPF or DKIM matches the domain in the visible From: header. This stops an attacker from passing SPF/DKIM for a domain they control while spoofing a different From: address — closing the gap the older two controls left open."),
+            .terminal(prompt: "analyst",
+                      command: "dig +short TXT _dmarc.corp.com",
+                      output: """
+\"v=DMARC1; p=reject; rua=mailto:dmarc@corp.com; adkim=s; aspf=s\"
+# p=reject → receivers DROP mail that fails alignment; reports go to rua
+"""),
+            .callout(.tip, "p=none is monitor-only — it reports but blocks nothing. Many domains stall there for fear of dropping real mail. The protection only kicks in at quarantine/reject, so use the reports to fix legitimate senders, then enforce."),
+            .callout(.warning, "These authenticate the *domain*, not the human, and don't stop look-alike domains (corp-support.com) or a genuinely compromised account. They're a powerful layer against exact-domain spoofing — not a complete anti-phishing solution on their own."),
+            .checkpoint(QuizQuestion(
+                "What does setting a domain's DMARC policy to `p=reject` accomplish?",
+                options: [
+                    "It encrypts all outgoing email",
+                    "It tells receiving servers to drop messages that fail SPF/DKIM alignment — blocking spoofed mail from that domain",
+                    "It hides the From: address",
+                    "It disables SPF and DKIM"
+                ],
+                correct: 1,
+                why: "DMARC reject instructs receivers to discard mail that isn't authenticated and aligned to the From: domain, which is what actually prevents attackers from spoofing that domain into inboxes."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does DKIM provide that SPF does not?",
+                options: [
+                    "A list of allowed sending IPs",
+                    "A cryptographic signature proving the message's integrity and that it came from the domain — and it survives forwarding",
+                    "A faster delivery path",
+                    "Encryption of the mailbox"
+                ],
+                correct: 1,
+                why: "SPF authorises sending IPs; DKIM signs the message itself, so the receiver verifies origin and integrity via a DNS public key — and unlike SPF, the signature still validates after forwarding."),
+            QuizQuestion(
+                "Why is DMARC needed on top of SPF and DKIM?",
+                options: [
+                    "It replaces them",
+                    "It enforces alignment with the visible From: domain and defines an enforcement policy (reject/quarantine) plus reporting",
+                    "It encrypts DNS",
+                    "It scans attachments for malware"
+                ],
+                correct: 1,
+                why: "SPF/DKIM can pass for a domain the attacker controls while spoofing another From:. DMARC closes that by requiring alignment to the From: domain and telling receivers how to act on failure — making the protection enforceable.")
+        ]
+    )
+
+    // MARK: B-MOD+ — Deception (modern defense)
+
+    private static let deceptionLesson = Lesson(
+        id: "blue-deception",
+        title: "Deception: Honeypots & Canary Tokens",
+        subtitle: "Plant tripwires no legitimate user would ever touch — so the alert that fires is almost never wrong.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Turning the attacker's curiosity against them"),
+            .paragraph("Most detection drowns in false positives. **Deception** flips the economics: you scatter attractive traps — fake servers, files, accounts and credentials — that have **no legitimate use**. Nobody normal opens `Q4_Salaries_FINAL.xlsx` on the file server or logs in as the dormant `backup_admin`. So when something touches one, it's almost certainly an intruder. Deception produces extremely **high-signal, low-false-positive** alerts."),
+            .animation(.honeyToken, caption: "An intruder opens a planted canary file; it silently beacons out, and the SOC gets a high-confidence tripwire alert — with the attacker none the wiser."),
+            .heading("From honeypots to canary tokens"),
+            .keyPoints([
+                "Honeypot — a decoy system that looks real and exists only to be attacked; any interaction is suspicious.",
+                "Honey account / honey credentials — a tempting unused account (or creds left in a file) whose every use is an alert; pairs with the honeypot AD account you met in Defending AD.",
+                "Canary token — a tiny tripwire embedded in a document, URL, AWS key or DNS name that 'phones home' the instant it's opened or used.",
+                "Deception is most powerful *inside* the network — it shines a light on the lateral-movement and recon phases that evade prevention.",
+                "Low cost, low noise: a handful of well-placed tokens can catch an intruder who beat every other control."
+            ]),
+            .definition(term: "Canary token", meaning: "A unique, embedded tripwire (in a file, link, API key, QR code or DNS record) that triggers a silent alert the moment it is accessed or used. Because it has no real purpose, an alert is near-certain evidence of unauthorized activity — and the attacker usually doesn't realise they tripped it."),
+            .callout(.tip, "Place tokens where an attacker will look but a user won't: a 'passwords' spreadsheet on a share, fake AWS keys in a repo or config, a honey admin account with a tempting name. Free services (e.g. Canarytokens) make minting them trivial."),
+            .callout(.warning, "Deception complements, never replaces, prevention and detection. Tokens must be realistic and maintained — a stale, obvious decoy is ignored, and a token that legitimate automation touches becomes just another false positive."),
+            .checkpoint(QuizQuestion(
+                "Why do canary tokens and honeypots generate such high-confidence alerts?",
+                options: [
+                    "They use machine learning",
+                    "They have no legitimate purpose, so any interaction is almost certainly an intruder — near-zero false positives",
+                    "They block the attacker automatically",
+                    "They scan all network traffic"
+                ],
+                correct: 1,
+                why: "Because nobody legitimate has any reason to touch a decoy file, account, or token, an access event is strong evidence of malicious activity — the opposite of noisy, ambiguous alerts."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Where is deception (honeypots/tokens) most valuable in catching an intrusion?",
+                options: [
+                    "At the public website's homepage only",
+                    "Inside the network — surfacing the recon and lateral-movement that slip past preventive controls",
+                    "On the attacker's own machine",
+                    "In the SPF record"
+                ],
+                correct: 1,
+                why: "Internal decoys catch attackers who already have a foothold and are exploring or moving laterally — exactly the post-breach phases that prevention tends to miss."),
+            QuizQuestion(
+                "What is a honey account?",
+                options: [
+                    "An admin's real account",
+                    "A deceptive, unused account whose every login attempt is high-signal evidence of an attacker",
+                    "A shared service account",
+                    "A backup of the domain controller"
+                ],
+                correct: 1,
+                why: "A honey account exists only as bait. Since no legitimate user signs into it, any authentication attempt strongly indicates an intruder probing or using harvested credentials.")
         ]
     )
 }

@@ -39,6 +39,7 @@
 		8644CC0500F77FBFFCC48C66 /* QuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE2DC8F1441A0A9A2C6A4AB /* QuizView.swift */; };
 		91EDC594E0C19F5443569919 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04166D30254FCF0CDB1BDF4F /* DashboardView.swift */; };
 		93E78052A52EE7370A41C5DA /* TracksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B01B4C6F13DA1F3424FF12 /* TracksView.swift */; };
+		947819F014CD57FDF09ACFBA /* AnimationsModern2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC1574538A0351D9400DD9C /* AnimationsModern2.swift */; };
 		9E819F70EB414B7A5A510A12 /* AnimationsBlue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 927B7F5E621E5BBDDFE40BD2 /* AnimationsBlue.swift */; };
 		A170F91ABF4C339F8D118C54 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ACEAED0770FD0D7F7161F0D /* ProfileView.swift */; };
 		A82A414CBE900996C4A54274 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0B5D5CB8B14FE4A5A0F483DD /* Assets.xcassets */; };
@@ -94,6 +95,7 @@
 		155F574F70EEAEE63457F986 /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
 		18DC90F5F3FCC6B18B4F8051 /* Cipher Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cipher Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1C6D27C215F7080C80F484DC /* WatchRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRootView.swift; sourceTree = "<group>"; };
+		1DC1574538A0351D9400DD9C /* AnimationsModern2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsModern2.swift; sourceTree = "<group>"; };
 		23B01B4C6F13DA1F3424FF12 /* TracksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TracksView.swift; sourceTree = "<group>"; };
 		270D52C64D8488D41368E1AF /* AnimationsBinexp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsBinexp.swift; sourceTree = "<group>"; };
 		3E42F3EC85180B226D42F0F3 /* Curriculum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Curriculum.swift; sourceTree = "<group>"; };
@@ -242,6 +244,7 @@
 				270D52C64D8488D41368E1AF /* AnimationsBinexp.swift */,
 				927B7F5E621E5BBDDFE40BD2 /* AnimationsBlue.swift */,
 				DD5C5C85CF923F029DB6D987 /* AnimationsModern.swift */,
+				1DC1574538A0351D9400DD9C /* AnimationsModern2.swift */,
 				9F5412CD0E9A766E4B4115E8 /* AnimationsNetworkCrypto.swift */,
 				F0ED949A2970AADCA2F4257A /* AnimationsOffense2.swift */,
 				E15092E688DFFA417B4D1090 /* AnimationsRed.swift */,
@@ -381,6 +384,7 @@
 				6317DC8C19C76EF4CC6C83F2 /* AnimationsBinexp.swift in Sources */,
 				9E819F70EB414B7A5A510A12 /* AnimationsBlue.swift in Sources */,
 				D4BE60486130665CD89BDE75 /* AnimationsModern.swift in Sources */,
+				947819F014CD57FDF09ACFBA /* AnimationsModern2.swift in Sources */,
 				CDBEE0DC4A6E1B2B9E0CE2BF /* AnimationsNetworkCrypto.swift in Sources */,
 				B7E63265782C70605888A73D /* AnimationsOffense2.swift in Sources */,
 				31F99C8D52CE8DD5F1EB4732 /* AnimationsRed.swift in Sources */,

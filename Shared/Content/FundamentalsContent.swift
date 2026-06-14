@@ -473,7 +473,7 @@ Hi!
         title: "Cryptography Essentials",
         summary: "Symmetric vs public-key encryption, and why hashing is what stands between a database leak and your password.",
         systemImage: "lock.shield",
-        lessons: [encryptionLesson, hashingLesson]
+        lessons: [encryptionLesson, blockModesLesson, hashingLesson]
     )
 
     private static let encryptionLesson = Lesson(
@@ -519,6 +519,60 @@ Hi!
                 options: ["public key", "private key", "shared AES key", "session cookie"],
                 correct: 1,
                 why: "Signing uses the private key; verification uses the public key. This proves the message came from the holder of the private key and wasn't modified.")
+        ]
+    )
+
+    private static let blockModesLesson = Lesson(
+        id: "fund-block-modes",
+        title: "Block Cipher Modes & Their Pitfalls",
+        subtitle: "AES encrypts one block at a time — how you chain those blocks decides whether your secret stays secret.",
+        minutes: 9,
+        difficulty: .advanced,
+        blocks: [
+            .heading("A block cipher only encrypts one block"),
+            .paragraph("AES doesn't encrypt a whole message — it encrypts a single fixed-size **block** (16 bytes) at a time. To protect anything longer, you apply it repeatedly under a **mode of operation**, and the mode you pick matters enormously. The same key and the same AES can be secure or catastrophically broken depending on how the blocks are chained."),
+            .heading("ECB: the mode that leaks"),
+            .paragraph("The naive mode, **ECB** (Electronic Codebook), encrypts each block completely independently. That means **identical plaintext blocks produce identical ciphertext blocks** — so the structure of the data survives encryption. Encrypt a bitmap of a penguin under ECB and you can still see the penguin in the ciphertext. ECB hides values but not *patterns*, which is why it must never be used for real data."),
+            .animation(.blockCipherModes, caption: "A patterned plaintext encrypted under ECB keeps its shape — identical blocks map to identical output — while CBC/GCM scramble it into noise."),
+            .heading("CBC, and why we add randomness"),
+            .paragraph("Better modes break that pattern by mixing each block with the previous one (or a counter) plus a random **IV** (initialization vector), so encrypting the same plaintext twice yields different ciphertext. **CBC** chains blocks together; modern **AEAD** modes like **GCM** go further and add built-in *authentication* so tampering is detected. The lesson: encryption needs the right mode *and* integrity, not just a strong cipher."),
+            .keyPoints([
+                "A block cipher (AES) encrypts fixed-size blocks; a mode applies it across a message.",
+                "ECB encrypts blocks independently → identical blocks leak as identical ciphertext (patterns survive).",
+                "CBC chains blocks with an IV so repetition is hidden — but it provides no integrity by itself.",
+                "GCM (AEAD) gives confidentiality AND authentication — the modern default.",
+                "A unique, unpredictable IV/nonce per message is essential; reusing one breaks the guarantees."
+            ]),
+            .definition(term: "Mode of operation", meaning: "The scheme that applies a block cipher (like AES) repeatedly to encrypt data longer than one block. ECB is insecure because it leaks patterns; CBC chains blocks with an IV; GCM adds authentication. The cipher can be strong while the mode makes the system weak."),
+            .callout(.danger, "ECB is a real-world finding, not a museum piece: developers reach for the 'default' AES call and get ECB, then encrypted-but-patterned data (database fields, tokens, images) leaks structure an attacker can exploit. Seeing repeating ciphertext blocks is a tell."),
+            .callout(.tip, "Modern guidance: use an authenticated mode (AES-GCM or ChaCha20-Poly1305) with a unique nonce per message, via a vetted library — never hand-roll crypto, and never select ECB."),
+            .checkpoint(QuizQuestion(
+                "Why can you still 'see' a simple image after encrypting it with AES in ECB mode?",
+                options: [
+                    "AES is a weak cipher",
+                    "ECB encrypts each block independently, so identical plaintext blocks become identical ciphertext blocks — the pattern is preserved",
+                    "The image wasn't really encrypted",
+                    "The key was too short"
+                ],
+                correct: 1,
+                why: "ECB lacks chaining, so repeated input blocks map to repeated output blocks. The pixel patterns (large areas of one colour) repeat identically in the ciphertext, leaving the image's structure visible despite strong AES."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the core weakness of ECB mode?",
+                options: [
+                    "It's too slow",
+                    "Identical plaintext blocks encrypt to identical ciphertext blocks, leaking the data's structure",
+                    "It can't use AES",
+                    "It requires two keys"
+                ],
+                correct: 1,
+                why: "Because ECB encrypts each block independently with no chaining or IV, repetition in the plaintext shows up as repetition in the ciphertext — patterns survive encryption."),
+            QuizQuestion(
+                "Which mode provides both confidentiality and built-in integrity/authentication?",
+                options: ["ECB", "CBC", "AES-GCM (AEAD)", "Plain AES"],
+                correct: 2,
+                why: "GCM is an authenticated (AEAD) mode: it encrypts and produces an authentication tag, so tampering is detected. ECB leaks patterns and CBC alone offers no integrity.")
         ]
     )
 

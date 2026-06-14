@@ -84,6 +84,7 @@ enum AnimationID: String, CaseIterable, Codable {
     case symmetricEncryption
     case publicKeyExchange
     case hashing
+    case blockCipherModes
     case httpRequest
     case adForest
 
@@ -104,6 +105,11 @@ enum AnimationID: String, CaseIterable, Codable {
     case clientSide
     case cloudMetadata
     case containerEscape
+    case subdomainTakeover
+    case requestSmuggling
+    case raceCondition
+    case fileUpload
+    case mobileSecurity
     case privilegeEscalation
     case passwordCracking
     case kerberoasting
@@ -134,6 +140,8 @@ enum AnimationID: String, CaseIterable, Codable {
     case adTiering
     case threatIntel
     case zeroTrust
+    case emailAuth
+    case honeyToken
 
     /// Short human label used in the lesson UI chrome.
     var label: String {
@@ -145,6 +153,7 @@ enum AnimationID: String, CaseIterable, Codable {
         case .symmetricEncryption: return "Symmetric Encryption"
         case .publicKeyExchange:   return "Public-Key Exchange"
         case .hashing:             return "Hashing"
+        case .blockCipherModes:    return "Block Cipher Modes (ECB)"
         case .httpRequest:         return "An HTTP Request"
         case .adForest:            return "Active Directory Forest"
         case .cyberKillChain:      return "The Cyber Kill Chain"
@@ -163,6 +172,11 @@ enum AnimationID: String, CaseIterable, Codable {
         case .clientSide:          return "Client-Side Attack"
         case .cloudMetadata:       return "Cloud Metadata SSRF"
         case .containerEscape:     return "Container Escape"
+        case .subdomainTakeover:   return "Subdomain Takeover"
+        case .requestSmuggling:    return "HTTP Request Smuggling"
+        case .raceCondition:       return "Race Condition (TOCTOU)"
+        case .fileUpload:          return "Insecure File Upload"
+        case .mobileSecurity:      return "Mobile App Attack"
         case .privilegeEscalation: return "Privilege Escalation"
         case .passwordCracking:    return "Offline Password Cracking"
         case .kerberoasting:       return "Kerberoasting"
@@ -191,6 +205,8 @@ enum AnimationID: String, CaseIterable, Codable {
         case .adTiering:           return "Tiered AD Administration"
         case .threatIntel:         return "Threat Intelligence Cycle"
         case .zeroTrust:           return "Zero Trust Decision"
+        case .emailAuth:           return "Email Auth (SPF/DKIM/DMARC)"
+        case .honeyToken:          return "Honeypots & Canary Tokens"
         }
     }
 }

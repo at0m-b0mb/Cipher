@@ -43,6 +43,8 @@ enum Flashcards {
         Flashcard("Base64", "Encodes arbitrary bytes into 64 printable characters (3 bytes → 4 chars, often '='-padded) so binary survives text channels. Reversible, not secret.", .fundamentals),
         Flashcard("URL Encoding", "Percent-encoding that escapes unsafe characters for URLs: space→%20, !→%21, ../→%2e%2e%2f. Reversible representation, no key.", .fundamentals),
         Flashcard("Encoding vs Encryption", "Encoding (hex/Base64/URL) is reversible re-representation with no key; encryption needs a key. No key means no confidentiality — a classic mix-up.", .fundamentals),
+        Flashcard("ECB Mode", "The naive block-cipher mode: each block encrypts independently, so identical plaintext blocks → identical ciphertext. Leaks patterns (the 'ECB penguin'). Never use it.", .fundamentals),
+        Flashcard("AEAD / GCM", "Authenticated encryption (e.g. AES-GCM) provides confidentiality AND integrity, detecting tampering. The modern default — used with a unique nonce per message.", .fundamentals),
 
         // Red team
         Flashcard("OSINT", "Open-source intelligence — recon from public data with no contact to the target's systems.", .redTeam),
@@ -116,6 +118,11 @@ enum Flashcards {
         Flashcard("Container Escape", "Breaking a container's namespace/cgroup isolation to run on the shared host kernel — via a mounted Docker socket, --privileged, capabilities or a host mount.", .redTeam),
         Flashcard("Docker Socket", "/var/run/docker.sock — control of it is root on the host. Mounted into a container, it lets you start a new container mounting the host's filesystem.", .redTeam),
         Flashcard("K8s Service-Account Token", "A pod's identity to the Kubernetes API server. With over-permissive RBAC it lists secrets, creates pods, or schedules a host-mounting pod — owning the cluster.", .redTeam),
+        Flashcard("Subdomain Takeover", "A dangling DNS record points to a deprovisioned third-party service; claim that service and you control content on the victim's trusted subdomain.", .redTeam),
+        Flashcard("HTTP Request Smuggling", "Front-end and back-end disagree on a request's length (CL vs TE), so smuggled bytes prepend to the next user's request — poisoning their traffic.", .redTeam),
+        Flashcard("Race Condition (TOCTOU)", "Parallel requests slip through the gap between check and act (time-of-check to time-of-use), so a one-time action fires several times. Fix: atomicity/locks.", .redTeam),
+        Flashcard("Web Shell", "A script an attacker uploads to a web server that runs OS commands over HTTP — interactive control of the host through the browser. Often via insecure file upload.", .redTeam),
+        Flashcard("Certificate Pinning", "A mobile app hard-codes its server's certificate to block interception — but the check runs client-side, so Frida/Objection can hook it out on a rooted device.", .redTeam),
 
         // Blue team
         Flashcard("Defense in Depth", "Layering independent controls so an attacker must defeat all of them.", .blueTeam),
@@ -145,7 +152,11 @@ enum Flashcards {
         Flashcard("EPSS", "Exploit Prediction Scoring System — a probability (0–1) that a CVE will be exploited soon. Patch by likelihood, not just raw CVSS severity.", .blueTeam),
         Flashcard("CISA KEV", "The Known Exploited Vulnerabilities catalog — CVEs confirmed exploited in the wild. Treat anything on it as drop-everything, regardless of CVSS.", .blueTeam),
         Flashcard("Vulnerability Management", "The continuous loop of discover → assess → prioritise (by risk, not raw score) → remediate → verify. Success is fixing what matters, fast.", .blueTeam),
-        Flashcard("Microsegmentation", "Splitting the network into small, individually-policed zones so one foothold can't roam — the Zero Trust control that directly blunts lateral movement.", .blueTeam)
+        Flashcard("Microsegmentation", "Splitting the network into small, individually-policed zones so one foothold can't roam — the Zero Trust control that directly blunts lateral movement.", .blueTeam),
+        Flashcard("SPF", "Sender Policy Framework — a DNS list of IPs authorised to send mail for a domain; receivers reject mail from IPs not on it. Anti-spoofing layer one.", .blueTeam),
+        Flashcard("DKIM", "DomainKeys Identified Mail — the sender cryptographically signs each message; receivers verify it with a DNS public key, proving origin and integrity (survives forwarding).", .blueTeam),
+        Flashcard("DMARC", "Ties SPF/DKIM to the visible From: domain (alignment) and sets the policy on failure — none/quarantine/reject — plus reporting. p=reject is what actually stops domain spoofing.", .blueTeam),
+        Flashcard("Canary Token", "A tripwire embedded in a file, link, API key or DNS name that silently alerts when accessed. No legitimate use → near-zero false positives; the attacker rarely knows they tripped it.", .blueTeam)
     ]
 
     static func cards(for category: TrackKind) -> [Flashcard] {

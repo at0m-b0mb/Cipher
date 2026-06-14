@@ -20,7 +20,7 @@ The same ground professional programs charge thousands for — framed throughout
 ![SwiftUI](https://img.shields.io/badge/SwiftUI-100%25-FF4D6A?style=flat-square&logo=swift&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-3CE88B?style=flat-square)
 ![Offline](https://img.shields.io/badge/works-fully%20offline-2BE6C0?style=flat-square)
-![Content](https://img.shields.io/badge/64%20lessons%20%C2%B7%2053%20animations-9B8CFF?style=flat-square)
+![Content](https://img.shields.io/badge/72%20lessons%20%C2%B7%2061%20animations-9B8CFF?style=flat-square)
 
 </div>
 
@@ -38,14 +38,14 @@ The same ground professional programs charge thousands for — framed throughout
 
 | | |
 |---|---|
-| 📚 **3 tracks · 24 modules · 64 lessons** | Real, accurate, opinionated content modelled on professional curricula (OSCP/OSWA/OSWE/OSEP/OSED/OSEE/OSWP) — plus modern cloud, container, API and defence topics. Not placeholders. |
-| 🎬 **53 interactive animated explainers** | Every one **plays, pauses, scrubs and changes speed** — freeze an attack mid-step and drag through it frame by frame. |
+| 📚 **3 tracks · 25 modules · 72 lessons** | Real, accurate, opinionated content modelled on professional curricula (OSCP/OSWA/OSWE/OSEP/OSED/OSEE/OSWP) — plus modern cloud, container, API, mobile and defence topics. Not placeholders. |
+| 🎬 **61 interactive animated explainers** | Every one **plays, pauses, scrubs and changes speed** — freeze an attack mid-step and drag through it frame by frame. |
 | 💻 **Simulated terminals** | Type out real commands (`nmap`, `hashcat`, `secretsdump`, `responder`, `getST`, `ROPgadget`, `proxychains`…) and print output line by line, like a live shell. |
 | 🧠 **Quizzes & knowledge checks** | Scored, explained, and physical — haptics, a shake on a wrong answer, a pop on a right one, and a confetti burst when you pass. |
 | 🏆 **Progress system** | XP, a 7-tier rank ladder (Initiate → Elite Operator), per-track completion rings, and a daily streak. |
 | 📖 **Built for the phone** | A reading-progress bar on every lesson, an **Up next** hand-off that chains lesson → lesson, and rich inline-formatted prose. |
 | ⌚ **Apple Watch companion** | A seeded daily flashcard drill, a "term of the day", and your streak/rank — sharing the same curriculum engine. |
-| 📖 **121-term searchable glossary** | Every key concept, one tap away. |
+| 📖 **132-term searchable glossary** | Every key concept, one tap away. |
 | ⚖️ **Ethics first** | A first-launch authorization pledge and reminders that everything here is for systems you own or are authorized to test. |
 
 ---
@@ -75,18 +75,19 @@ Built from a handful of reusable engines — `FlowStage` (node-to-node messaging
 - **Systems & the Shell** — Linux & the Command Line
 - **Networking for Hackers** — The OSI & TCP/IP Models · TCP, Ports & the 3-Way Handshake · Anatomy of a Packet
 - **Data & Encoding** *(new)* — Bytes, Hex, Base64 & Encoding
-- **Cryptography Essentials** — Symmetric & Public-Key Encryption · Hashing, Salting & Leaked Passwords
+- **Cryptography Essentials** — Symmetric & Public-Key Encryption · Block Cipher Modes & Their Pitfalls *(new)* · Hashing, Salting & Leaked Passwords
 - **How the Web Works** — HTTP, Cookies & Sessions
 - **Windows & Active Directory** — Active Directory Foundations *(new)*
 
 ### 🟥 Red Team — *think like the adversary*
 - **Reconnaissance** — Passive Recon & OSINT · Active Scanning & Enumeration
 - **Initial Access & Exploitation** — Phishing & Social Engineering · Client-Side Attacks *(new)* · Exploiting Services & Getting a Shell
-- **Web Application Attacks** — SQL Injection · Cross-Site Scripting (XSS) · Command Injection & SSRF · Broken Access Control & IDOR · Path Traversal & File Inclusion · SSTI, XXE & Insecure Deserialization · Cross-Site Request Forgery · JWT & Token Attacks · API & GraphQL Attacks *(new)* · OAuth, SSO & Token Theft *(new)* · White-Box Source Code Review
+- **Web Application Attacks** — SQL Injection · Cross-Site Scripting (XSS) · Command Injection & SSRF · Broken Access Control & IDOR · Path Traversal & File Inclusion · Insecure File Uploads → Web Shell *(new)* · SSTI, XXE & Insecure Deserialization · Cross-Site Request Forgery · JWT & Token Attacks · API & GraphQL Attacks · OAuth, SSO & Token Theft · Subdomain Takeover & DNS Attacks *(new)* · HTTP Request Smuggling *(new)* · Race Conditions & TOCTOU *(new)* · White-Box Source Code Review
 - **Post-Exploitation** — Privilege Escalation · Password Attacks & Cracking · Tunneling & Port Forwarding
 - **Active Directory & Lateral Movement** — Kerberoasting · AS-REP Roasting, DCSync & Golden Tickets · Attack Paths & ACL Abuse · Pivoting & Lateral Movement
 - **Advanced Active Directory** — Kerberos Delegation Abuse · Domain & Forest Trust Attacks
 - **Cloud & Container Attacks** *(new)* — Attacking Cloud Infrastructure · Container & Kubernetes Breakouts
+- **Mobile App Attacks** *(new)* — Attacking Mobile Applications
 - **Evasion & Defense Bypass** — Antivirus, AMSI & EDR Evasion · Process Injection & Living Off the Land · Application Whitelisting Bypass
 - **Wireless & Network Attacks** — Wi-Fi Attacks: WPA2 & Evil Twin · Network Poisoning & MITM
 - **Advanced Exploitation & C2** — Stack Buffer Overflows · Defeating Mitigations: DEP, ASLR & ROP · Command & Control
@@ -94,33 +95,35 @@ Built from a handful of reusable engines — `FlowStage` (node-to-node messaging
 - **The Operator's Field Manual** *(new)* — Build Your Practice Lab · Methodology & Writing the Report
 
 ### 🟦 Blue Team — *detect, respond, outlast*
-- **Defensive Foundations** — Defense in Depth & the SOC · Network Security & Firewalls · Defending Active Directory · Logging, Telemetry & the SIEM
+- **Defensive Foundations** — Defense in Depth & the SOC · Network Security & Firewalls · Email Authentication: SPF, DKIM & DMARC *(new)* · Defending Active Directory · Logging, Telemetry & the SIEM
 - **Detection Engineering** — MITRE ATT&CK for Defenders · Detection Engineering
 - **Threat Hunting & Incident Response** — Threat Hunting · Incident Response Lifecycle
-- **Modern Defense** *(new)* — Cyber Threat Intelligence · Vulnerability Management · Zero Trust Architecture
+- **Modern Defense** *(new)* — Cyber Threat Intelligence · Vulnerability Management · Deception: Honeypots & Canary Tokens *(new)* · Zero Trust Architecture
 - **Forensics & Malware** — Digital Forensics Essentials · Intro to Malware Analysis
 
 <details>
-<summary><b>The 53 animated explainers</b></summary>
+<summary><b>The 61 animated explainers</b></summary>
 
 <br>
 
 `OSI Model` · `TCP Handshake` · `Anatomy of a Packet` · `Encoding Layers` ·
-`Symmetric Encryption` · `Public-Key Exchange` · `Hashing` · `An HTTP Request` ·
-`Active Directory Forest` · `Cyber Kill Chain` · `Port Scanning` ·
+`Symmetric Encryption` · `Public-Key Exchange` · `Hashing` · `Block Cipher Modes (ECB)` ·
+`An HTTP Request` · `Active Directory Forest` · `Cyber Kill Chain` · `Port Scanning` ·
 `Phishing → Initial Access` · `Client-Side Attack` · `SQL Injection` ·
 `Cross-Site Scripting` · `Broken Access Control (IDOR)` ·
-`Path Traversal & File Inclusion` · `Server-Side Template Injection` ·
+`Path Traversal & File Inclusion` · `Insecure File Upload` · `Server-Side Template Injection` ·
 `Cross-Site Request Forgery` · `JWT Token Attacks` · `API & GraphQL (BOLA)` ·
-`OAuth Token Theft` · `Source-to-Sink (White-Box)` · `Cloud Metadata SSRF` ·
-`Container Escape` · `Privilege Escalation` · `Password Cracking` · `Kerberoasting` ·
-`DCSync → Golden Ticket` · `Attack Path (BloodHound)` · `Kerberos Delegation Abuse` ·
-`Forest Trust Abuse` · `Lateral Movement` · `Tunneling & Pivoting` · `AMSI Bypass` ·
-`Process Injection` · `AppLocker Bypass` · `WPA2 Handshake Capture` · `ARP Poisoning (MITM)` ·
-`Buffer Overflow` · `Return-Oriented Programming` · `SEH Overflow` · `Format String Exploit` ·
-`Heap Exploitation` · `C2 Beacon` · `Defense in Depth` · `SIEM Pipeline` ·
-`Incident Response Lifecycle` · `MITRE ATT&CK` · `Threat Hunting` ·
-`Tiered AD Administration` · `Threat Intelligence Cycle` · `Zero Trust Decision`
+`OAuth Token Theft` · `Subdomain Takeover` · `HTTP Request Smuggling` ·
+`Race Condition (TOCTOU)` · `Source-to-Sink (White-Box)` · `Cloud Metadata SSRF` ·
+`Container Escape` · `Mobile App Attack` · `Privilege Escalation` · `Password Cracking` ·
+`Kerberoasting` · `DCSync → Golden Ticket` · `Attack Path (BloodHound)` ·
+`Kerberos Delegation Abuse` · `Forest Trust Abuse` · `Lateral Movement` · `Tunneling & Pivoting` ·
+`AMSI Bypass` · `Process Injection` · `AppLocker Bypass` · `WPA2 Handshake Capture` ·
+`ARP Poisoning (MITM)` · `Buffer Overflow` · `Return-Oriented Programming` · `SEH Overflow` ·
+`Format String Exploit` · `Heap Exploitation` · `C2 Beacon` · `Defense in Depth` ·
+`SIEM Pipeline` · `Incident Response Lifecycle` · `MITRE ATT&CK` · `Threat Hunting` ·
+`Tiered AD Administration` · `Threat Intelligence Cycle` · `Email Auth (SPF/DKIM/DMARC)` ·
+`Honeypots & Canary Tokens` · `Zero Trust Decision`
 
 </details>
 
@@ -193,7 +196,7 @@ Cipher/
 ├─ CipheriOS/                   # iPhone app
 │  ├─ CipherApp.swift             # @main, ethics gate → RootView
 │  ├─ Screens/                    # Dashboard, Tracks, TrackDetail, Lesson, Quiz, Gallery, Glossary, Profile, Ethics
-│  ├─ Animations/                 # the 53 explainers + reusable engines + playback model + registry
+│  ├─ Animations/                 # the 61 explainers + reusable engines + playback model + registry
 │  ├─ Components/                 # terminal, callouts, code, rings, confetti, cards
 │  └─ Assets.xcassets
 └─ CipherWatch/                 # Apple Watch app

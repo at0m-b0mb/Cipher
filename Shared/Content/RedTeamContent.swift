@@ -11,7 +11,7 @@ enum RedTeamContent {
         kind: .redTeam,
         title: "Red Team",
         tagline: "Think like the adversary — recon to root, the offensive way.",
-        modules: [recon, access, web, post, activeDirectory, adAdvanced, cloud, evasion, wireless, advanced, binexp, fieldManual]
+        modules: [recon, access, web, post, activeDirectory, adAdvanced, cloud, mobile, evasion, wireless, advanced, binexp, fieldManual]
     )
 
     // MARK: R1 — Reconnaissance
@@ -350,9 +350,9 @@ uid=33(www-data) gid=33(www-data)
     private static let web = Module(
         id: "red-web",
         title: "Web Application Attacks",
-        summary: "The internet's biggest attack surface — injection, broken access control, file disclosure, template/deserialization RCE, request forgery, token attacks, modern APIs and OAuth, and the white-box review that finds them.",
+        summary: "The internet's biggest attack surface — injection, broken access control, file disclosure & upload, template/deserialization RCE, request forgery, token attacks, modern APIs and OAuth, subdomain takeover, request smuggling, race conditions, and the white-box review that finds them.",
         systemImage: "globe",
-        lessons: [sqliLesson, xssLesson, cmdiLesson, accessControlLesson, fileInclusionLesson, webAdvancedLesson, csrfLesson, jwtLesson, apiLesson, oauthLesson, sourceReviewLesson]
+        lessons: [sqliLesson, xssLesson, cmdiLesson, accessControlLesson, fileInclusionLesson, fileUploadLesson, webAdvancedLesson, csrfLesson, jwtLesson, apiLesson, oauthLesson, subdomainLesson, smugglingLesson, raceLesson, sourceReviewLesson]
     )
 
     private static let sqliLesson = Lesson(
@@ -2773,6 +2773,349 @@ Nmap scan report for 192.168.56.102   <-- Juice Shop target is up
                 ],
                 correct: 1,
                 why: "Severity reflects business impact and exploitability, not exploit elegance. A simple bug exposing sensitive data can outrank a sophisticated one that reaches nothing important — CVSS helps standardise that judgement.")
+        ]
+    )
+
+    // MARK: R3++ — Insecure file upload (web module)
+
+    private static let fileUploadLesson = Lesson(
+        id: "red-file-upload",
+        title: "Insecure File Uploads → Web Shell",
+        subtitle: "An upload form that trusts the file becomes the shortest path to running your code on the server.",
+        minutes: 10,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The avatar form that gives you a shell"),
+            .paragraph("Tons of apps let you upload a file — an avatar, a CV, a support attachment. If the server stores it in a web-served folder and doesn't strictly validate *what* it is, you can upload a script instead of an image. Browse to it, and the server **executes** it: a **web shell** and instant code execution. The flaw is trusting attacker-controlled metadata (filename, `Content-Type`) instead of the actual file."),
+            .animation(.fileUpload, caption: "A PHP shell uploaded with an image Content-Type slips past the filter, lands in /uploads, and runs as www-data when requested."),
+            .heading("Defeating weak filters"),
+            .paragraph("Naive checks are easy to bypass. A filter on the `Content-Type` header? You set it to `image/png` while the bytes are PHP. A blocklist of `.php`? Try `.php5`, `.phtml`, `.phar`, a double extension `shell.php.png`, a trailing dot/space, or a null byte on old stacks. A magic-byte check? Prepend `GIF89a;` to your script. The robust path to RCE is landing executable content somewhere the server will run it."),
+            .terminal(prompt: "attacker",
+                      command: "curl -F 'file=@shell.php;type=image/png' https://app.lab/avatar\ncurl https://app.lab/uploads/shell.php?c=id",
+                      output: """
+{\"ok\":true,\"path\":\"/uploads/shell.php\"}
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+# the 'image' executed — web shell live
+"""),
+            .keyPoints([
+                "Content-Type / filename are attacker-controlled — never trust them as validation.",
+                "Extension bypasses — .phtml/.php5/.phar, double extensions, trailing dot/space, case tricks.",
+                "Content tricks — GIF89a magic-byte prefix, polyglot files that are valid image AND script.",
+                "The kill condition is execution: an upload folder that runs scripts turns storage into RCE.",
+                "Even without RCE: SVG/HTML uploads → stored XSS; path control → overwrite other files."
+            ]),
+            .definition(term: "Web shell", meaning: "A small script (e.g. PHP/ASPX/JSP) an attacker plants on a web server that executes operating-system commands sent via HTTP. It gives interactive control of the host through the browser or curl, surviving as long as the file remains."),
+            .callout(.danger, "An upload that lands executable code in the webroot is one of the most direct routes to server compromise — no second bug required. It's why file-upload handling is a perennial source of critical findings."),
+            .callout(.tip, "Robust defenses stack: validate the real content type, generate your own random filename and extension, store uploads **outside the webroot** (or on object storage) served via a handler that never executes, strip execute permissions, and scan the content."),
+            .checkpoint(QuizQuestion(
+                "You upload `shell.php` but set the request's `Content-Type` to `image/png`; it's accepted and then runs when you browse to it. What's the core mistake?",
+                options: [
+                    "The server used HTTPS",
+                    "It validated attacker-controlled metadata (the Content-Type) instead of the real file, and stored it where scripts execute",
+                    "The file was too large",
+                    "PHP is insecure by design"
+                ],
+                correct: 1,
+                why: "The Content-Type header is set by the client and trivially spoofed. Trusting it — and saving the file in an executable web folder — let a script masquerade as an image and run, yielding a web shell."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Which is the strongest single mitigation for dangerous file uploads?",
+                options: [
+                    "Blocking the .php extension",
+                    "Storing uploads outside the webroot and serving them through a handler that never executes them",
+                    "Checking the Content-Type header",
+                    "Renaming files to uppercase"
+                ],
+                correct: 1,
+                why: "Extension blocklists and Content-Type checks are bypassable. Ensuring uploaded files can never be executed — by storing them outside the webroot and serving them inertly — removes the path to RCE regardless of what was uploaded."),
+            QuizQuestion(
+                "Why might an attacker prepend `GIF89a;` to a PHP payload?",
+                options: [
+                    "To compress it",
+                    "To pass a magic-byte/content check that looks for an image signature while the rest of the file is still executable script",
+                    "To encrypt it",
+                    "To make it a valid URL"
+                ],
+                correct: 1,
+                why: "Some filters validate the leading 'magic bytes'. Starting the file with a GIF header satisfies that check, yet the appended PHP still runs when the file is executed — a classic polyglot bypass.")
+        ]
+    )
+
+    // MARK: R3++ — Subdomain takeover & DNS (web module)
+
+    private static let subdomainLesson = Lesson(
+        id: "red-subdomain-takeover",
+        title: "Subdomain Takeover & DNS Attacks",
+        subtitle: "A forgotten DNS record pointing at a service nobody owns anymore is an open door with the company's name on it.",
+        minutes: 9,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The record that outlived the service"),
+            .paragraph("Companies spin up cloud services and point a subdomain at them with a **CNAME** — `blog.acme.com` → `acme.github.io`. Later they delete the service but forget to remove the DNS record. Now the subdomain is a **dangling pointer** to a name *anyone* can claim. Register that GitHub Pages/Heroku/S3/Azure resource yourself and you control content served from `blog.acme.com` — a trusted domain."),
+            .animation(.subdomainTakeover, caption: "The service behind a CNAME is decommissioned, leaving a 404; the attacker registers that same name and now serves content from the victim's subdomain."),
+            .heading("Why a trusted subdomain is dangerous"),
+            .paragraph("Owning `blog.acme.com` is far more than defacement. You phish from a genuine company domain; you serve malware users trust; cookies scoped to `.acme.com` may flow to you; and OAuth/SSO flows or CORS rules that allowlist the subdomain can be abused to steal tokens. It's also a classic bug-bounty finding because it's so common and so impactful."),
+            .terminal(prompt: "kali@lab",
+                      command: "subfinder -d acme.com | httpx -status-code -cname | grep -i 'NoSuchBucket\\|herokuapp\\|github.io'",
+                      output: """
+blog.acme.com   [404]  CNAME acme.github.io   <-- unclaimed Pages site
+cdn.acme.com    [404]  CNAME acme.s3.amazonaws.com  (NoSuchBucket)
+# both are takeover candidates — register the target resource to claim them
+"""),
+            .keyPoints([
+                "Dangling CNAME — DNS points to a third-party service that's been deleted/unclaimed.",
+                "Fingerprint the 'unclaimed' error (NoSuchBucket, no GitHub Pages site, herokuapp 404).",
+                "Claim the resource on that provider → you now serve the victim's subdomain.",
+                "Impact: trusted-domain phishing, cookie theft, OAuth/CORS abuse, malware hosting.",
+                "Related DNS attacks: cache poisoning, NS/MX hijack, and DNS used as a covert exfil channel."
+            ]),
+            .definition(term: "Dangling DNS record", meaning: "A DNS entry (often a CNAME) that still points to a backend resource which no longer exists or is no longer owned by the organisation. Because the target can be (re)claimed by anyone, the record hands control of the name to whoever claims it."),
+            .callout(.danger, "The takeover inherits the parent domain's trust: browsers, employees, and allowlists treat `blog.acme.com` as Acme. That trust is exactly what makes phishing and token theft from a taken-over subdomain so effective."),
+            .callout(.tip, "Defenders: remove DNS records the moment a service is decommissioned (treat it as part of teardown), run continuous subdomain/dangling-record monitoring, and avoid wildcard CNAMEs to third parties you don't tightly control."),
+            .checkpoint(QuizQuestion(
+                "`shop.acme.com` is a CNAME to `acme.herokuapp.com`, which now returns Heroku's 'no such app' page. Why is this exploitable?",
+                options: [
+                    "Heroku is insecure",
+                    "The DNS record dangles — you can register that Heroku app name yourself and then serve content from the trusted shop.acme.com",
+                    "It exposes the database",
+                    "It only causes downtime"
+                ],
+                correct: 1,
+                why: "The subdomain still points to an unclaimed Heroku app. Registering that app name gives you control of what shop.acme.com serves — a subdomain takeover, leveraging Acme's domain trust."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What condition is required for a subdomain takeover?",
+                options: [
+                    "A weak admin password",
+                    "A DNS record pointing to a third-party resource that has been deleted and can be re-registered by anyone",
+                    "An open port 22",
+                    "A SQL injection on the homepage"
+                ],
+                correct: 1,
+                why: "Takeover hinges on a dangling DNS record: the name still resolves to a backend the org no longer owns, so an attacker claims that backend and controls the subdomain."),
+            QuizQuestion(
+                "Why is content served from a taken-over subdomain especially dangerous for phishing?",
+                options: [
+                    "It loads faster",
+                    "It comes from a legitimate, trusted company domain, so users and security controls trust it",
+                    "It bypasses TLS",
+                    "It can't be logged"
+                ],
+                correct: 1,
+                why: "The subdomain genuinely belongs to the company's domain space, so it carries that trust — defeating user skepticism and any controls that allowlist the domain.")
+        ]
+    )
+
+    // MARK: R3++ — HTTP request smuggling (web module)
+
+    private static let smugglingLesson = Lesson(
+        id: "red-request-smuggling",
+        title: "HTTP Request Smuggling",
+        subtitle: "When the front-end and back-end disagree on where a request ends, you can hide a second request inside the first.",
+        minutes: 12,
+        difficulty: .expert,
+        blocks: [
+            .heading("Two servers, one stream, two opinions"),
+            .paragraph("Most sites put a front-end (CDN/load balancer/reverse proxy) in front of back-end servers, reusing one TCP connection for many requests. Both must agree on where each request ends. **Request smuggling** (HTTP desync) exploits a disagreement: if the front-end measures a request one way and the back-end another, leftover bytes from your request get prepended to the *next* visitor's request on that shared connection."),
+            .animation(.requestSmuggling, caption: "A request carries both Content-Length and Transfer-Encoding; the front-end honours one, the back-end the other — and the smuggled remainder poisons the next request."),
+            .heading("CL.TE and TE.CL"),
+            .paragraph("The classic desync abuses two ways to express body length: `Content-Length` (a byte count) and `Transfer-Encoding: chunked` (terminated by a zero-length chunk). If the front-end uses `Content-Length` and the back-end uses `Transfer-Encoding` (**CL.TE**) — or vice versa (**TE.CL**) — you craft a body that one ends early and the other doesn't. The straggler bytes become a prefix on the next request through the back-end."),
+            .code(language: "http", """
+POST / HTTP/1.1
+Host: site
+Content-Length: 6
+Transfer-Encoding: chunked
+
+0
+
+GET /admin HTTP/1.1
+X: x
+# front-end (CL:6) forwards it all; back-end (TE) ends at "0",
+# so "GET /admin..." is smuggled onto the NEXT user's request
+"""),
+            .keyPoints([
+                "Root cause: front-end and back-end disagree on request length (CL vs TE).",
+                "CL.TE / TE.CL / TE.TE — the variants, depending on which server trusts which header.",
+                "Impact: bypass front-end controls, poison the next victim's request, capture their data, mass cache poisoning.",
+                "Detection: timing differences and crafted probes (tools like Burp's HTTP Request Smuggler).",
+                "HTTP/2 downgrade smuggling revived this class even where HTTP/1 parsing was fixed."
+            ]),
+            .definition(term: "HTTP desync", meaning: "A state where two servers processing the same connection disagree on request boundaries, so bytes one server treats as the end of a request are treated by the other as the start of the next. The attacker's 'smuggled' bytes then execute in the context of another user's connection."),
+            .callout(.danger, "Smuggling poisons *other users'* traffic: a smuggled prefix can capture a victim's full request (including their session cookie) or serve them attacker content — turning one crafted request into a connection-wide compromise."),
+            .callout(.tip, "Defenses: make the whole chain parse identically — prefer HTTP/2 end-to-end (and don't downgrade), reject ambiguous requests that contain both Content-Length and Transfer-Encoding, and use the same server software/config front to back. Normalise or drop conflicting length headers at the edge."),
+            .checkpoint(QuizQuestion(
+                "A request includes both `Content-Length: 6` and `Transfer-Encoding: chunked`. The front-end uses Content-Length; the back-end uses Transfer-Encoding. What happens?",
+                options: [
+                    "The request is rejected automatically",
+                    "They disagree on where the body ends, so leftover bytes are smuggled onto the next request the back-end processes",
+                    "Nothing — they always agree",
+                    "It only slows the connection"
+                ],
+                correct: 1,
+                why: "With the two servers honouring different length headers, the body each considers complete differs. The remainder the back-end didn't consume becomes a prefix on the following request — the essence of CL.TE smuggling."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the fundamental cause of HTTP request smuggling?",
+                options: [
+                    "Weak TLS ciphers",
+                    "A front-end and back-end disagreeing on where one HTTP request ends and the next begins",
+                    "A missing CSRF token",
+                    "An exposed database port"
+                ],
+                correct: 1,
+                why: "Smuggling is a parsing-disagreement (desync) bug: when chained servers compute request boundaries differently, attacker bytes cross from one request into another on a shared connection."),
+            QuizQuestion(
+                "Why is request smuggling considered high-impact?",
+                options: [
+                    "It only affects the attacker",
+                    "It can poison other users' requests — capturing their sessions or serving them malicious responses — and bypass front-end security controls",
+                    "It just returns a 500 error",
+                    "It reveals the server version"
+                ],
+                correct: 1,
+                why: "Because the shared connection carries other users' traffic, a smuggled prefix can hijack their requests/responses and slip past edge controls — a connection-wide, multi-user compromise from one request.")
+        ]
+    )
+
+    // MARK: R3++ — Race conditions (web module)
+
+    private static let raceLesson = Lesson(
+        id: "red-race-condition",
+        title: "Race Conditions & TOCTOU",
+        subtitle: "Between checking a value and acting on it there's a window — fire enough requests into it and the rules bend.",
+        minutes: 10,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The gap between check and act"),
+            .paragraph("Code often **checks** a condition then **acts** on it: *if the gift card has balance, redeem it; if the coupon is unused, apply it.* Between those two steps is a tiny window. If many requests arrive in parallel, they can all pass the check before any of them performs the act — so a one-time action happens several times. This is a **race condition**, and the check-then-act flavour is called **TOCTOU** (time-of-check to time-of-use)."),
+            .animation(.raceCondition, caption: "Five requests hit the balance check simultaneously; all read $10 before any deduction lands, so a $10 card redeems five times."),
+            .heading("Exploiting it on the web"),
+            .paragraph("You fire many identical requests as close to simultaneously as possible (HTTP/2's single-packet multiplexing makes this brutally precise). Targets: redeem a coupon/gift card multiple times, withdraw more than your balance, bypass a rate or purchase limit, or register the same unique resource twice. The bug exists because the check and the act aren't **atomic** — nothing holds a lock across them."),
+            .terminal(prompt: "attacker",
+                      command: "# 20 parallel redemptions of a single-use $10 voucher\nseq 20 | xargs -P20 -I_ curl -s -X POST app.lab/redeem -d code=ABC",
+                      output: """
+balance before: $10.00
+... 20 requests pass `if balance>=10` in the same instant ...
+balance after:  -$190.00   # redeemed 20×
+"""),
+            .keyPoints([
+                "Check-then-act without a lock = a race window between the two steps.",
+                "Send many requests in parallel (HTTP/2 single-packet) to land inside the window.",
+                "Classic targets: vouchers, withdrawals, vote/like limits, 'claim once' resources.",
+                "Server fix: make it atomic — DB transactions, row locks (SELECT … FOR UPDATE), or a unique constraint.",
+                "Idempotency keys make a repeated request a no-op rather than a second action."
+            ]),
+            .definition(term: "TOCTOU", meaning: "Time-Of-Check to Time-Of-Use — a race condition where the state checked (the card has balance, the file is safe) can change between the check and the use, because the two operations aren't atomic. Concurrent requests exploit that gap to act on a condition that's no longer true."),
+            .callout(.danger, "Race conditions defeat business logic that looks airtight in single-request testing. 'Single-use' and 'limit one' guarantees silently break under concurrency — which is exactly why they're missed and so valuable to find."),
+            .callout(.tip, "The durable fix is atomicity at the data layer: wrap check-and-act in one transaction with appropriate locking, or enforce the invariant with a database constraint (unique index, conditional UPDATE that returns rows affected). Application-level checks alone can't win a race."),
+            .checkpoint(QuizQuestion(
+                "A single-use $10 voucher is redeemed 12 times by sending 12 requests simultaneously. Why did the 'already redeemed?' check fail to stop it?",
+                options: [
+                    "The check was encrypted",
+                    "All 12 requests passed the check before any of them marked the voucher used — the check and the update weren't atomic",
+                    "The voucher had unlimited balance",
+                    "The server was offline"
+                ],
+                correct: 1,
+                why: "With no lock spanning check and update, the parallel requests all read 'not yet redeemed' in the same instant, then each redeemed — a TOCTOU race. Making the operation atomic (transaction/constraint) is the fix."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What makes a code path vulnerable to a race condition?",
+                options: [
+                    "Using HTTPS",
+                    "Performing a check and then a dependent action non-atomically, so concurrent requests can act before state updates",
+                    "Having a long password policy",
+                    "Logging too much"
+                ],
+                correct: 1,
+                why: "When check and act aren't atomic, parallel requests slip into the gap between them and all act on the same pre-update state — the core of a TOCTOU race."),
+            QuizQuestion(
+                "Which is a correct server-side fix for a redemption race?",
+                options: [
+                    "Add a CAPTCHA",
+                    "Make check-and-act atomic with a DB transaction/row lock or a unique constraint so only one redemption can succeed",
+                    "Hide the redeem button",
+                    "Increase the server's RAM"
+                ],
+                correct: 1,
+                why: "Atomicity at the data layer — locking the row across check and update, or enforcing a unique/conditional constraint — guarantees only one of the racing requests can commit the action.")
+        ]
+    )
+
+    // MARK: R-MOBILE — Mobile app attacks
+
+    private static let mobile = Module(
+        id: "red-mobile",
+        title: "Mobile App Attacks",
+        summary: "The phone in everyone's pocket is a client to an API — with secrets on the device, defeatable transport protections, and the same server-side bugs underneath.",
+        systemImage: "iphone",
+        lessons: [mobileLesson]
+    )
+
+    private static let mobileLesson = Lesson(
+        id: "red-mobile-app",
+        title: "Attacking Mobile Applications",
+        subtitle: "Pull the app apart, read what it stored, defeat its pinning, then attack the API it was hiding.",
+        minutes: 11,
+        difficulty: .advanced,
+        blocks: [
+            .heading("A mobile app is a client you fully control"),
+            .paragraph("Unlike a web app, a mobile app runs entirely on a device the attacker can own — rooted/jailbroken, instrumented, decompiled. The OWASP **MASVS/Mobile Top 10** centre on this: **insecure data storage**, weak transport protections, hardcoded secrets, and — underneath it all — the same server-side API flaws (IDOR/BOLA, broken auth) you've already studied. The app is mostly a skin; the real logic and data live in the API."),
+            .animation(.mobileSecurity, caption: "On a rooted device: read the token sitting in plaintext storage, hook the app to bypass certificate pinning, then read its API traffic in an intercepting proxy."),
+            .heading("Storage, transport, and the code itself"),
+            .keyPoints([
+                "Insecure storage — tokens, keys and PII in SharedPreferences/plist/SQLite/logs in plaintext; trivially read on a rooted device.",
+                "Transport — apps add TLS certificate pinning; tools like Frida/Objection hook it out so a proxy (Burp) can read traffic.",
+                "Reverse engineering — decompile the APK/IPA (jadx, Hopper) to find hardcoded API keys, endpoints and logic.",
+                "Hardcoded secrets — API keys baked into the binary are extractable; client-side secrets are never secret.",
+                "The API is the prize — once traffic is visible, attack the backend: BOLA, weak auth, mass assignment."
+            ]),
+            .terminal(prompt: "attacker",
+                      command: "objection -g com.acme.app explore\n  android sslpinning disable        # hook out cert pinning\n  android hooking search classes token",
+                      output: """
+[+] Pinning bypassed — proxy can now read TLS traffic
+shared_prefs/auth.xml: <string name=\"jwt\">eyJhbGciOi...</string>
+# token in plaintext; traffic now flows through Burp -> attack the API
+"""),
+            .definition(term: "Certificate pinning", meaning: "A mobile-app defense that hard-codes the expected server certificate/public key, so the app rejects any TLS connection (including a proxy's) that doesn't match. It stops casual interception — but because the check runs in client code on a device the attacker controls, it can be hooked out with instrumentation like Frida/Objection."),
+            .callout(.danger, "Anything shipped inside the app — API keys, 'hidden' endpoints, client-side checks — is recoverable. Treat the mobile client as fully untrusted: it's running on the attacker's hardware. Security must be enforced server-side."),
+            .callout(.tip, "Defenders: store secrets in the OS keystore/keychain (not prefs/plist), never hardcode API keys, enforce all authorization on the server, and treat pinning as a speed-bump (raising effort) rather than a guarantee. Add server-side anomaly detection for abused API patterns."),
+            .checkpoint(QuizQuestion(
+                "An app uses certificate pinning so a proxy can't read its traffic. Why can an attacker often still intercept it?",
+                options: [
+                    "Pinning is encryption and can be decrypted",
+                    "The pinning check runs in the app on a device the attacker controls, so it can be hooked out with instrumentation (Frida/Objection)",
+                    "Pinning only works on Wi-Fi",
+                    "Proxies ignore pinning"
+                ],
+                correct: 1,
+                why: "Pinning is a client-side control. On a rooted/jailbroken device the attacker can hook the app at runtime and disable the check, letting their proxy read the (now unpinned) TLS traffic and attack the API behind it."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why are hardcoded API keys in a mobile app a problem?",
+                options: [
+                    "They slow the app down",
+                    "Anything shipped in the binary can be extracted by decompiling it — client-side secrets aren't secret",
+                    "They only work on iOS",
+                    "They expire too quickly"
+                ],
+                correct: 1,
+                why: "The app binary is on the attacker's device and can be decompiled. Embedded keys and 'hidden' endpoints are recoverable, so secrets and authorization must live server-side, not in the client."),
+            QuizQuestion(
+                "After bypassing pinning and reading an app's API traffic, what is the natural next focus?",
+                options: [
+                    "Reinstalling the app",
+                    "Attacking the backend API itself — BOLA/IDOR, broken authentication, mass assignment",
+                    "Changing the phone's wallpaper",
+                    "Clearing the app cache"
+                ],
+                correct: 1,
+                why: "The app is a client; the real logic and data are in the API. With traffic visible, you test the backend for the same server-side flaws — object-level authorization, auth weaknesses, and mass assignment.")
         ]
     )
 }
