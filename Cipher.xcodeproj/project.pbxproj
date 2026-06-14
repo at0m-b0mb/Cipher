@@ -51,6 +51,7 @@
 		B7E63265782C70605888A73D /* AnimationsOffense2.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0ED949A2970AADCA2F4257A /* AnimationsOffense2.swift */; };
 		CDBEE0DC4A6E1B2B9E0CE2BF /* AnimationsNetworkCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5412CD0E9A766E4B4115E8 /* AnimationsNetworkCrypto.swift */; };
 		D102E36AD71BEB5F67F5D6E2 /* WatchProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61FF6E93E34B881D4FFB4079 /* WatchProgressView.swift */; };
+		D4BE60486130665CD89BDE75 /* AnimationsModern.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD5C5C85CF923F029DB6D987 /* AnimationsModern.swift */; };
 		EAD48ED03B2BEA1DAB8C76E5 /* RedTeamContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B97EBC1F4F0C3522B8D0831 /* RedTeamContent.swift */; };
 		F1B7493C3663109AE20C4534 /* ListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046083BB1BA9D4ACFCD9F082 /* ListComponents.swift */; };
 		F95E2D205AE07ABEAFE29A9A /* AnimationsAD.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E6246D7749388061B81944D /* AnimationsAD.swift */; };
@@ -121,6 +122,7 @@
 		D1938A617BDD4FF40E303156 /* Cipher.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Cipher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D75DF7201A55C6D933D493A9 /* AnimationGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationGalleryView.swift; sourceTree = "<group>"; };
 		DD4FECA14607AA9BC328FA79 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		DD5C5C85CF923F029DB6D987 /* AnimationsModern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsModern.swift; sourceTree = "<group>"; };
 		DF9C4C3199784DA9ECE933E4 /* EthicsGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EthicsGateView.swift; sourceTree = "<group>"; };
 		E15092E688DFFA417B4D1090 /* AnimationsRed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsRed.swift; sourceTree = "<group>"; };
 		F0798D5BF432D53A48A4CE85 /* BlueTeamContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlueTeamContent.swift; sourceTree = "<group>"; };
@@ -239,6 +241,7 @@
 				BA2AF06D987B63B72AC6C53B /* AnimationsAdvanced.swift */,
 				270D52C64D8488D41368E1AF /* AnimationsBinexp.swift */,
 				927B7F5E621E5BBDDFE40BD2 /* AnimationsBlue.swift */,
+				DD5C5C85CF923F029DB6D987 /* AnimationsModern.swift */,
 				9F5412CD0E9A766E4B4115E8 /* AnimationsNetworkCrypto.swift */,
 				F0ED949A2970AADCA2F4257A /* AnimationsOffense2.swift */,
 				E15092E688DFFA417B4D1090 /* AnimationsRed.swift */,
@@ -377,6 +380,7 @@
 				FAE8E7EBDABC1B8DDE501454 /* AnimationsAdvanced.swift in Sources */,
 				6317DC8C19C76EF4CC6C83F2 /* AnimationsBinexp.swift in Sources */,
 				9E819F70EB414B7A5A510A12 /* AnimationsBlue.swift in Sources */,
+				D4BE60486130665CD89BDE75 /* AnimationsModern.swift in Sources */,
 				CDBEE0DC4A6E1B2B9E0CE2BF /* AnimationsNetworkCrypto.swift in Sources */,
 				B7E63265782C70605888A73D /* AnimationsOffense2.swift in Sources */,
 				31F99C8D52CE8DD5F1EB4732 /* AnimationsRed.swift in Sources */,

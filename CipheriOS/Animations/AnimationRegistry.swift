@@ -23,6 +23,7 @@ struct AnimationView: View {
         case .osiModel:            OSIModelView()
         case .tcpHandshake:        TCPHandshakeView()
         case .packetTravel:        PacketTravelView()
+        case .encodingLayers:      EncodingLayersView()
         case .symmetricEncryption: SymmetricEncryptionView()
         case .publicKeyExchange:   PublicKeyExchangeView()
         case .hashing:             HashingView()
@@ -39,8 +40,12 @@ struct AnimationView: View {
         case .templateInjection:   TemplateInjectionView()
         case .csrf:                CSRFView()
         case .jwtAttack:           JWTAttackView()
+        case .apiBola:             ApiBolaView()
+        case .oauthFlow:           OAuthFlowView()
         case .sourceReview:        SourceReviewView()
         case .clientSide:          ClientSideView()
+        case .cloudMetadata:       CloudMetadataView()
+        case .containerEscape:     ContainerEscapeView()
         case .privilegeEscalation: PrivilegeEscalationView()
         case .passwordCracking:    PasswordCrackingView()
         case .kerberoasting:       KerberoastingView()
@@ -68,6 +73,8 @@ struct AnimationView: View {
         case .mitreAttack:         MITREAttackView()
         case .threatHunting:       ThreatHuntingView()
         case .adTiering:           ADTieringView()
+        case .threatIntel:         ThreatIntelView()
+        case .zeroTrust:           ZeroTrustView()
         }
     }
 }
@@ -79,7 +86,7 @@ enum AnimationCatalog {
     private static let redIDs: Set<AnimationID> = [
         .cyberKillChain, .portScan, .phishingFlow, .sqlInjection, .xssReflected,
         .accessControl, .fileInclusion, .templateInjection, .csrf, .jwtAttack,
-        .sourceReview, .clientSide,
+        .apiBola, .oauthFlow, .sourceReview, .clientSide, .cloudMetadata, .containerEscape,
         .privilegeEscalation, .passwordCracking, .kerberoasting, .dcsync, .attackPath,
         .delegation, .forestTrust, .lateralMovement, .tunneling,
         .amsiBypass, .processInjection, .applockerBypass, .wifiHandshake, .arpPoisoning,
@@ -87,7 +94,7 @@ enum AnimationCatalog {
     ]
     private static let blueIDs: Set<AnimationID> = [
         .defenseInDepth, .siemPipeline, .incidentResponse, .mitreAttack, .threatHunting,
-        .adTiering
+        .adTiering, .threatIntel, .zeroTrust
     ]
 
     static func accent(_ id: AnimationID) -> Color {
@@ -102,6 +109,10 @@ enum AnimationCatalog {
         case .sqlInjection, .xssReflected:  return 300
         case .accessControl, .fileInclusion, .templateInjection: return 296
         case .jwtAttack, .clientSide, .formatString, .heapExploit: return 296
+        case .apiBola, .containerEscape:    return 300
+        case .encodingLayers:               return 288
+        case .zeroTrust:                    return 286
+        case .threatIntel:                  return 274
         case .applockerBypass:              return 292
         case .amsiBypass:                   return 288
         case .ropChain, .sehOverflow:       return 286
@@ -120,6 +131,7 @@ enum AnimationCatalog {
         case .osiModel:            return "How each network layer wraps data in its own header — then unwraps it."
         case .tcpHandshake:        return "The SYN / SYN-ACK / ACK ritual that opens every TCP connection."
         case .packetTravel:        return "Peel a real packet apart, header by header, down to the payload."
+        case .encodingLayers:      return "The same message re-dressed as hex, Base64 and URL encoding — reversible, not secret."
         case .symmetricEncryption: return "One shared key turns plaintext to ciphertext and back."
         case .publicKeyExchange:   return "A public key locks a message that only the private key can open."
         case .hashing:             return "A one-way fingerprint where a tiny change avalanches the output."
@@ -135,8 +147,12 @@ enum AnimationCatalog {
         case .templateInjection:   return "Input the template engine evaluates — from {{7*7}} to code execution."
         case .csrf:                return "An attacker page rides the victim's cookie to forge a real request."
         case .jwtAttack:           return "Tampering a JWT's claims and dropping the signature to forge admin."
+        case .apiBola:             return "GraphQL introspection plus one id swap returns another tenant's data."
+        case .oauthFlow:           return "A tampered redirect_uri leaks the OAuth code straight to the attacker."
         case .sourceReview:        return "Tracing untrusted input from its source to a dangerous sink."
         case .clientSide:          return "A macro-enabled document that runs code the moment it's opened."
+        case .cloudMetadata:       return "An SSRF walks the cloud metadata service back to temporary IAM keys."
+        case .containerEscape:     return "A mounted Docker socket turns a container foothold into root on the node."
         case .privilegeEscalation: return "Climbing from a low-privilege foothold to full root access."
         case .passwordCracking:    return "Streaming a wordlist through a hash until a password matches."
         case .kerberoasting:       return "Requesting a service ticket and cracking it offline."
@@ -163,6 +179,8 @@ enum AnimationCatalog {
         case .mitreAttack:         return "Plotting an intrusion across the ATT&CK tactics matrix."
         case .threatHunting:       return "The proactive loop: hypothesize, query, investigate, automate."
         case .adTiering:           return "Admin tiers that stop a stolen low-tier credential reaching the DC."
+        case .threatIntel:         return "The intelligence lifecycle turning raw data into decisions, then back again."
+        case .zeroTrust:           return "Every request scored on identity, device and risk before least-privilege access."
         }
     }
 }

@@ -1,0 +1,113 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cipher — Red and Blue Team Academy">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B1018"/>
+      <stop offset="1" stop-color="#05080D"/>
+    </linearGradient>
+    <linearGradient id="rb" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF4D6A"/>
+      <stop offset="0.5" stop-color="#9B8CFF"/>
+      <stop offset="1" stop-color="#3DA0FF"/>
+    </linearGradient>
+    <linearGradient id="redHex" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF6B82"/>
+      <stop offset="1" stop-color="#C81E47"/>
+    </linearGradient>
+    <linearGradient id="blueHex" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5BB0FF"/>
+      <stop offset="1" stop-color="#1E6FC8"/>
+    </linearGradient>
+    <radialGradient id="glowRed" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FF4D6A" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FF4D6A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowBlue" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3DA0FF" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#3DA0FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowTeal" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2BE6C0" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#2BE6C0" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 L0 0 L0 40" fill="none" stroke="#27324A" stroke-opacity="0.35" stroke-width="1"/>
+    </pattern>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+  </defs>
+
+  <!-- Backdrop -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#grid)"/>
+  <ellipse cx="250" cy="300" rx="520" ry="460" fill="url(#glowRed)"/>
+  <ellipse cx="1080" cy="360" rx="520" ry="460" fill="url(#glowBlue)"/>
+  <ellipse cx="640" cy="560" rx="640" ry="260" fill="url(#glowTeal)"/>
+
+  <!-- Border frame -->
+  <rect x="18" y="18" width="1244" height="604" rx="28" fill="none" stroke="url(#rb)" stroke-opacity="0.55" stroke-width="2"/>
+
+  <!-- ===== Emblem: split red/blue hex shield with terminal keyhole ===== -->
+  <g transform="translate(232 320)">
+    <!-- outer glow ring -->
+    <circle r="150" fill="none" stroke="url(#rb)" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="4 9"/>
+    <!-- hex shield -->
+    <g filter="url(#soft)" opacity="0.85">
+      <path d="M0 -132 L114 -66 L114 66 L0 132 L-114 66 L-114 -66 Z" fill="url(#rb)" opacity="0.35"/>
+    </g>
+    <!-- left half = red team -->
+    <path d="M0 -126 L0 126 L-109 63 L-109 -63 Z" fill="url(#redHex)"/>
+    <!-- right half = blue team -->
+    <path d="M0 -126 L109 -63 L109 63 L0 126 Z" fill="url(#blueHex)"/>
+    <!-- top wedge cap -->
+    <path d="M0 -126 L109 -63 L0 -63 L-109 -63 Z" fill="#ffffff" opacity="0.10"/>
+    <!-- inner cut -->
+    <path d="M0 -126 L109 -63 L109 63 L0 126 L-109 63 L-109 -63 Z" fill="none" stroke="#0B1018" stroke-opacity="0.55" stroke-width="3"/>
+    <!-- center plate -->
+    <circle r="64" fill="#0B1018" opacity="0.78"/>
+    <circle r="64" fill="none" stroke="#EDF1F7" stroke-opacity="0.25" stroke-width="1.5"/>
+    <!-- terminal prompt mark  >_ -->
+    <path d="M-30 -16 L-8 4 L-30 24" fill="none" stroke="#EDF1F7" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="0" y="16" width="34" height="8" rx="4" fill="#2BE6C0"/>
+    <!-- key shaft (cipher / key) -->
+    <circle cx="0" cy="-40" r="9" fill="none" stroke="#FFC24B" stroke-width="5" opacity="0.0"/>
+  </g>
+
+  <!-- ===== Wordmark & text ===== -->
+  <g transform="translate(430 0)">
+    <text x="0" y="232" font-family="Avenir Next, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="148" font-weight="800" letter-spacing="4" fill="#EDF1F7">CIPHER</text>
+    <!-- gradient underline -->
+    <rect x="4" y="256" width="556" height="6" rx="3" fill="url(#rb)"/>
+
+    <text x="6" y="318" font-family="Menlo, Consolas, monospace" font-size="32" font-weight="700" letter-spacing="6" fill="#9AA7BD">RED &amp; BLUE TEAM ACADEMY</text>
+
+    <text x="6" y="372" font-family="Avenir Next, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="27" font-weight="500" fill="#6E7C95">Ethical hacking, taught through animated, interactive lessons —</text>
+    <text x="6" y="408" font-family="Avenir Next, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="27" font-weight="500" fill="#6E7C95">recon to root, and detect to respond. In your pocket and on your wrist.</text>
+
+    <!-- stat chips -->
+    <g transform="translate(6 452)" font-family="Menlo, Consolas, monospace" font-weight="700">
+      <g>
+        <rect x="0" y="0" width="196" height="48" rx="12" fill="#121826" stroke="#FF4D6A" stroke-opacity="0.5" stroke-width="1.5"/>
+        <circle cx="26" cy="24" r="6" fill="#FF4D6A"/>
+        <text x="44" y="31" font-size="20" fill="#EDF1F7">64 LESSONS</text>
+      </g>
+      <g transform="translate(212 0)">
+        <rect x="0" y="0" width="232" height="48" rx="12" fill="#121826" stroke="#9B8CFF" stroke-opacity="0.5" stroke-width="1.5"/>
+        <circle cx="26" cy="24" r="6" fill="#9B8CFF"/>
+        <text x="44" y="31" font-size="20" fill="#EDF1F7">53 ANIMATIONS</text>
+      </g>
+      <g transform="translate(460 0)">
+        <rect x="0" y="0" width="158" height="48" rx="12" fill="#121826" stroke="#3DA0FF" stroke-opacity="0.5" stroke-width="1.5"/>
+        <circle cx="26" cy="24" r="6" fill="#3DA0FF"/>
+        <text x="44" y="31" font-size="20" fill="#EDF1F7">OFFLINE</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- platform tag, top-right -->
+  <g transform="translate(1006 56)" font-family="Menlo, Consolas, monospace" font-weight="700">
+    <rect x="0" y="0" width="216" height="40" rx="20" fill="#0B1018" stroke="#27324A" stroke-width="1.5"/>
+    <circle cx="26" cy="20" r="6" fill="#2BE6C0"/>
+    <text x="44" y="27" font-size="17" fill="#9AA7BD">iOS · watchOS · SwiftUI</text>
+  </g>
+</svg>

@@ -10,7 +10,7 @@ enum BlueTeamContent {
         kind: .blueTeam,
         title: "Blue Team",
         tagline: "Detect, respond, and outlast the adversary.",
-        modules: [foundations, detection, response, forensics]
+        modules: [foundations, detection, response, modernDefense, forensics]
     )
 
     // MARK: B1 — Defensive foundations
@@ -650,6 +650,191 @@ schtasks /create /tn Updater   <-- persistence (scheduled task)
                 ],
                 correct: 1,
                 why: "Readable strings often leak C2 URLs, commands and techniques (here, scheduled-task persistence) — fast, valuable leads even before disassembly.")
+        ]
+    )
+
+    // MARK: B-MOD — Modern Defense
+
+    private static let modernDefense = Module(
+        id: "blue-modern",
+        title: "Modern Defense",
+        summary: "Defending today's environment — turning adversary data into intelligence, prioritising the vulnerabilities that matter, and the zero-trust model that assumes the perimeter has already failed.",
+        systemImage: "shield.checkerboard",
+        lessons: [threatIntelLesson, vulnMgmtLesson, zeroTrustLesson]
+    )
+
+    private static let threatIntelLesson = Lesson(
+        id: "blue-threat-intel",
+        title: "Cyber Threat Intelligence",
+        subtitle: "Raw data isn't intelligence. Intelligence is data, analysed and aimed at a decision.",
+        minutes: 10,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Knowing your adversary"),
+            .paragraph("Cyber Threat Intelligence (CTI) is the discipline of collecting and analysing information about threats so defenders can act *before* they're hit — or respond faster when they are. The point isn't to hoard indicators; it's to answer a decision-maker's question. A feed of a million IPs is data. 'This ransomware crew is targeting our sector via this technique, so prioritise these detections' is intelligence."),
+            .animation(.threatIntel, caption: "The intelligence lifecycle as a loop: direction → collection → processing → analysis → dissemination → feedback, then around again."),
+            .heading("Three altitudes of intel"),
+            .keyPoints([
+                "Strategic — big-picture risk for leadership: who targets our industry, and why. Drives budget and posture.",
+                "Operational — campaigns and adversary TTPs (tactics, techniques, procedures); feeds threat hunting and detection.",
+                "Tactical — the technical specifics: IOCs like hashes, domains, IPs; feeds the SIEM and EDR directly.",
+                "The Pyramid of Pain — hashes/IPs are trivial for an attacker to change; TTPs are painful. Detect on behaviour to hurt them most.",
+                "Frameworks — MITRE ATT&CK for TTPs, STIX/TAXII to share it, the Diamond Model to structure an intrusion."
+            ]),
+            .definition(term: "IOC vs TTP", meaning: "An Indicator of Compromise is an artifact of a specific attack — a file hash, C2 domain, IP. A TTP is the adversary's behaviour — how they phish, escalate, persist. IOCs are easy to detect but easy for the attacker to change; TTPs are harder to detect but far harder for them to alter, so behaviour-based detection has lasting value."),
+            .terminal(prompt: "analyst",
+                      command: "# enrich an observable seen in the SIEM before acting on it\nvt lookup 3aa1f... ; whois evil-c2[.]net ; check-misp 185.x.x.x",
+                      output: """
+hash 3aa1f...   -> 48/72 vendors: Qakbot loader
+domain evil-c2  -> registered 3 days ago, fast-flux
+185.x.x.x       -> in 2 threat-intel feeds, tagged 'Qakbot C2'
+# verdict: active campaign IOC — hunt for this TTP across the fleet
+"""),
+            .callout(.tip, "Climb the Pyramid of Pain: blocking a hash stops one file; detecting the *behaviour* (e.g. Office spawning PowerShell that beacons out) stops the whole technique no matter how the attacker repackages it."),
+            .callout(.warning, "Intelligence has a shelf life and a source-reliability problem. An IOC can be stale or shared (a CDN IP) and cause false positives; always weigh source confidence and context before you block or alert on it."),
+            .checkpoint(QuizQuestion(
+                "According to the Pyramid of Pain, why is detecting an adversary's TTPs more valuable than blocking their file hashes?",
+                options: [
+                    "Hashes are illegal to store",
+                    "Hashes and IPs are trivial for the attacker to change; TTPs describe behaviour that's painful for them to alter, so behavioural detection lasts",
+                    "TTPs are easier to collect",
+                    "Hashes can't be detected"
+                ],
+                correct: 1,
+                why: "An attacker can recompile a file or rotate an IP in seconds, but changing how they operate is costly. Detecting on TTPs/behaviour forces real effort on them and keeps working across campaigns."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What distinguishes intelligence from raw data?",
+                options: [
+                    "Intelligence is encrypted",
+                    "Intelligence is data that's been analysed and aimed at supporting a specific decision",
+                    "Intelligence is always free",
+                    "There is no difference"
+                ],
+                correct: 1,
+                why: "A feed of indicators is data. Intelligence applies analysis and context to answer a decision-maker's question — what to prioritise, block, or hunt for."),
+            QuizQuestion(
+                "Which intel level feeds IOCs directly into a SIEM/EDR for automated matching?",
+                options: ["Strategic", "Operational", "Tactical", "Executive"],
+                correct: 2,
+                why: "Tactical intelligence is the technical, machine-consumable layer — hashes, domains, IPs — that tooling ingests to match against telemetry automatically.")
+        ]
+    )
+
+    private static let vulnMgmtLesson = Lesson(
+        id: "blue-vuln-mgmt",
+        title: "Vulnerability Management",
+        subtitle: "You can't patch everything at once. The skill is knowing what to fix first.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("A program, not a scan"),
+            .paragraph("Running a scanner is easy; managing what it finds is the job. Vulnerability management is the continuous loop of **discovering** assets, **assessing** them for weaknesses, **prioritising** by real risk, **remediating**, and **verifying** — then doing it again. An enterprise scan returns tens of thousands of findings; success is fixing the handful that actually expose you, fast, not drowning in a CSV."),
+            .animation(.defenseInDepth, caption: "Patching is one layer among many — defense in depth keeps you covered for the window before a fix lands."),
+            .heading("Prioritisation: severity ≠ risk"),
+            .paragraph("A CVSS 10 on an internal printer nobody can reach matters less than a CVSS 7 on your internet-facing login. Real prioritisation blends the base **severity** with **exploitability** and **exposure**: Is there a public exploit? Is it being exploited *right now* in the wild? Is the asset internet-facing and business-critical? Modern programs lean on **CISA KEV** (known exploited) and **EPSS** (probability of exploitation) — not raw CVSS alone."),
+            .keyPoints([
+                "Asset inventory first — you can't protect or patch what you don't know exists.",
+                "CVSS gives base severity; it is an input, not the whole decision.",
+                "EPSS estimates the probability a CVE will be exploited soon — focus effort where it's likely.",
+                "CISA KEV lists vulns known to be exploited in the wild — treat these as drop-everything.",
+                "Exposure & context — internet-facing + business-critical + public exploit = top of the queue.",
+                "Compensating controls — if you can't patch now, reduce risk: restrict access, add detection, virtually patch at the WAF."
+            ]),
+            .definition(term: "EPSS", meaning: "The Exploit Prediction Scoring System — a data-driven probability (0–1) that a given CVE will be exploited in the near term. Paired with CVSS severity and CISA KEV, it lets teams patch by likelihood of attack rather than by raw score, cutting an unmanageable list down to what truly matters."),
+            .callout(.tip, "A 'patch everything CVSS ≥ 7' policy sounds rigorous and fails in practice — it buries teams. Prioritise by KEV + EPSS + exposure, and you fix the few that attackers will actually use first."),
+            .callout(.warning, "The clock is the adversary. The window between a vulnerability becoming public and mass exploitation is often days. Vulnerability management is a race; an accurate inventory and fast, prioritised patching are how you win it."),
+            .checkpoint(QuizQuestion(
+                "Two findings: CVE-A is CVSS 9.8 on an isolated internal device with no known exploit; CVE-B is CVSS 7.5 on your internet-facing portal and appears on CISA's KEV list. Which do you remediate first?",
+                options: [
+                    "CVE-A — it has the higher CVSS score",
+                    "CVE-B — it's internet-facing and known to be actively exploited, so its real risk is higher",
+                    "Neither is urgent",
+                    "Whichever is alphabetically first"
+                ],
+                correct: 1,
+                why: "Risk = severity × exploitability × exposure. CVE-B is exposed to the internet and actively exploited in the wild (KEV), making it the real, present danger despite a lower CVSS than the unreachable CVE-A."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why is raw CVSS score an insufficient way to prioritise patching?",
+                options: [
+                    "CVSS is always wrong",
+                    "It measures base severity but ignores whether the vuln is actually being exploited and how exposed the asset is",
+                    "CVSS scores change hourly",
+                    "Only attackers use CVSS"
+                ],
+                correct: 1,
+                why: "CVSS captures intrinsic severity, not real-world risk. Exploitability (EPSS/KEV) and exposure (internet-facing, critical asset) determine what an attacker will actually hit — so they must factor into the order."),
+            QuizQuestion(
+                "You can't patch a critical internet-facing vulnerability immediately. What's a sound interim step?",
+                options: [
+                    "Ignore it until the maintenance window",
+                    "Apply compensating controls — restrict access, virtually patch at the WAF, and add detection — to reduce risk now",
+                    "Take the whole company offline",
+                    "Lower its CVSS score"
+                ],
+                correct: 1,
+                why: "When immediate patching isn't possible, compensating controls shrink the exposure and exploitability in the meantime — buying time without leaving the risk wide open.")
+        ]
+    )
+
+    private static let zeroTrustLesson = Lesson(
+        id: "blue-zero-trust",
+        title: "Zero Trust Architecture",
+        subtitle: "Stop trusting the network. Verify every request as if it came from an open internet.",
+        minutes: 11,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The castle wall already fell"),
+            .paragraph("The old model was a hard perimeter around a soft, trusting interior: get inside the firewall and you were treated as friendly. Every breach in this app's Red track shows why that fails — phishing, VPN footholds and lateral movement all exploit that implicit interior trust. **Zero Trust** discards it. Its mantra: **never trust, always verify.** There is no trusted network; every request is authenticated, authorised, and inspected as if it came straight off the open internet."),
+            .animation(.zeroTrust, caption: "Every request is scored live on identity, device posture and risk before the policy engine grants the least access needed — for that session only."),
+            .heading("Verify explicitly, every time"),
+            .paragraph("A Zero Trust **policy engine** sits in front of resources and decides each request dynamically, weighing **who** (strongly-authenticated identity, ideally phishing-resistant MFA), **what** (is the device managed, patched, healthy?), and **context** (location, time, behaviour, risk score). Access granted is the **least privilege** needed, **just-in-time**, and re-evaluated continuously — not a standing all-areas pass handed out once at the VPN."),
+            .keyPoints([
+                "Never trust, always verify — network location grants nothing; identity and posture do.",
+                "Verify explicitly — strong auth (passkeys/FIDO2) + device health on every access decision.",
+                "Least privilege & JIT — grant the minimum, for as short as possible; re-check continuously.",
+                "Microsegmentation — break the flat network into small zones so a foothold can't roam freely.",
+                "Assume breach — design as if an attacker is already inside; limit blast radius by default.",
+                "It blunts lateral movement — the technique that turns one compromised host into a domain takeover."
+            ]),
+            .definition(term: "Microsegmentation", meaning: "Dividing the network into small, individually-policed zones (down to per-workload) so that compromising one host doesn't grant free movement to others. It directly attacks lateral movement: every hop must pass a policy check, instead of a flat internal network where one foothold reaches everything."),
+            .callout(.danger, "Zero Trust's prime target is lateral movement. In a flat trusted network, one phished laptop is a launchpad to the whole domain; under Zero Trust, that laptop's credentials still face explicit verification and segmentation at every step — turning a breach into a contained incident."),
+            .callout(.tip, "Zero Trust is a strategy, not a product you buy. It's implemented incrementally: start with strong identity (MFA everywhere), add device-health checks, then microsegment the crown-jewel systems. Identity is the foundation everything else builds on."),
+            .checkpoint(QuizQuestion(
+                "Under a Zero Trust model, an attacker steals a valid laptop and its session inside the corporate network. Why is their lateral movement still hard?",
+                options: [
+                    "The network is faster",
+                    "There's no trusted interior — each further access is re-verified on identity, device posture and risk, and microsegmentation forces a policy check at every hop",
+                    "Zero Trust deletes all credentials hourly",
+                    "Internal traffic is never allowed at all"
+                ],
+                correct: 1,
+                why: "Zero Trust removes implicit network trust. Even from inside, every additional resource access is explicitly evaluated and segmented, so a single foothold can't freely pivot the way it can on a flat, trusting network."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the core principle of Zero Trust?",
+                options: [
+                    "Trust everything inside the firewall",
+                    "Never trust, always verify — authenticate and authorise every request regardless of network location",
+                    "Block all internet traffic",
+                    "Use one very strong perimeter firewall"
+                ],
+                correct: 1,
+                why: "Zero Trust eliminates implicit trust based on network position. Every request is verified on identity, device and context, treated as if it originated on the open internet."),
+            QuizQuestion(
+                "How does microsegmentation limit an attacker?",
+                options: [
+                    "It encrypts all disks",
+                    "It splits the network into small policed zones so a single foothold can't move freely to other systems",
+                    "It speeds up the VPN",
+                    "It hides the network from scans"
+                ],
+                correct: 1,
+                why: "Microsegmentation forces a policy check between zones, so compromising one host doesn't grant reach to the rest — directly constraining lateral movement and shrinking the blast radius.")
         ]
     )
 }

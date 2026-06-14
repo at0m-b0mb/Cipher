@@ -11,7 +11,7 @@ enum RedTeamContent {
         kind: .redTeam,
         title: "Red Team",
         tagline: "Think like the adversary — recon to root, the offensive way.",
-        modules: [recon, access, web, post, activeDirectory, adAdvanced, evasion, wireless, advanced, binexp]
+        modules: [recon, access, web, post, activeDirectory, adAdvanced, cloud, evasion, wireless, advanced, binexp, fieldManual]
     )
 
     // MARK: R1 — Reconnaissance
@@ -350,9 +350,9 @@ uid=33(www-data) gid=33(www-data)
     private static let web = Module(
         id: "red-web",
         title: "Web Application Attacks",
-        summary: "The internet's biggest attack surface — injection, broken access control, file disclosure, template/deserialization RCE, request forgery, token attacks, and the white-box review that finds them.",
+        summary: "The internet's biggest attack surface — injection, broken access control, file disclosure, template/deserialization RCE, request forgery, token attacks, modern APIs and OAuth, and the white-box review that finds them.",
         systemImage: "globe",
-        lessons: [sqliLesson, xssLesson, cmdiLesson, accessControlLesson, fileInclusionLesson, webAdvancedLesson, csrfLesson, jwtLesson, sourceReviewLesson]
+        lessons: [sqliLesson, xssLesson, cmdiLesson, accessControlLesson, fileInclusionLesson, webAdvancedLesson, csrfLesson, jwtLesson, apiLesson, oauthLesson, sourceReviewLesson]
     )
 
     private static let sqliLesson = Lesson(
@@ -2348,6 +2348,431 @@ msf-pattern_offset -l 600 -q 39694438
                 ],
                 correct: 1,
                 why: "Grooming shapes the heap layout — through chosen allocation/free patterns — so the overflow or reclaimed slot lands exactly next to or on top of the target object, making exploitation reliable.")
+        ]
+    )
+
+    // MARK: R3+ — API & GraphQL (web module)
+
+    private static let apiLesson = Lesson(
+        id: "red-api",
+        title: "API & GraphQL Attacks",
+        subtitle: "Modern apps are APIs with a thin coat of paint — and APIs leak through object ids and over-permissive schemas.",
+        minutes: 11,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The frontend is a lie; the API is the target"),
+            .paragraph("A modern web or mobile app is mostly a pretty client talking to a REST or GraphQL **API**. Hitting the API directly — with Burp, `curl`, or Postman — drops the UI's guard rails entirely. The OWASP **API Security Top 10** exists because the bugs here differ from classic web flaws: the dominant one is **Broken Object-Level Authorization (BOLA)** — the API version of IDOR, and the single most common API vulnerability."),
+            .animation(.apiBola, caption: "GraphQL introspection maps the whole schema; then one id swap on an object query returns another tenant's record — BOLA."),
+            .heading("BOLA — IDOR by another name"),
+            .paragraph("Every object the API returns is fetched by an id: `GET /api/v2/orders/2000`. If the server checks that you're *logged in* but not that the order is *yours*, changing the id hands you someone else's data. At API scale — thousands of endpoints, mobile clients nobody watches — this is everywhere. Its sibling **BFLA** (Broken Function-Level Authorization) is the same failure on actions: a normal user calling an admin-only `DELETE` and it just works."),
+            .heading("GraphQL: one endpoint, the whole graph"),
+            .paragraph("GraphQL exposes a single `/graphql` endpoint where the client asks for exactly the fields it wants. That power cuts both ways. **Introspection** — often left on in production — lets you query the API for its own complete schema: every type, query, and mutation, including the ones the UI never calls. From there you probe hidden mutations, over-fetch nested objects, and abuse the lack of per-object checks."),
+            .terminal(prompt: "attacker",
+                      command: "curl -s https://app.lab/graphql -d '{\"query\":\"{ __schema { mutationType { fields { name } } } }\"}'",
+                      output: """
+{"data":{"__schema":{"mutationType":{"fields":[
+  {"name":"updateProfile"},
+  {"name":"deleteUser"},          <-- not in the UI…
+  {"name":"setUserRole"}          <-- privilege change?
+]}}}}
+"""),
+            .keyPoints([
+                "BOLA — swap an object id (orders/2000 → 2001); the #1 API bug. Test every id-bearing endpoint.",
+                "BFLA — call privileged functions/methods (GET→DELETE, hidden admin routes) as a low user.",
+                "GraphQL introspection — dump the full schema, then hunt undocumented mutations.",
+                "Mass assignment — POST extra fields (`\"role\":\"admin\"`) the client never sends; the API may bind them.",
+                "Excessive data exposure — APIs often return whole objects and rely on the UI to hide fields; you read the raw JSON.",
+                "Rate limits & resource limits — deep nested GraphQL queries and missing limits enable abuse and DoS."
+            ]),
+            .definition(term: "BOLA (Broken Object-Level Authorization)", meaning: "An API endpoint accepts an object identifier from the user and returns or modifies that object without verifying the caller owns or may access it. The fix is a server-side authorization check tying every object to the authenticated principal — `WHERE id = :id AND owner = :current_user`."),
+            .callout(.danger, "APIs make BOLA brutal because automation scales it: a script that walks `/orders/1…/orders/100000` can exfiltrate an entire customer base in minutes. Object-level authorization must be enforced on the server for every single object access."),
+            .callout(.tip, "Defenders: turn off GraphQL introspection in production, use random unguessable ids (UUIDs) as defense-in-depth (not a fix), enforce authorization in a central layer, and add query depth/complexity limits plus rate limiting."),
+            .checkpoint(QuizQuestion(
+                "A mobile app's API call `GET /api/v2/invoices/4501` returns your invoice. You change it to `4502` and receive a different customer's invoice. What is this?",
+                options: [
+                    "SQL injection",
+                    "Broken Object-Level Authorization (BOLA) — the API IDOR",
+                    "A buffer overflow",
+                    "Cross-site scripting"
+                ],
+                correct: 1,
+                why: "You requested another object by id and the API returned it with no ownership check. That's BOLA — the API equivalent of IDOR and the most common API vulnerability."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why is GraphQL introspection useful to an attacker?",
+                options: [
+                    "It encrypts the traffic",
+                    "It returns the API's full schema — every type, query and mutation, including ones the UI never uses",
+                    "It bypasses TLS",
+                    "It cracks passwords"
+                ],
+                correct: 1,
+                why: "Introspection lets the API describe itself, revealing the complete schema. Attackers mine it for undocumented mutations and sensitive fields the client never exposes."),
+            QuizQuestion(
+                "What is the durable fix for BOLA?",
+                options: [
+                    "Use longer object ids",
+                    "Enforce a server-side ownership/authorization check on every object access against the authenticated user",
+                    "Hide the endpoint from the docs",
+                    "Switch from REST to GraphQL"
+                ],
+                correct: 1,
+                why: "Unguessable ids only obscure. The real fix is authorizing each object access on the server against the caller's identity, so an id you don't own is rejected.")
+        ]
+    )
+
+    // MARK: R3+ — OAuth, SSO & token theft (web module)
+
+    private static let oauthLesson = Lesson(
+        id: "red-oauth",
+        title: "OAuth, SSO & Token Theft",
+        subtitle: "“Log in with Google” is a delegation protocol — and the redirect that powers it is where it bleeds.",
+        minutes: 11,
+        difficulty: .advanced,
+        blocks: [
+            .heading("Delegated access, in four parties"),
+            .paragraph("**OAuth 2.0** lets you grant one app limited access to your account on another without sharing your password — the machinery behind “Sign in with Google/Microsoft” and most modern SSO. Four parties dance: the **user**, the **client** app, the **authorization server** (the identity provider), and the **resource**. The most common variant, the **authorization-code flow**, hands the client a short-lived `code` via a browser **redirect**, which the client swaps server-to-server for an `access_token`."),
+            .animation(.oauthFlow, caption: "The code flow derailed: a tampered redirect_uri sends the victim's authorization code to the attacker, who exchanges it for a token."),
+            .heading("redirect_uri: the soft underbelly"),
+            .paragraph("The whole flow's security rests on the authorization server only ever sending the `code` back to a **pre-registered** `redirect_uri`. Weak validation — allowing subdomains, open redirects on the client, path tricks, or `localhost` — lets an attacker craft a login link that returns the victim's code to *attacker-controlled* infrastructure. With the code (and a known public `client_id`), the attacker completes the exchange and rides the victim's session."),
+            .terminal(prompt: "attacker",
+                      command: "# phishing link the victim clicks (they're already logged into the IdP):\nhttps://idp.example/authorize?client_id=app123&response_type=code\n  &redirect_uri=https://app.example.evil.com/cb&scope=email",
+                      output: """
+# IdP redirects the victim's browser to the EVIL callback with the code:
+# https://app.example.evil.com/cb?code=AUTH_abc123
+# attacker now exchanges AUTH_abc123 -> access_token -> victim's account
+"""),
+            .keyPoints([
+                "redirect_uri abuse — loose matching, open redirects, or subdomain wildcards leak the code.",
+                "Stolen tokens — access/refresh tokens in logs, URLs, localStorage or `Referer` headers are bearer creds: whoever holds one is you.",
+                "Implicit flow (token in URL fragment) is deprecated for good reason — tokens leak through history and referrers.",
+                "Missing `state` parameter → OAuth CSRF: an attacker links their account to the victim's session.",
+                "Scope creep & consent phishing — trick a user into granting a malicious app broad scopes (read all mail) — no password ever stolen.",
+                "SAML's analog: signature-stripping and XML-wrapping attacks forge the assertion that proves who you are."
+            ]),
+            .definition(term: "Bearer token", meaning: "An access token that grants whoever presents it the associated access — like cash. It isn't bound to the client by default, so a token leaked through a URL, log, or referrer header can be replayed by anyone. Short lifetimes, sender-constraining (DPoP/mTLS), and never putting tokens in URLs are the mitigations."),
+            .callout(.danger, "Consent phishing skips passwords and MFA entirely: the victim genuinely logs into the real provider and clicks 'Allow', granting an attacker app standing access to their mailbox or files. Because no credential is stolen, it survives password resets — only revoking the OAuth grant stops it."),
+            .callout(.tip, "Defenses: exact-match `redirect_uri` allowlists (no wildcards), mandatory `state` (CSRF) and PKCE, short token lifetimes, never carrying tokens in URLs, and admin review/restriction of third-party app consent."),
+            .checkpoint(QuizQuestion(
+                "An OAuth authorization server returns the `code` to whatever `redirect_uri` the request specifies, with only loose matching. Why is that dangerous?",
+                options: [
+                    "It slows down login",
+                    "An attacker can craft a login link that delivers the victim's authorization code to attacker-controlled infrastructure, then exchange it for a token",
+                    "It breaks HTTPS",
+                    "It leaks the user's password"
+                ],
+                correct: 1,
+                why: "The flow's security depends on the code only ever going to a trusted, pre-registered URL. Loose redirect_uri validation lets an attacker redirect the code to themselves and complete the token exchange — taking over the account without the password."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does the `state` parameter protect against in an OAuth flow?",
+                options: [
+                    "Token expiry",
+                    "Cross-site request forgery that links the attacker's account to the victim",
+                    "Weak passwords",
+                    "SQL injection"
+                ],
+                correct: 1,
+                why: "`state` is an unguessable value the client checks on the callback, binding the response to the user's original request — defeating CSRF-style OAuth account-linking attacks."),
+            QuizQuestion(
+                "Why does a stolen access token survive the victim changing their password?",
+                options: [
+                    "Tokens are encrypted",
+                    "A bearer token is independent of the password — it stays valid until it expires or the grant is revoked",
+                    "It doesn't — password change kills it instantly",
+                    "Tokens are tied to the device"
+                ],
+                correct: 1,
+                why: "Access tokens are bearer credentials issued at consent time, decoupled from the password. Only expiry or explicit revocation of the OAuth grant invalidates them — a password reset alone does not.")
+        ]
+    )
+
+    // MARK: R-CLOUD — Cloud & container attacks
+
+    private static let cloud = Module(
+        id: "red-cloud",
+        title: "Cloud & Container Attacks",
+        summary: "The infrastructure most targets actually run on — cloud IAM and metadata, and breaking out of containers onto the host that hosts everything.",
+        systemImage: "cloud.fill",
+        lessons: [cloudInfraLesson, containersLesson]
+    )
+
+    private static let cloudInfraLesson = Lesson(
+        id: "red-cloud-infra",
+        title: "Attacking Cloud Infrastructure",
+        subtitle: "In the cloud the perimeter is identity — and a single stolen key or SSRF can unravel the whole account.",
+        minutes: 12,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The cloud changes the rules"),
+            .paragraph("On-prem you hunt for hosts and exploit services. In AWS/Azure/GCP the prize is **identity and configuration**. Compute is ephemeral, but **IAM** (who can do what) is the real terrain — and misconfiguration, not memory-corruption, is the dominant flaw. The fastest paths in: a leaked access key, a public storage bucket, and **SSRF** reaching the instance **metadata service** for temporary credentials."),
+            .animation(.cloudMetadata, caption: "An SSRF makes the app query 169.254.169.254, walks back the instance's IAM credentials, and hands them to the attacker."),
+            .heading("The metadata service: SSRF's jackpot"),
+            .paragraph("Every cloud VM can reach a link-local **metadata endpoint** (`169.254.169.254`) that hands the instance its own configuration — and, crucially, the **temporary IAM credentials** of the role attached to it. If you can make a server-side component fetch a URL you choose (SSRF), you point it at the metadata service and walk back keys that act *as that workload*. This is exactly the path behind the 2019 Capital One breach."),
+            .terminal(prompt: "via SSRF",
+                      command: "GET http://169.254.169.254/latest/meta-data/iam/security-credentials/web-role",
+                      output: """
+{
+  "AccessKeyId": "ASIA...",
+  "SecretAccessKey": "wJal...",
+  "Token": "FwoGZXIvYXdz...",
+  "Expiration": "2026-06-13T20:00:00Z"
+}
+# export these → you are now the web-role
+"""),
+            .heading("From a key to the whole account"),
+            .paragraph("A foothold credential is rarely the end. You **enumerate your own permissions** (`aws sts get-caller-identity`, then probe what the role can do) and look for an **IAM privilege-escalation path**: a role allowed to create access keys for others, attach policies, pass a more-powerful role to a service, or update a Lambda it shouldn't. Tools like Pacu and ScoutSuite automate finding these chains. Public **S3 buckets**, over-permissive policies, and secrets in environment variables are the recurring wins."),
+            .keyPoints([
+                "Leaked keys — GitHub, mobile apps, CI logs; `AKIA…` strings are gold. Check `git` history.",
+                "Metadata SSRF — 169.254.169.254 returns the workload's temporary IAM creds (IMDSv1).",
+                "S3/blob exposure — public or list-able buckets leak data, backups, even credentials.",
+                "IAM privesc — iam:PassRole, policy attachment, key creation, Lambda/EC2 abuse chain to admin.",
+                "Enumerate, don't guess — `get-caller-identity`, then map effective permissions with Pacu/ScoutSuite.",
+                "Persistence — new access keys, extra IAM users, or a backdoored trust policy outlast a patched app."
+            ]),
+            .definition(term: "Instance metadata service (IMDS)", meaning: "A link-local HTTP endpoint (169.254.169.254) that gives a cloud VM its own metadata and the temporary credentials of its attached IAM role. IMDSv1 answers any request from the host, so an SSRF can reach it; IMDSv2 requires a session token obtained via a PUT, which most SSRF primitives can't perform — which is why enforcing IMDSv2 blunts the attack."),
+            .callout(.danger, "Cloud credentials are the new RCE. A read-only SSRF that would be minor on-prem becomes total account compromise in the cloud, because it yields keys that act across the entire environment's control plane."),
+            .callout(.tip, "Defenses: enforce IMDSv2, scope IAM roles to least privilege, block public buckets at the org level, scan code/CI for leaked keys, and alert on anomalous credential use (a role's keys suddenly used from a new region/IP)."),
+            .checkpoint(QuizQuestion(
+                "An app has an SSRF. Why is that dramatically more dangerous in the cloud than on a traditional server?",
+                options: [
+                    "Cloud servers are slower",
+                    "SSRF can reach the metadata service (169.254.169.254) and retrieve the workload's IAM credentials, escalating to control-plane access over the whole account",
+                    "Cloud apps don't use HTTPS",
+                    "It deletes the database automatically"
+                ],
+                correct: 1,
+                why: "The metadata service hands out the instance role's temporary credentials. An SSRF that fetches them lets the attacker act as that workload across the cloud account — turning a modest web bug into full environment compromise."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What single control most directly defeats the metadata-SSRF credential-theft attack?",
+                options: [
+                    "A stronger root password",
+                    "Enforcing IMDSv2, which requires a token obtained via a PUT that typical SSRF can't perform",
+                    "Disabling HTTPS",
+                    "Using a bigger instance"
+                ],
+                correct: 1,
+                why: "IMDSv2 makes the metadata service require a session token fetched with a PUT request (and limits hops). Most SSRF primitives only do GETs, so enforcing IMDSv2 cuts off the credential-walkback path."),
+            QuizQuestion(
+                "After landing low-privilege cloud credentials, what is the realistic next objective?",
+                options: [
+                    "Reboot the region",
+                    "Enumerate the role's permissions and hunt an IAM privilege-escalation path (PassRole, policy attach, key creation) toward admin",
+                    "Crack the TLS certificate",
+                    "Format the disk"
+                ],
+                correct: 1,
+                why: "Foothold creds are rarely admin. You map what the role can do and look for an IAM misconfiguration that lets you escalate — passing a powerful role, attaching policies, or minting keys — to reach account-wide control.")
+        ]
+    )
+
+    private static let containersLesson = Lesson(
+        id: "red-containers",
+        title: "Container & Kubernetes Breakouts",
+        subtitle: "A container is a process with a costume — and a few misconfigurations turn that costume into root on the host.",
+        minutes: 12,
+        difficulty: .expert,
+        blocks: [
+            .heading("Containers are isolation, not a VM"),
+            .paragraph("A container isn't a tiny virtual machine — it's a normal **Linux process** fenced off with **namespaces** (its own view of processes, network, mounts) and **cgroups** (resource limits), sharing the host's single kernel. That sharing is the whole game: every container on a node runs on the *same kernel*, so escaping the fence means root on the host and a pivot to every other container beside you. After a web RCE you very often land *inside a container* — recognising it and breaking out is a core modern skill."),
+            .animation(.containerEscape, caption: "A container foothold finds the Docker socket mounted inside, launches a container mounting the host root, and chroots to become root on the node."),
+            .heading("Spot the box, then find the door"),
+            .paragraph("First confirm you're contained: `/.dockerenv`, container cgroups in `/proc/1/cgroup`, a tiny process list. Then hunt for the **misconfiguration** that lets you out. The classic doors: a mounted **Docker socket** (`/var/run/docker.sock`) — control of the socket is root on the host; the `--privileged` flag or dangerous **capabilities** (`CAP_SYS_ADMIN`); host paths mounted in; or a vulnerable kernel since you share it."),
+            .terminal(prompt: "container$",
+                      command: "ls -la /var/run/docker.sock && id",
+                      output: """
+srw-rw---- 1 root docker 0 /var/run/docker.sock   <-- the host's Docker is reachable
+uid=0(root) gid=0(root)
+# escape: ask the host's Docker to run a container that mounts the host's /
+docker run -v /:/host --privileged -it alpine chroot /host sh
+host# id  ->  uid=0(root)   # root on the NODE
+"""),
+            .heading("Kubernetes raises the stakes"),
+            .paragraph("In Kubernetes you're a **pod** on a node, and the prize is the **cluster**. The mounted **service-account token** (`/var/run/secrets/kubernetes.io/...`) is your identity to the API server — over-permissioned RBAC lets you list secrets, create pods, or schedule a pod that mounts the host. Exposed **kubelet** APIs, the **etcd** datastore (every secret, often unauthenticated), and cloud metadata from inside the pod are the other classic paths from one pod to owning the cluster."),
+            .keyPoints([
+                "Confirm containment — /.dockerenv, /proc/1/cgroup, capabilities (`capsh --print`).",
+                "Mounted docker.sock — talk to the host daemon; spin a container mounting `/` → host root.",
+                "--privileged / CAP_SYS_ADMIN — disable the fence; mount host devices, abuse cgroup release_agent.",
+                "Host mounts — a writable hostPath (or `/`) handed in is a direct road out.",
+                "K8s: read the service-account token → query the API server → abuse loose RBAC (list secrets, create privileged pods).",
+                "Shared kernel — a kernel exploit from inside the container is game over for the node."
+            ]),
+            .definition(term: "Container escape", meaning: "Breaking out of a container's namespace/cgroup isolation to execute as a process on the host kernel — typically via a mounted Docker socket, the --privileged flag, dangerous capabilities, a host-path mount, or a kernel vulnerability. Because all containers share the host kernel, an escape compromises the node and every container on it."),
+            .callout(.danger, "Mounting `/var/run/docker.sock` into a container is effectively granting it root on the host — the daemon runs as root and will happily start a new container that mounts the entire host filesystem. Treat the Docker socket as the crown jewels."),
+            .callout(.tip, "Defenses: never mount the Docker socket into workloads; drop capabilities and avoid --privileged; run as non-root with a read-only rootfs; apply seccomp/AppArmor; least-privilege Kubernetes RBAC and namespaced service-account tokens; and keep the host kernel patched."),
+            .checkpoint(QuizQuestion(
+                "You get RCE inside a container and find `/var/run/docker.sock` is mounted in. Why is that a full host compromise?",
+                options: [
+                    "It lets you read one log file",
+                    "Controlling the Docker socket lets you command the host's root daemon — e.g. start a container mounting the host's `/` and chroot into it as root",
+                    "It only restarts the container",
+                    "It exposes the database password"
+                ],
+                correct: 1,
+                why: "The Docker daemon runs as root on the host. With its socket, you can tell it to launch a new container that bind-mounts the host filesystem, then chroot in — giving you root on the node and access to every other container."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why does escaping a container compromise every other container on the same node?",
+                options: [
+                    "Containers share encrypted storage",
+                    "All containers on a host share the single host kernel; host root can reach any container's processes and files",
+                    "Containers are copies of each other",
+                    "They use the same password"
+                ],
+                correct: 1,
+                why: "Containers are isolated processes on one shared kernel, not separate VMs. Root on the host kernel sits above every container's namespace, so a single escape exposes all of them."),
+            QuizQuestion(
+                "In a Kubernetes pod, why is the mounted service-account token valuable to an attacker?",
+                options: [
+                    "It decrypts TLS",
+                    "It's the pod's identity to the API server — with loose RBAC it can list secrets, create pods, or schedule a host-mounting pod",
+                    "It's the root password",
+                    "It disables the firewall"
+                ],
+                correct: 1,
+                why: "The service-account token authenticates the pod to the Kubernetes API. If RBAC is over-permissive, that token lets the attacker pivot from a single pod to reading cluster secrets or scheduling privileged workloads — owning the cluster.")
+        ]
+    )
+
+    // MARK: R-FIELD — The Operator's Field Manual (guides)
+
+    private static let fieldManual = Module(
+        id: "red-field-manual",
+        title: "The Operator's Field Manual",
+        summary: "The two practical guides every learner needs around the techniques: how to build a safe lab to practise in, and how to turn an engagement into a report that gets findings fixed.",
+        systemImage: "book.closed.fill",
+        lessons: [labLesson, reportLesson]
+    )
+
+    private static let labLesson = Lesson(
+        id: "red-lab",
+        title: "Build Your Practice Lab",
+        subtitle: "Everything in this app is for systems you're allowed to touch — so the first build is the place you're allowed to touch.",
+        minutes: 9,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Why you need a lab first"),
+            .paragraph("Reading about an attack and *running* one are different skills, and the only legal place to run them is somewhere you own. A home lab is your sandbox: break things, run exploits, snapshot, revert, repeat — with zero risk to anyone else and zero legal exposure. Build this before you touch any technique in the offensive tracks."),
+            .heading("The minimal kit"),
+            .paragraph("You need three pieces: a **hypervisor** to run virtual machines, an **attacker VM**, and **target VMs** to practise on — all on an **isolated virtual network** so nothing leaks onto your real LAN or the internet. It runs comfortably on a laptop with 16 GB of RAM."),
+            .keyPoints([
+                "Hypervisor — VirtualBox or VMware (free tiers) on Windows/Linux; UTM on Apple Silicon.",
+                "Attacker box — Kali or Parrot OS: the toolkits (nmap, Burp, Metasploit, hashcat) come pre-installed.",
+                "Targets — intentionally vulnerable VMs: Metasploitable 2/3, OWASP Juice Shop, DVWA, VulnHub boxes.",
+                "Network — put every VM on a Host-Only / Internal network so attacks stay contained.",
+                "Snapshots — snapshot a clean state before each session so you can revert instantly.",
+                "Active Directory — a Windows Server DC + a client VM (or GOAD/'Game of Active Directory') to drill the AD tracks."
+            ]),
+            .terminal(prompt: "attacker@kali",
+                      command: "# confirm the lab is isolated and the target is reachable\nip a | grep inet                # you're on the host-only net, e.g. 192.168.56.0/24\nnmap -sn 192.168.56.0/24        # discover your target VMs",
+                      output: """
+inet 192.168.56.10/24            <-- attacker, isolated subnet
+Nmap scan report for 192.168.56.101   <-- Metasploitable target is up
+Nmap scan report for 192.168.56.102   <-- Juice Shop target is up
+"""),
+            .callout(.tip, "Prefer something already hosted? Online ranges like Hack The Box and TryHackMe give you legal, ready-made targets with guided paths — no setup, and you still only attack machines provisioned *for you*."),
+            .callout(.warning, "Keep the lab off your production network. Use Host-Only or Internal networking, never bridge a deliberately-vulnerable VM onto your home LAN, and don't expose it to the internet — a Metasploitable box online is compromised within minutes by someone who is *not* you."),
+            .definition(term: "Snapshot", meaning: "A saved point-in-time state of a VM (disk + memory) you can revert to instantly. In a lab it lets you detonate malware or run a destructive exploit, then roll back to a clean machine in seconds — the single biggest time-saver in practice."),
+            .checkpoint(QuizQuestion(
+                "Why must lab target VMs sit on a Host-Only or Internal virtual network?",
+                options: [
+                    "To make them faster",
+                    "To isolate deliberately-vulnerable machines so attacks stay contained and nothing leaks to your real LAN or the internet",
+                    "Because Kali requires it",
+                    "To save disk space"
+                ],
+                correct: 1,
+                why: "Vulnerable practice VMs would be trivially compromised if exposed. Host-Only/Internal networks keep the lab traffic between your VMs only, containing both your attacks and any real-world attacker."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What's the practical value of taking a VM snapshot before a practice session?",
+                options: [
+                    "It speeds up the CPU",
+                    "You can run destructive exploits and instantly revert to a clean machine afterwards",
+                    "It encrypts the disk",
+                    "It connects the VM to the internet"
+                ],
+                correct: 1,
+                why: "Snapshots capture a clean state you can roll back to in seconds, so you can break a target freely and reset for the next attempt without rebuilding it."),
+            QuizQuestion(
+                "Which is the most appropriate, legal way to practise the offensive techniques?",
+                options: [
+                    "Scan random internet hosts to stay sharp",
+                    "Use your own isolated lab VMs or platforms built for it (Hack The Box, TryHackMe)",
+                    "Test a friend's website without telling them",
+                    "Try the techniques at work on production"
+                ],
+                correct: 1,
+                why: "Practise only on systems you own or are explicitly authorized to test — your isolated lab, or purpose-built legal ranges. Anything else is unauthorized access, regardless of intent.")
+        ]
+    )
+
+    private static let reportLesson = Lesson(
+        id: "red-report",
+        title: "Methodology & Writing the Report",
+        subtitle: "The deliverable isn't the shell — it's the report. A finding nobody can act on didn't really get found.",
+        minutes: 10,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("A repeatable methodology beats luck"),
+            .paragraph("Good testers aren't lucky; they're **systematic**. Whatever the target, the same loop runs: scope it, enumerate it thoroughly, find and exploit a weakness, escalate and pivot, then document as you go. The frameworks (PTES, the OWASP Testing Guide, MITRE ATT&CK as a checklist) all encode the same discipline — cover everything, and record everything, so a result is reproducible rather than a one-off accident."),
+            .keyPoints([
+                "Scope & rules of engagement — what's in scope, what's off-limits, timing, and emergency contacts. In writing, first.",
+                "Enumerate exhaustively — the phase that wins engagements; note every host, service and version.",
+                "Exploit & escalate — get the foothold, then privilege-escalate and move laterally to objectives.",
+                "Take notes continuously — every command, timestamp and screenshot; you can't reconstruct it later.",
+                "Clean up — remove tools, shells, and any test accounts you created.",
+                "Report — the actual product the client pays for."
+            ]),
+            .heading("The report is the product"),
+            .paragraph("A client can't see your clever exploit chain — they see the document. A strong report has an **executive summary** in business language (risk, impact, what to do — for leadership), and a **technical section** per finding: a clear title, a **severity** rating (often CVSS), **affected assets**, **reproduction steps** so their team can confirm it, the **impact** in concrete terms, and a specific, actionable **remediation**. Evidence (screenshots, request/response) backs each one."),
+            .definition(term: "CVSS", meaning: "The Common Vulnerability Scoring System — a standard 0–10 score derived from a vulnerability's exploitability and impact characteristics. It gives findings a comparable severity so an organisation can prioritise: a 9.8 gets fixed before a 4.3."),
+            .terminal(prompt: "finding template",
+                      command: "## SQL Injection in /login (Critical · CVSS 9.8)\nAsset:   https://app.example/login  (param: username)\nImpact:  Full authentication bypass + database read\nSteps:   1) POST username=admin'-- … 2) observe admin session\nFix:     Use parameterized queries; least-privilege DB account",
+                      output: """
+# leadership reads the summary & risk;
+# the engineer reads Steps + Fix and reproduces, then patches
+"""),
+            .callout(.tip, "Write remediation a developer can act on without you in the room: name the exact fix ('use prepared statements in /login's query'), not a platitude ('sanitize inputs'). Re-testing after the fix is part of the job — and where you confirm the loop closed."),
+            .callout(.warning, "Severity is impact-driven, not exploit-coolness-driven. A boring misconfiguration that exposes customer PII outranks an elegant exploit that reaches nothing sensitive. Rate by what it puts at risk for *this* organisation."),
+            .checkpoint(QuizQuestion(
+                "Why does a penetration test report include both an executive summary and detailed technical findings?",
+                options: [
+                    "To make it longer",
+                    "Different audiences: leadership needs business-level risk and priorities; engineers need reproduction steps and specific fixes",
+                    "The summary is just decoration",
+                    "Regulations forbid technical detail"
+                ],
+                correct: 1,
+                why: "A report serves two readers. Executives decide on risk and budget from the summary; the technical team confirms and remediates each issue from the steps, severity and fix. Both are needed for findings to actually get resolved."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "During an engagement, why take continuous notes (commands, timestamps, screenshots)?",
+                options: [
+                    "To pad the invoice",
+                    "Findings must be reproducible and evidenced; you can't reliably reconstruct exact steps and proof after the fact",
+                    "Notes encrypt the traffic",
+                    "It's only for legal reasons"
+                ],
+                correct: 1,
+                why: "The report depends on exact, evidenced reproduction. Real-time notes capture the precise commands, order, and screenshots needed to prove and reproduce each finding — detail that's impossible to recover accurately later."),
+            QuizQuestion(
+                "What should drive a finding's severity rating?",
+                options: [
+                    "How technically impressive the exploit was",
+                    "The concrete risk and impact to that organisation (often scored with CVSS)",
+                    "How long it took to find",
+                    "The number of tools used"
+                ],
+                correct: 1,
+                why: "Severity reflects business impact and exploitability, not exploit elegance. A simple bug exposing sensitive data can outrank a sophisticated one that reaches nothing important — CVSS helps standardise that judgement.")
         ]
     )
 }

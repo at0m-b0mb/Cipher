@@ -10,7 +10,7 @@ enum FundamentalsContent {
         kind: .fundamentals,
         title: "Fundamentals",
         tagline: "Mindset, the shell, networks & crypto — the ground floor of everything.",
-        modules: [mindset, shell, networking, crypto, web, windows]
+        modules: [mindset, shell, networking, encoding, crypto, web, windows]
     )
 
     // MARK: F-S — Systems & the shell
@@ -385,6 +385,88 @@ Cookie: session=8f3b...   <-- plaintext over HTTP!
     )
 
     // MARK: F3 — Cryptography essentials
+
+    // MARK: F-ENC — Data & encoding
+
+    private static let encoding = Module(
+        id: "fund-data",
+        title: "Data & Encoding",
+        summary: "Bits, bytes, hex and Base64 — how data is dressed up for transport, and why recognizing an encoding is a daily hacking skill.",
+        systemImage: "number",
+        lessons: [encodingLesson]
+    )
+
+    private static let encodingLesson = Lesson(
+        id: "fund-encoding",
+        title: "Bytes, Hex, Base64 & Encoding",
+        subtitle: "Spot and reverse the costumes data wears — and never confuse encoding with encryption.",
+        minutes: 9,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Everything is bytes"),
+            .paragraph("Underneath every password, packet and token is the same thing: **bytes** — numbers from 0 to 255. A character like `H` is just the byte `72`. We rarely look at raw bytes, though; we dress them in more readable *encodings*. Reading those costumes — and knowing they're costumes, not locks — is a skill you'll use in almost every challenge and engagement."),
+            .animation(.encodingLayers, caption: "Watch the message `Hi!` re-dressed as hex, then Base64, then URL encoding — every layer fully reversible."),
+            .heading("Hex: bytes for humans"),
+            .paragraph("Each byte is eight bits, which is exactly two **hexadecimal** digits (base-16, `0`–`9` then `a`–`f`). So one byte = two hex characters. `H` (72 in decimal) is `0x48`. Hex is everywhere — memory dumps, hashes, MAC addresses, packet captures — because it maps so cleanly onto bytes."),
+            .terminal(prompt: "kali@lab",
+                      command: "echo -n 'Hi!' | xxd",
+                      output: """
+00000000: 4869 21                                  Hi!
+# 48=H  69=i  21=!   — three bytes, six hex digits
+"""),
+            .heading("Base64: binary that survives text channels"),
+            .paragraph("Email headers, JSON, cookies and JWTs can only carry text safely. **Base64** packs arbitrary bytes into 64 printable characters (`A–Z a–z 0–9 + /`), three bytes becoming four characters — that's the `=` padding you see trailing tokens. It is *not* secret: anyone can decode it instantly."),
+            .terminal(prompt: "kali@lab",
+                      command: "echo -n 'Hi!' | base64   # SGkh\necho 'SGkh' | base64 -d   # Hi!",
+                      output: """
+SGkh
+Hi!
+# round-trips perfectly — no key involved
+"""),
+            .keyPoints([
+                "Bit → byte (8 bits) → hex (2 digits/byte) → Base64 (4 chars/3 bytes).",
+                "URL/percent encoding escapes unsafe characters: space→%20, !→%21.",
+                "Recognize Base64 by its charset and trailing `=`; hex by `0-9a-f` pairs.",
+                "`xxd`, `base64 -d`, CyberChef and `urldecode` flip them back in seconds.",
+                "Encodings stack — a token may be URL-encoded Base64 of JSON. Peel one layer at a time."
+            ]),
+            .callout(.warning, "Encoding is **not** encryption. Base64 and hex hide nothing — they're reversible with no key. Treating an encoded secret as 'protected' is a classic, dangerous mistake you'll find on real targets."),
+            .definition(term: "Encoding vs encryption", meaning: "Encoding is a reversible re-representation of data for transport or display, with no secret involved (hex, Base64, URL). Encryption transforms data using a key so only key-holders can reverse it. If there's no key, it's encoding — and offers no confidentiality."),
+            .callout(.tip, "When a value looks like gibberish, guess the encoding before assuming crypto. A string of `a-f0-9` is probably hex; one ending in `=` is probably Base64; `%`-sprinkled text is URL-encoded. Decoding it often reveals the next clue for free."),
+            .checkpoint(QuizQuestion(
+                "You find the cookie value `YWRtaW4=` in a request. What's the right first move?",
+                options: [
+                    "Try to brute-force the encryption key",
+                    "Base64-decode it — the trailing `=` suggests encoding, not encryption",
+                    "Report it as a buffer overflow",
+                    "Ignore it; cookies are always random"
+                ],
+                correct: 1,
+                why: "The trailing `=` and printable charset scream Base64. Decoding `YWRtaW4=` yields `admin` — no key needed. Encoded values are reversible representations, not protected secrets."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "How many hexadecimal digits represent a single byte?",
+                options: ["One", "Two", "Four", "Eight"],
+                correct: 1,
+                why: "A byte is 8 bits; each hex digit encodes 4 bits, so two hex digits represent one byte (e.g. `H` = `0x48`)."),
+            QuizQuestion(
+                "What is the main reason data is Base64-encoded?",
+                options: [
+                    "To encrypt it so attackers can't read it",
+                    "To safely carry arbitrary bytes through text-only channels like JSON, cookies and email",
+                    "To compress it smaller",
+                    "To hash it irreversibly"
+                ],
+                correct: 1,
+                why: "Base64 represents binary data using printable ASCII so it survives text-only transports. It adds no secrecy and actually grows the data by ~33%."),
+            QuizQuestion(
+                "A URL parameter contains `%2e%2e%2f`. Decoded, that is…",
+                options: ["admin", "../", "a hash", "a NOP sled"],
+                correct: 1,
+                why: "Percent-encoding maps %2e→`.` and %2f→`/`, so `%2e%2e%2f` is `../` — exactly the path-traversal sequence, smuggled past naive filters by URL-encoding it.")
+        ]
+    )
 
     private static let crypto = Module(
         id: "fund-crypto",

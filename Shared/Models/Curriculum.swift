@@ -80,6 +80,7 @@ enum AnimationID: String, CaseIterable, Codable {
     case osiModel
     case tcpHandshake
     case packetTravel
+    case encodingLayers
     case symmetricEncryption
     case publicKeyExchange
     case hashing
@@ -97,8 +98,12 @@ enum AnimationID: String, CaseIterable, Codable {
     case templateInjection
     case csrf
     case jwtAttack
+    case apiBola
+    case oauthFlow
     case sourceReview
     case clientSide
+    case cloudMetadata
+    case containerEscape
     case privilegeEscalation
     case passwordCracking
     case kerberoasting
@@ -127,6 +132,8 @@ enum AnimationID: String, CaseIterable, Codable {
     case mitreAttack
     case threatHunting
     case adTiering
+    case threatIntel
+    case zeroTrust
 
     /// Short human label used in the lesson UI chrome.
     var label: String {
@@ -134,6 +141,7 @@ enum AnimationID: String, CaseIterable, Codable {
         case .osiModel:            return "The OSI Model"
         case .tcpHandshake:        return "TCP 3-Way Handshake"
         case .packetTravel:        return "Anatomy of a Packet"
+        case .encodingLayers:      return "Encoding Layers"
         case .symmetricEncryption: return "Symmetric Encryption"
         case .publicKeyExchange:   return "Public-Key Exchange"
         case .hashing:             return "Hashing"
@@ -149,8 +157,12 @@ enum AnimationID: String, CaseIterable, Codable {
         case .templateInjection:   return "Server-Side Template Injection"
         case .csrf:                return "Cross-Site Request Forgery"
         case .jwtAttack:           return "JWT Token Attacks"
+        case .apiBola:             return "API & GraphQL (BOLA)"
+        case .oauthFlow:           return "OAuth Token Theft"
         case .sourceReview:        return "Source-to-Sink (White-Box)"
         case .clientSide:          return "Client-Side Attack"
+        case .cloudMetadata:       return "Cloud Metadata SSRF"
+        case .containerEscape:     return "Container Escape"
         case .privilegeEscalation: return "Privilege Escalation"
         case .passwordCracking:    return "Offline Password Cracking"
         case .kerberoasting:       return "Kerberoasting"
@@ -177,6 +189,8 @@ enum AnimationID: String, CaseIterable, Codable {
         case .mitreAttack:         return "MITRE ATT&CK"
         case .threatHunting:       return "Threat Hunting Loop"
         case .adTiering:           return "Tiered AD Administration"
+        case .threatIntel:         return "Threat Intelligence Cycle"
+        case .zeroTrust:           return "Zero Trust Decision"
         }
     }
 }

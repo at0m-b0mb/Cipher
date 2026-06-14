@@ -39,6 +39,10 @@ enum Flashcards {
         Flashcard("Active Directory", "Microsoft's central directory of users, computers and groups for a Windows domain — the prize in most internal tests.", .fundamentals),
         Flashcard("Domain Controller", "The server running AD; it authenticates logons and holds NTDS.dit — every account's password hash.", .fundamentals),
         Flashcard("Kerberos TGT", "A Ticket Granting Ticket issued at logon that proves your identity and is exchanged for per-service tickets.", .fundamentals),
+        Flashcard("Hexadecimal", "Base-16 (0–9, a–f). One byte = two hex digits, so hex maps cleanly onto raw bytes — used in hashes, dumps and packet captures.", .fundamentals),
+        Flashcard("Base64", "Encodes arbitrary bytes into 64 printable characters (3 bytes → 4 chars, often '='-padded) so binary survives text channels. Reversible, not secret.", .fundamentals),
+        Flashcard("URL Encoding", "Percent-encoding that escapes unsafe characters for URLs: space→%20, !→%21, ../→%2e%2e%2f. Reversible representation, no key.", .fundamentals),
+        Flashcard("Encoding vs Encryption", "Encoding (hex/Base64/URL) is reversible re-representation with no key; encryption needs a key. No key means no confidentiality — a classic mix-up.", .fundamentals),
 
         // Red team
         Flashcard("OSINT", "Open-source intelligence — recon from public data with no contact to the target's systems.", .redTeam),
@@ -100,6 +104,18 @@ enum Flashcards {
         Flashcard("Egghunter", "Tiny shellcode that scans memory for a tagged 'egg' marking your larger payload — used when the controlled buffer is too small.", .redTeam),
         Flashcard("Format String", "printf(user_input) lets the user control specifiers: %x/%s read memory, %n writes it — an arbitrary read/write from one bug.", .redTeam),
         Flashcard("Use-After-Free", "Memory freed but still pointed to; reclaim the slot with attacker data (a fake vtable) so the dangling call runs your code.", .redTeam),
+        Flashcard("BOLA", "Broken Object-Level Authorization — the API's IDOR. Swap an object id and the server returns it without checking ownership. The #1 API vulnerability.", .redTeam),
+        Flashcard("GraphQL Introspection", "A built-in query that returns the API's full schema — every type, query and mutation, including ones the UI hides. Often left on in production.", .redTeam),
+        Flashcard("Mass Assignment", "Sending extra fields a client never should (\"role\":\"admin\") that the server blindly binds to an object — granting properties you were never meant to set.", .redTeam),
+        Flashcard("OAuth 2.0", "A delegated-access protocol (the engine behind 'Sign in with…'). The authorization-code flow returns a short-lived code via a browser redirect.", .redTeam),
+        Flashcard("redirect_uri Abuse", "Loose validation of OAuth's redirect target lets an attacker craft a login link that delivers the victim's auth code to attacker-controlled infrastructure.", .redTeam),
+        Flashcard("Bearer Token", "An access token valid for whoever holds it, like cash. Leaked via URLs, logs or referrers, it's replayable and survives a password reset until revoked.", .redTeam),
+        Flashcard("Consent Phishing", "Tricking a user into clicking 'Allow' on a malicious OAuth app, granting it standing access (mailbox/files) — no password or MFA ever stolen.", .redTeam),
+        Flashcard("IMDS", "Instance Metadata Service (169.254.169.254) — hands a cloud VM its config and its IAM role's temporary credentials. SSRF reaches it; IMDSv2 blunts that.", .redTeam),
+        Flashcard("IAM Privilege Escalation", "Chaining cloud permissions (iam:PassRole, policy attachment, key creation) from a low-privilege role up to account admin.", .redTeam),
+        Flashcard("Container Escape", "Breaking a container's namespace/cgroup isolation to run on the shared host kernel — via a mounted Docker socket, --privileged, capabilities or a host mount.", .redTeam),
+        Flashcard("Docker Socket", "/var/run/docker.sock — control of it is root on the host. Mounted into a container, it lets you start a new container mounting the host's filesystem.", .redTeam),
+        Flashcard("K8s Service-Account Token", "A pod's identity to the Kubernetes API server. With over-permissive RBAC it lists secrets, creates pods, or schedules a host-mounting pod — owning the cluster.", .redTeam),
 
         // Blue team
         Flashcard("Defense in Depth", "Layering independent controls so an attacker must defeat all of them.", .blueTeam),
@@ -123,7 +139,13 @@ enum Flashcards {
         Flashcard("Tiered Administration", "Isolating admin credentials by tier (Tier 0 = DCs/Domain Admins) so high-tier creds never land on low-tier hosts.", .blueTeam),
         Flashcard("LAPS", "Local Administrator Password Solution — unique, rotating local-admin passwords per machine that defeat pass-the-hash reuse.", .blueTeam),
         Flashcard("gMSA", "Group Managed Service Account — a service account with a long, auto-rotated password that makes Kerberoasting infeasible.", .blueTeam),
-        Flashcard("Honeypot Account", "A deceptive, never-used account (often with a tempting SPN) whose every login or ticket request is high-signal evidence of an attacker.", .blueTeam)
+        Flashcard("Honeypot Account", "A deceptive, never-used account (often with a tempting SPN) whose every login or ticket request is high-signal evidence of an attacker.", .blueTeam),
+        Flashcard("CTI", "Cyber Threat Intelligence — data about adversaries, analysed and aimed at a decision. Tiers: strategic (leadership), operational (TTPs), tactical (IOCs).", .blueTeam),
+        Flashcard("STIX / TAXII", "Standard formats (STIX) and transport (TAXII) for sharing threat intelligence between organisations and tools in a machine-readable way.", .blueTeam),
+        Flashcard("EPSS", "Exploit Prediction Scoring System — a probability (0–1) that a CVE will be exploited soon. Patch by likelihood, not just raw CVSS severity.", .blueTeam),
+        Flashcard("CISA KEV", "The Known Exploited Vulnerabilities catalog — CVEs confirmed exploited in the wild. Treat anything on it as drop-everything, regardless of CVSS.", .blueTeam),
+        Flashcard("Vulnerability Management", "The continuous loop of discover → assess → prioritise (by risk, not raw score) → remediate → verify. Success is fixing what matters, fast.", .blueTeam),
+        Flashcard("Microsegmentation", "Splitting the network into small, individually-policed zones so one foothold can't roam — the Zero Trust control that directly blunts lateral movement.", .blueTeam)
     ]
 
     static func cards(for category: TrackKind) -> [Flashcard] {
