@@ -5,12 +5,18 @@ import SwiftUI
 struct AnimationGalleryView: View {
     private let groups: [(title: String, accent: Color, ids: [AnimationID])] = [
         ("Fundamentals", Theme.teal,
-         [.osiModel, .tcpHandshake, .packetTravel, .symmetricEncryption, .publicKeyExchange, .hashing]),
+         [.osiModel, .tcpHandshake, .packetTravel, .symmetricEncryption, .publicKeyExchange, .hashing,
+          .processMemory, .certChain]),
+        ("Networking", Theme.violet,
+         [.internetMap, .ipAddressing, .subnetMask, .dnsResolution, .defaultGateway, .routingHops,
+          .natTranslation, .dhcpLease, .tcpVsUdp, .wifiConnect, .vpnTunnel, .firewallFilter]),
         ("Red Team", Theme.red,
-         [.cyberKillChain, .portScan, .phishingFlow, .sqlInjection, .xssReflected, .privilegeEscalation,
-          .passwordCracking, .kerberoasting, .lateralMovement, .bufferOverflow, .c2Beacon]),
+         [.cyberKillChain, .portScan, .phishingFlow, .sqlInjection, .xssReflected, .payloadStaging,
+          .privilegeEscalation, .tokenTheft, .passwordCracking, .kerberoasting, .lateralMovement,
+          .bufferOverflow, .reverseEngineering, .paddingOracle, .c2Beacon, .dnsTunneling, .supplyChain,
+          .aitmProxy, .promptInjection]),
         ("Blue Team", Theme.blue,
-         [.defenseInDepth, .siemPipeline, .incidentResponse, .mitreAttack, .threatHunting])
+         [.defenseInDepth, .siemPipeline, .idsDetection, .secureSdlc, .incidentResponse, .mitreAttack, .threatHunting])
     ]
 
     var body: some View {

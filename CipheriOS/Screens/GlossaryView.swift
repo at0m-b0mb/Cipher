@@ -22,6 +22,7 @@ struct GlossaryView: View {
                         HStack(spacing: 8) {
                             filterChip(nil, "All", Theme.textSecondary)
                             filterChip(.fundamentals, "Fundamentals", Theme.teal)
+                            filterChip(.networking, "Networking", Theme.violet)
                             filterChip(.redTeam, "Red Team", Theme.red)
                             filterChip(.blueTeam, "Blue Team", Theme.blue)
                         }

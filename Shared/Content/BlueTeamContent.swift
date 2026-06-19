@@ -10,7 +10,7 @@ enum BlueTeamContent {
         kind: .blueTeam,
         title: "Blue Team",
         tagline: "Detect, respond, and outlast the adversary.",
-        modules: [foundations, detection, response, modernDefense, forensics]
+        modules: [foundations, detection, nsm, response, modernDefense, appcloud, forensics]
     )
 
     // MARK: B1 — Defensive foundations
@@ -957,6 +957,232 @@ domain evil-c2  -> registered 3 days ago, fast-flux
                 ],
                 correct: 1,
                 why: "A honey account exists only as bait. Since no legitimate user signs into it, any authentication attempt strongly indicates an intruder probing or using harvested credentials.")
+        ]
+    )
+
+    // MARK: B-NSM — Network security monitoring
+
+    private static let nsm = Module(
+        id: "blue-nsm",
+        title: "Network Security Monitoring",
+        summary: "Watching the wire — IDS/IPS, signatures vs anomalies, and the packet-level visibility that catches what endpoints miss.",
+        systemImage: "antenna.radiowaves.left.and.right",
+        lessons: [nsmLesson]
+    )
+
+    private static let nsmLesson = Lesson(
+        id: "blue-nsm-monitoring",
+        title: "IDS, IPS & Network Visibility",
+        subtitle: "The network never lies — detect intrusions in the traffic itself.",
+        minutes: 11,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Why watch the network at all"),
+            .paragraph("Endpoints can be blinded — an attacker who kills the EDR agent goes dark on that host. But to do anything useful they still have to talk on the network: scan, move laterally, beacon to C2, exfiltrate. **Network Security Monitoring (NSM)** watches that traffic, giving you a vantage point the attacker can't simply switch off."),
+            .animation(.idsDetection, caption: "Traffic streams past a sensor; a malicious request matches a signature and fires an alert — an IPS would block it inline."),
+            .heading("IDS vs IPS, signatures vs anomalies"),
+            .paragraph("An **IDS** (Intrusion Detection System) inspects a *copy* of traffic and **alerts**; an **IPS** sits *inline* and can **block**. Both detect two ways: **signatures** match known-bad patterns (a specific exploit string) — precise but blind to novelty; **anomaly** detection flags deviations from normal — catches the unknown but generates more noise. Mature shops run both, plus a **NDR** layer for behavioural analytics."),
+            .keyPoints([
+                "IDS — out-of-band, alerts on a copy of traffic (fed by a SPAN port or network tap).",
+                "IPS — inline, can drop malicious packets in real time.",
+                "Signature detection — Snort/Suricata rules matching known-bad; precise, but misses novel attacks.",
+                "Anomaly detection — flags deviations from a baseline; catches the unknown, noisier.",
+                "Zeek — turns raw traffic into rich connection logs (who talked to whom, DNS, certs, files)."
+            ]),
+            .terminal(prompt: "soc@sensor",
+                      command: "cat /var/log/suricata/fast.log",
+                      output: """
+[**] [1:2010935:3] ET WEB_SERVER Possible /etc/passwd via Directory Traversal [**]
+[Classification: Web Application Attack] [Priority: 1]
+10.10.10.40:51544 -> 10.0.0.8:80
+"""),
+            .definition(term: "Full packet capture vs flow", meaning: "Full PCAP records every byte — perfect for investigation but storage-heavy. Flow/metadata (NetFlow, Zeek logs) records who-talked-to-whom and how much, not the contents — far cheaper and still hugely valuable, especially when traffic is encrypted."),
+            .callout(.warning, "Most traffic is now encrypted (TLS), so signatures can't read payloads. Modern NSM leans on metadata — JA3/JA4 TLS fingerprints, certificate details, destination reputation, beacon timing — to spot malicious encrypted flows without decrypting them."),
+            .callout(.tip, "Sensor placement is everything: you can only monitor traffic you can see. Position taps/SPAN at choke points — the internet egress and between network segments — so lateral movement and exfiltration cross a sensor."),
+            .checkpoint(QuizQuestion(
+                "What is the core difference between an IDS and an IPS?",
+                options: [
+                    "An IDS is software, an IPS is hardware",
+                    "An IDS alerts on a copy of traffic; an IPS sits inline and can block traffic in real time",
+                    "An IDS is for Windows, an IPS for Linux",
+                    "They are the same thing"
+                ],
+                correct: 1,
+                why: "An IDS detects and alerts out-of-band; an IPS is positioned inline so it can actively drop or block malicious traffic as it passes."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the main weakness of purely signature-based detection?",
+                options: [
+                    "It's too slow",
+                    "It can only catch known patterns, so novel or modified attacks slip past",
+                    "It blocks legitimate traffic",
+                    "It can't run on Linux"
+                ],
+                correct: 1,
+                why: "Signatures match known-bad. A new or sufficiently altered attack has no signature yet, so anomaly/behavioural detection is needed to catch the unknown."),
+            QuizQuestion(
+                "Why does network monitoring increasingly rely on metadata like JA3 fingerprints?",
+                options: [
+                    "Metadata is bigger than the payload",
+                    "Most traffic is encrypted, so the payload can't be read — metadata still reveals malicious patterns",
+                    "It's required by law",
+                    "Signatures are no longer used at all"
+                ],
+                correct: 1,
+                why: "TLS hides payloads from signature inspection. TLS fingerprints, certificate data, destinations and timing let analysts spot malicious encrypted flows without decryption."),
+            QuizQuestion(
+                "Why is sensor placement critical to NSM?",
+                options: [
+                    "Sensors look nicer in the data center",
+                    "You can only detect traffic that actually crosses a sensor, so they belong at choke points like egress and between segments",
+                    "It reduces electricity use",
+                    "Placement doesn't matter"
+                ],
+                correct: 1,
+                why: "Monitoring only sees traffic that passes the sensor. Placing taps at the internet egress and between segments ensures lateral movement and exfiltration are visible.")
+        ]
+    )
+
+    // MARK: B-AC — Securing apps & the cloud
+
+    private static let appcloud = Module(
+        id: "blue-appcloud",
+        title: "Securing Apps & the Cloud",
+        summary: "Building security in — catching vulnerabilities in the pipeline before they ship, and defending the cloud where the attacks from the Red Team track land.",
+        systemImage: "cloud.fill",
+        lessons: [appsecLesson, cloudDefenseLesson]
+    )
+
+    private static let appsecLesson = Lesson(
+        id: "blue-appsec",
+        title: "Application Security & the Secure SDLC",
+        subtitle: "The cheapest bug to fix is the one caught before it ships — shift security left.",
+        minutes: 10,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Security as part of building, not an afterthought"),
+            .paragraph("The web attacks in the Red Team track all exist because a vulnerability shipped to production. **Application security** moves the defense earlier — “shift left” — so flaws are caught while they're cheap to fix: during design, coding and the build pipeline, not after a breach. The goal is a **Secure SDLC**, where every change passes automated security gates before it can deploy."),
+            .animation(.secureSdlc, caption: "A CI/CD pipeline with security gates — SAST, dependency and DAST checks — where a vulnerable dependency fails the build before it ships."),
+            .heading("The testing toolbox"),
+            .keyPoints([
+                "Threat modeling — at design time, ask how this feature could be abused.",
+                "SAST — static analysis reads source code for vulnerable patterns (no running app).",
+                "DAST — dynamic analysis attacks the running app from the outside, like a scanner.",
+                "SCA — software composition analysis flags known-vulnerable third-party libraries.",
+                "Secrets scanning — catch hard-coded API keys and passwords before they hit the repo."
+            ]),
+            .definition(term: "SBOM (Software Bill of Materials)", meaning: "A complete inventory of every component and dependency in your software. When the next Log4j-style flaw drops, an SBOM lets you answer “are we affected, and where?” in minutes instead of weeks — the lesson the industry learned the hard way."),
+            .callout(.tip, "Most modern code is dependencies, not your own lines — so SCA is often the highest-value gate. The majority of real-world app risk hides in a vulnerable library someone pulled in years ago and forgot."),
+            .callout(.danger, "Security gates only help if a failing gate actually blocks the deploy. A SAST scan whose findings everyone ignores is theatre. The control is the *enforcement* — build fails, merge blocked — not the scan itself."),
+            .checkpoint(QuizQuestion(
+                "What is the difference between SAST and DAST?",
+                options: [
+                    "SAST runs the app and attacks it; DAST reads the code",
+                    "SAST analyzes source code without running it; DAST tests the running application from the outside",
+                    "They are two names for the same scan",
+                    "SAST is for cloud, DAST is for mobile"
+                ],
+                correct: 1,
+                why: "SAST inspects source statically for risky patterns; DAST exercises the live application like an attacker would. They find different classes of bug and complement each other."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does “shift left” mean in application security?",
+                options: [
+                    "Move servers to a left-hand data center",
+                    "Catch security issues earlier in development, where they're cheaper to fix",
+                    "Write code right-to-left",
+                    "Delay security testing until after release"
+                ],
+                correct: 1,
+                why: "Shifting left moves security into design, coding and the build pipeline so defects are found and fixed early — far cheaper than after a production breach."),
+            QuizQuestion(
+                "Why is software composition analysis (SCA) so important?",
+                options: [
+                    "It speeds up the build",
+                    "Most applications are mostly third-party dependencies, where known-vulnerable libraries often hide",
+                    "It replaces the need for a firewall",
+                    "It encrypts the source code"
+                ],
+                correct: 1,
+                why: "Modern apps are largely assembled from libraries. SCA flags components with known CVEs — frequently the largest and most overlooked source of risk."),
+            QuizQuestion(
+                "A SAST scan flags issues but nobody is required to fix them before deploy. What's the problem?",
+                options: [
+                    "Nothing — scanning is enough",
+                    "Without enforcement (a failing gate that blocks the deploy), the scan is just theatre",
+                    "SAST should run after deploy",
+                    "The scanner is misconfigured by definition"
+                ],
+                correct: 1,
+                why: "A security gate only reduces risk if a failure actually stops the release. Findings that don't block anything change nothing.")
+        ]
+    )
+
+    private static let cloudDefenseLesson = Lesson(
+        id: "blue-cloud",
+        title: "Cloud Security & Shared Responsibility",
+        subtitle: "The cloud secures the infrastructure; securing what you put on it is your job.",
+        minutes: 11,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Who secures what"),
+            .paragraph("Moving to the cloud doesn't outsource security — it splits it. Under the **shared responsibility model**, the provider secures the cloud *itself* (hardware, hypervisor, managed services); **you** secure what you put *in* it — your data, identities, configurations and access rules. Most cloud breaches aren't the provider being hacked; they're a customer **misconfiguration**."),
+            .animation(.zeroTrust, caption: "Every request scored on identity, device and context before least-privilege access is granted — the model cloud security is built on."),
+            .heading("Where cloud breaches actually come from"),
+            .keyPoints([
+                "Identity is the new perimeter — IAM least privilege matters more than network firewalls.",
+                "Public storage — world-readable buckets/blobs are the classic data-leak headline.",
+                "Over-permissive roles — broad IAM policies let one compromised key reach everything.",
+                "Exposed metadata — lock down the instance metadata service (IMDSv2) to blunt SSRF-to-credentials.",
+                "Logging — CloudTrail / activity logs are how you detect and reconstruct what happened."
+            ]),
+            .definition(term: "CSPM (Cloud Security Posture Management)", meaning: "Tooling that continuously scans cloud accounts for misconfigurations and policy violations — public buckets, unused over-privileged roles, disabled logging, open security groups — and flags drift from a secure baseline. It's how teams keep up with cloud that changes by the minute."),
+            .callout(.danger, "This is the defensive mirror of the Red Team cloud module: the IMDS SSRF, IAM privilege escalation and public-bucket attacks you learned to *perform* are all defeated here by least-privilege IAM, IMDSv2, blocking public access, and watching CloudTrail. Attack and defense are the same map read from opposite sides."),
+            .callout(.tip, "Default-deny applies in the cloud too: grant the minimum IAM permission needed, scope it to specific resources, and prefer short-lived credentials over long-lived keys. Most cloud privilege escalation dies against tight, scoped roles."),
+            .checkpoint(QuizQuestion(
+                "Under the shared responsibility model, who is responsible for a publicly-exposed storage bucket full of customer data?",
+                options: [
+                    "The cloud provider — it's their infrastructure",
+                    "The customer — securing data and configuration in the cloud is their responsibility",
+                    "Nobody — buckets are private by default forever",
+                    "It's split 50/50 by contract"
+                ],
+                correct: 1,
+                why: "The provider secures the underlying cloud; the customer secures what they put in it — including storage access settings. A public bucket is a customer misconfiguration."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "In the shared responsibility model, what does the cloud provider secure?",
+                options: [
+                    "Your data and access policies",
+                    "The underlying infrastructure — hardware, hypervisor and managed services",
+                    "Everything, so you don't have to",
+                    "Only the billing system"
+                ],
+                correct: 1,
+                why: "The provider secures the cloud itself (physical, virtualization, managed service internals). The customer secures their data, identities and configuration on top of it."),
+            QuizQuestion(
+                "Why is IAM least privilege central to cloud security?",
+                options: [
+                    "It makes logins faster",
+                    "Identity is the primary perimeter; tightly-scoped permissions stop one compromised key from reaching everything",
+                    "It's only relevant on-premises",
+                    "It replaces encryption"
+                ],
+                correct: 1,
+                why: "In the cloud, access is gated by identity more than network location. Minimal, resource-scoped permissions contain the blast radius of any leaked credential."),
+            QuizQuestion(
+                "What does a CSPM tool do?",
+                options: [
+                    "Encrypts all cloud traffic",
+                    "Continuously scans cloud accounts for misconfigurations and drift from a secure baseline",
+                    "Replaces the need for IAM",
+                    "Runs penetration tests automatically"
+                ],
+                correct: 1,
+                why: "CSPM continuously checks cloud configuration — public storage, over-broad roles, disabled logging — and alerts on violations, keeping pace with fast-changing environments.")
         ]
     )
 }

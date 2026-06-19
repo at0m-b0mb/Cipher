@@ -24,6 +24,33 @@ struct AnimationView: View {
         case .tcpHandshake:        TCPHandshakeView()
         case .packetTravel:        PacketTravelView()
         case .encodingLayers:      EncodingLayersView()
+        // Networking track
+        case .internetMap:         InternetMapView()
+        case .ipAddressing:        IPAddressingView()
+        case .subnetMask:          SubnetMaskView()
+        case .dnsResolution:       DNSResolutionView()
+        case .defaultGateway:      DefaultGatewayView()
+        case .routingHops:         RoutingHopsView()
+        case .natTranslation:      NATTranslationView()
+        case .dhcpLease:           DHCPLeaseView()
+        case .tcpVsUdp:            TCPvsUDPView()
+        case .wifiConnect:         WiFiConnectView()
+        case .vpnTunnel:           VPNTunnelView()
+        case .firewallFilter:      FirewallFilterView()
+        // Expansion
+        case .processMemory:       ProcessMemoryView()
+        case .certChain:           CertChainView()
+        case .payloadStaging:      PayloadStagingView()
+        case .tokenTheft:          TokenTheftView()
+        case .idsDetection:        IDSDetectionView()
+        case .secureSdlc:          SecureSdlcView()
+        // Advanced offensive
+        case .reverseEngineering:  ReverseEngineeringView()
+        case .paddingOracle:       PaddingOracleView()
+        case .dnsTunneling:        DnsTunnelingView()
+        case .supplyChain:         SupplyChainView()
+        case .aitmProxy:           AitmProxyView()
+        case .promptInjection:     PromptInjectionView()
         case .symmetricEncryption: SymmetricEncryptionView()
         case .publicKeyExchange:   PublicKeyExchangeView()
         case .hashing:             HashingView()
@@ -99,16 +126,25 @@ enum AnimationCatalog {
         .privilegeEscalation, .passwordCracking, .kerberoasting, .dcsync, .attackPath,
         .delegation, .forestTrust, .lateralMovement, .tunneling,
         .amsiBypass, .processInjection, .applockerBypass, .wifiHandshake, .arpPoisoning,
-        .bufferOverflow, .ropChain, .sehOverflow, .formatString, .heapExploit, .c2Beacon
+        .bufferOverflow, .ropChain, .sehOverflow, .formatString, .heapExploit, .c2Beacon,
+        .payloadStaging, .tokenTheft,
+        .reverseEngineering, .paddingOracle, .dnsTunneling, .supplyChain, .aitmProxy, .promptInjection
     ]
     private static let blueIDs: Set<AnimationID> = [
         .defenseInDepth, .siemPipeline, .incidentResponse, .mitreAttack, .threatHunting,
-        .adTiering, .threatIntel, .zeroTrust, .emailAuth, .honeyToken
+        .adTiering, .threatIntel, .zeroTrust, .emailAuth, .honeyToken,
+        .idsDetection, .secureSdlc
+    ]
+    private static let networkIDs: Set<AnimationID> = [
+        .internetMap, .ipAddressing, .subnetMask, .dnsResolution, .defaultGateway,
+        .routingHops, .natTranslation, .dhcpLease, .tcpVsUdp, .wifiConnect,
+        .vpnTunnel, .firewallFilter
     ]
 
     static func accent(_ id: AnimationID) -> Color {
         if redIDs.contains(id) { return Theme.red }
         if blueIDs.contains(id) { return Theme.blue }
+        if networkIDs.contains(id) { return Theme.violet }
         return Theme.teal
     }
 
@@ -135,6 +171,22 @@ enum AnimationCatalog {
         case .defenseInDepth:               return 272
         case .adForest, .adTiering:         return 272
         case .privilegeEscalation:          return 262
+        // Networking
+        case .ipAddressing:                 return 300
+        case .subnetMask:                   return 288
+        case .dnsResolution:                return 286
+        case .internetMap, .defaultGateway: return 290
+        case .routingHops, .natTranslation: return 286
+        case .vpnTunnel, .wifiConnect:      return 280
+        case .firewallFilter, .tcpVsUdp:    return 280
+        // Expansion
+        case .processMemory, .certChain:    return 300
+        case .tokenTheft, .idsDetection:    return 272
+        case .secureSdlc:                   return 290
+        // Advanced offensive
+        case .reverseEngineering, .paddingOracle: return 300
+        case .supplyChain, .promptInjection: return 296
+        case .dnsTunneling:                 return 272
         default:                            return 250
         }
     }
@@ -145,6 +197,30 @@ enum AnimationCatalog {
         case .tcpHandshake:        return "The SYN / SYN-ACK / ACK ritual that opens every TCP connection."
         case .packetTravel:        return "Peel a real packet apart, header by header, down to the payload."
         case .encodingLayers:      return "The same message re-dressed as hex, Base64 and URL encoding — reversible, not secret."
+        case .internetMap:         return "Your data hops laptop → home router → ISP → the internet backbone → a server."
+        case .ipAddressing:        return "An IPv4 address is four octets (32 bits); the MAC names the physical card."
+        case .subnetMask:          return "The mask splits an address into a network part and a host part — and sets how many hosts fit."
+        case .dnsResolution:       return "A resolver walks root → TLD → authoritative name server to turn a name into an IP."
+        case .defaultGateway:      return "Local traffic stays on the switch; anything off-subnet goes to the default gateway."
+        case .routingHops:         return "A packet hops router to router, its TTL ticking down — exactly what traceroute reveals."
+        case .natTranslation:      return "One public IP shared by many private devices — the router rewrites addresses both ways."
+        case .dhcpLease:           return "DORA: a new device gets its IP, gateway and DNS automatically in four messages."
+        case .tcpVsUdp:            return "TCP acknowledges and reorders; UDP just fires and forgets — speed over guarantees."
+        case .wifiConnect:         return "Scan, authenticate with WPA2, associate — then your phone is on the network."
+        case .vpnTunnel:           return "An encrypted tunnel hides your traffic from anyone watching the network in between."
+        case .firewallFilter:      return "Packets are checked against a ruleset — allowed ports pass, the rest are dropped."
+        case .processMemory:       return "A process's memory: stack growing down, heap growing up, with static data and code below."
+        case .certChain:           return "A TLS certificate chain — Root signs Intermediate signs the server — validated up to a trusted root."
+        case .payloadStaging:      return "A tiny stager lands, calls home, and pulls down the full Meterpreter payload."
+        case .tokenTheft:          return "Abusing SeImpersonatePrivilege to steal a SYSTEM token and elevate on Windows."
+        case .idsDetection:        return "Traffic streams past an IDS sensor; a malicious request matches a signature and fires an alert."
+        case .secureSdlc:          return "A CI/CD pipeline where SAST, dependency and DAST gates block a vulnerable build from shipping."
+        case .reverseEngineering:  return "Raw bytes become disassembly; patching one conditional jump bypasses a license check."
+        case .paddingOracle:       return "A server's padding-error responses leak a CBC ciphertext one byte at a time — no key needed."
+        case .dnsTunneling:        return "Stolen data is base32-encoded into DNS queries that slip out through an allowed port 53."
+        case .supplyChain:         return "Dependency confusion — a malicious higher-version public package outranks the real internal one."
+        case .aitmProxy:           return "A reverse proxy relays the login and MFA code, then steals the live session cookie."
+        case .promptInjection:     return "Untrusted text in an LLM's context overrides its system prompt and hijacks the model."
         case .symmetricEncryption: return "One shared key turns plaintext to ciphertext and back."
         case .publicKeyExchange:   return "A public key locks a message that only the private key can open."
         case .hashing:             return "A one-way fingerprint where a tiny change avalanches the output."

@@ -81,12 +81,42 @@ enum AnimationID: String, CaseIterable, Codable {
     case tcpHandshake
     case packetTravel
     case encodingLayers
+
+    // Computer networking (the "Networking" track)
+    case internetMap
+    case ipAddressing
+    case subnetMask
+    case dnsResolution
+    case defaultGateway
+    case routingHops
+    case natTranslation
+    case dhcpLease
+    case tcpVsUdp
+    case wifiConnect
+    case vpnTunnel
+    case firewallFilter
     case symmetricEncryption
     case publicKeyExchange
     case hashing
     case blockCipherModes
     case httpRequest
     case adForest
+
+    // Expansion — OS internals, PKI, frameworks, privesc, defense
+    case processMemory
+    case certChain
+    case payloadStaging
+    case tokenTheft
+    case idsDetection
+    case secureSdlc
+
+    // Advanced offensive concepts
+    case reverseEngineering
+    case paddingOracle
+    case dnsTunneling
+    case supplyChain
+    case aitmProxy
+    case promptInjection
 
     // Red team
     case cyberKillChain
@@ -150,6 +180,30 @@ enum AnimationID: String, CaseIterable, Codable {
         case .tcpHandshake:        return "TCP 3-Way Handshake"
         case .packetTravel:        return "Anatomy of a Packet"
         case .encodingLayers:      return "Encoding Layers"
+        case .internetMap:         return "A Network of Networks"
+        case .ipAddressing:        return "IP & MAC Addresses"
+        case .subnetMask:          return "Subnet Mask & CIDR"
+        case .dnsResolution:       return "DNS Lookup"
+        case .defaultGateway:      return "Switch, Router & Gateway"
+        case .routingHops:         return "Routing & Traceroute"
+        case .natTranslation:      return "NAT Translation"
+        case .dhcpLease:           return "DHCP Lease (DORA)"
+        case .tcpVsUdp:            return "TCP vs UDP"
+        case .wifiConnect:         return "Joining a Wi-Fi Network"
+        case .vpnTunnel:           return "VPN Tunnel"
+        case .firewallFilter:      return "Firewall Filtering"
+        case .processMemory:       return "Processes & Memory Layout"
+        case .certChain:           return "Certificate Chain (PKI)"
+        case .payloadStaging:      return "Staged Payload → Meterpreter"
+        case .tokenTheft:          return "Windows Token Theft"
+        case .idsDetection:        return "IDS Signature & Anomaly"
+        case .secureSdlc:          return "Secure SDLC Pipeline"
+        case .reverseEngineering:  return "Reverse Engineering a Binary"
+        case .paddingOracle:       return "Padding Oracle Attack"
+        case .dnsTunneling:        return "DNS Tunneling Exfiltration"
+        case .supplyChain:         return "Dependency Confusion"
+        case .aitmProxy:           return "Adversary-in-the-Middle"
+        case .promptInjection:     return "LLM Prompt Injection"
         case .symmetricEncryption: return "Symmetric Encryption"
         case .publicKeyExchange:   return "Public-Key Exchange"
         case .hashing:             return "Hashing"
@@ -284,11 +338,12 @@ extension Lesson {
 }
 
 enum TrackKind: String {
-    case fundamentals, redTeam, blueTeam
+    case fundamentals, networking, redTeam, blueTeam
 
     var title: String {
         switch self {
         case .fundamentals: return "Fundamentals"
+        case .networking:   return "Networking"
         case .redTeam:      return "Red Team"
         case .blueTeam:     return "Blue Team"
         }
@@ -297,6 +352,7 @@ enum TrackKind: String {
     var accent: Color {
         switch self {
         case .fundamentals: return Theme.teal
+        case .networking:   return Theme.violet
         case .redTeam:      return Theme.red
         case .blueTeam:     return Theme.blue
         }
@@ -305,6 +361,7 @@ enum TrackKind: String {
     var glyph: String {
         switch self {
         case .fundamentals: return "function"
+        case .networking:   return "globe"
         case .redTeam:      return "flame.fill"
         case .blueTeam:     return "shield.lefthalf.filled"
         }
@@ -331,6 +388,7 @@ struct Track: Identifiable {
 enum Curriculum {
     static let tracks: [Track] = [
         FundamentalsContent.track,
+        NetworkingContent.track,
         RedTeamContent.track,
         BlueTeamContent.track
     ]

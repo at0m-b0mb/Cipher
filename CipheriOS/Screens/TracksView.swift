@@ -10,7 +10,7 @@ struct TracksView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Curriculum").font(Theme.rounded(30, .bold)).foregroundStyle(Theme.textPrimary)
-                        Text("Three tracks · \(Curriculum.lessonCount) animated lessons. Learn the attacker's playbook and the defender's craft — the same ground professional programs charge thousands to teach.")
+                        Text("\(Curriculum.tracks.count) tracks · \(Curriculum.lessonCount) animated lessons. Learn how networks really work, the attacker's playbook and the defender's craft — the same ground professional programs charge thousands to teach.")
                             .font(.system(size: 14)).foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }

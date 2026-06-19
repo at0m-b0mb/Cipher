@@ -10,7 +10,7 @@ enum FundamentalsContent {
         kind: .fundamentals,
         title: "Fundamentals",
         tagline: "Mindset, the shell, networks & crypto — the ground floor of everything.",
-        modules: [mindset, shell, networking, encoding, crypto, web, windows]
+        modules: [mindset, shell, os, networking, encoding, crypto, web, windows]
     )
 
     // MARK: F-S — Systems & the shell
@@ -473,7 +473,7 @@ Hi!
         title: "Cryptography Essentials",
         summary: "Symmetric vs public-key encryption, and why hashing is what stands between a database leak and your password.",
         systemImage: "lock.shield",
-        lessons: [encryptionLesson, blockModesLesson, hashingLesson]
+        lessons: [encryptionLesson, blockModesLesson, hashingLesson, pkiLesson]
     )
 
     private static let encryptionLesson = Lesson(
@@ -793,6 +793,163 @@ Address: 10.10.10.10        <-- the Domain Controller
                 options: ["Domain Users", "Remote Desktop Users", "Domain Admins", "Authenticated Users"],
                 correct: 2,
                 why: "Domain Admins have full control over the domain. Reaching that group (or the DC itself) is the standard objective of an internal engagement.")
+        ]
+    )
+
+    // MARK: F-OS — How programs run
+
+    private static let os = Module(
+        id: "fund-os",
+        title: "How Programs Run",
+        summary: "What actually happens when a program runs — processes, the way memory is laid out, and the user/kernel boundary that all of security sits on top of.",
+        systemImage: "cpu",
+        lessons: [processesLesson]
+    )
+
+    private static let processesLesson = Lesson(
+        id: "fund-processes",
+        title: "Processes, Memory & the OS",
+        subtitle: "The model under every exploit and privilege escalation: how code, memory and privilege fit together.",
+        minutes: 11,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("A program becomes a process"),
+            .paragraph("A **program** is a file on disk; a **process** is that program brought to life — loaded into memory and executing. The operating system gives each process the illusion that it owns the whole machine: its own private memory, its own slice of CPU time. That illusion, called **virtual memory**, is also a security boundary: one process can't simply reach into another's memory and read its secrets."),
+            .definition(term: "Process vs thread", meaning: "A process is an isolated running program with its own memory. A thread is a single line of execution within a process; a process can have many threads that share its memory. Isolation is between processes, not between threads of the same process."),
+            .heading("How a process's memory is laid out"),
+            .paragraph("Inside a process, memory is organized into regions. At the bottom sits the **text** segment (the read-only machine code) and the **data/BSS** (global variables). Above them, the **heap** grows upward as the program asks for memory (`malloc`/`new`). And from the top, the **stack** grows downward — one **frame** pushed for every function call, holding its local variables and, crucially, the **return address** it should jump back to when it finishes."),
+            .animation(.processMemory, caption: "Stack frames push downward on each call; the heap grows upward with each allocation — toward each other, with code and data fixed below."),
+            .keyPoints([
+                "Text — the program's machine code, read-only and shared.",
+                "Data / BSS — global and static variables.",
+                "Heap — dynamically allocated memory (malloc/new); grows up.",
+                "Stack — one frame per function call: locals + the saved return address; grows down.",
+                "The instruction pointer (EIP/RIP) holds the address of the next instruction to run."
+            ]),
+            .callout(.danger, "That saved **return address** on the stack is the prize behind a classic exploit. If a program copies attacker input past the end of a local buffer (a stack buffer overflow), it can overwrite the return address and redirect execution — the foundation of the binary exploitation you'll meet in the Red Team track."),
+            .heading("User mode vs kernel mode"),
+            .paragraph("The CPU runs in two privilege levels. Your apps run in **user mode**, walled off from the hardware. The **kernel** — the core of the OS — runs in **kernel mode** with full control. When an app needs something privileged (open a file, send a packet), it makes a **system call**, a controlled doorway into the kernel. Most privilege-escalation attacks are about crossing this boundary: getting user-mode code to run with kernel or administrator authority."),
+            .definition(term: "System call", meaning: "The controlled interface a user-mode program uses to ask the kernel to do privileged work — read/write files, allocate memory, create processes, talk to the network. It's the only legitimate way to cross from user mode into the kernel."),
+            .callout(.tip, "Tools like `ps`, `top` (Linux/macOS) and Task Manager (Windows) list running processes with their owner and privilege. Spotting *which user* a process runs as — and which run as root/SYSTEM — is the first thing both attackers and defenders look at on a box."),
+            .checkpoint(QuizQuestion(
+                "In a stack buffer overflow, what makes overwriting the stack so dangerous?",
+                options: [
+                    "It deletes the program from disk",
+                    "It can overwrite the saved return address, letting the attacker redirect execution",
+                    "It changes the program's file permissions",
+                    "It frees the heap"
+                ],
+                correct: 1,
+                why: "Each call frame stores the address to return to. Overflowing a local buffer can clobber that return address, so when the function returns it jumps wherever the attacker chose — hijacking control flow."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the difference between a program and a process?",
+                options: [
+                    "Nothing — they're the same",
+                    "A program is a file on disk; a process is that program loaded into memory and executing",
+                    "A process is smaller than a program",
+                    "A program runs in the kernel; a process runs in user mode"
+                ],
+                correct: 1,
+                why: "A program is static (a file). A process is a live instance of it — loaded into memory with its own resources and a thread of execution."),
+            QuizQuestion(
+                "Which way does the stack grow, and what does each frame contain?",
+                options: [
+                    "Upward; only global variables",
+                    "Downward; a function's locals and its saved return address",
+                    "It doesn't grow",
+                    "Upward; the program's machine code"
+                ],
+                correct: 1,
+                why: "The stack grows downward, pushing a frame per call that holds local variables and the return address — which is exactly what overflow attacks target."),
+            QuizQuestion(
+                "Why does an application use a system call?",
+                options: [
+                    "To run faster",
+                    "To ask the kernel to perform a privileged operation it can't do directly in user mode",
+                    "To encrypt its memory",
+                    "To create a new programming language"
+                ],
+                correct: 1,
+                why: "User-mode code is walled off from the hardware. A system call is the controlled doorway into the kernel for privileged actions like file, memory and network operations.")
+        ]
+    )
+
+    // MARK: F-PKI — Certificates & trust (part of Cryptography Essentials)
+
+    private static let pkiLesson = Lesson(
+        id: "fund-pki",
+        title: "PKI, Certificates & TLS Trust",
+        subtitle: "How your browser decides a stranger's server is really who it claims to be.",
+        minutes: 10,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Encryption isn't enough — you need identity"),
+            .paragraph("Public-key crypto lets two strangers encrypt to each other, but it leaves one gap: how do you know the public key you received really belongs to `bank.com` and not an attacker in the middle? **PKI** (Public Key Infrastructure) answers that with **certificates** — a public key bound to an identity and **signed** by an authority your browser already trusts."),
+            .definition(term: "Certificate Authority (CA)", meaning: "A trusted organization that verifies an identity and signs its certificate. Your operating system and browser ship with a built-in list of trusted **root** CAs (the trust store). Anything chaining back to one of those roots is trusted automatically."),
+            .heading("The chain of trust"),
+            .paragraph("Trust flows down a chain. A **root CA** (offline and heavily protected) signs **intermediate** CAs, which sign the **leaf** certificate on an actual server. When you connect, the server presents its leaf cert plus the intermediates, and your browser walks the chain *upward* until it reaches a root in its trust store. If every signature checks out and nothing is expired or revoked, the chain is valid."),
+            .animation(.certChain, caption: "Root signs Intermediate signs the server's leaf cert — and the browser validates the chain back up to a trusted root."),
+            .keyPoints([
+                "Leaf cert — the server's own certificate (e.g. for shop.com).",
+                "Intermediate CA — signs leaf certs; bridges to the root.",
+                "Root CA — self-signed, in the browser/OS trust store; the anchor of trust.",
+                "Validation checks — signature chain, hostname match, expiry, and revocation (CRL/OCSP).",
+                "TLS uses the cert to authenticate the server and agree on the session keys (the HTTPS handshake)."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "openssl s_client -connect shop.com:443 -servername shop.com </dev/null 2>/dev/null | openssl x509 -noout -issuer -subject -dates",
+                      output: """
+issuer= /C=US/O=Let's Encrypt/CN=R3
+subject= /CN=shop.com
+notBefore=... notAfter=...   <-- validity window the browser checks
+"""),
+            .callout(.warning, "The padlock proves the connection is encrypted and the server controls that domain — **not** that the site is honest or safe. Phishing sites get free valid certificates too. HTTPS secures the channel; it does not vouch for the content."),
+            .definition(term: "Self-signed certificate", meaning: "A certificate signed by its own key rather than a trusted CA. It still encrypts, but nothing vouches for the identity, so browsers warn loudly. Fine for internal testing; never for a public site users must trust."),
+            .callout(.tip, "When a browser screams “your connection is not private,” read the reason: expired cert, hostname mismatch, or an untrusted issuer. Each points at a specific broken link in the chain — and occasionally at a real man-in-the-middle."),
+            .checkpoint(QuizQuestion(
+                "Your browser trusts shop.com's certificate. What did it actually verify?",
+                options: [
+                    "That shop.com is a safe, honest business",
+                    "That the cert chains to a trusted root CA, matches the hostname, and is in its validity window",
+                    "That the server's password is strong",
+                    "That the site has no vulnerabilities"
+                ],
+                correct: 1,
+                why: "Validation confirms the cryptographic chain to a trusted root, a matching hostname, and current validity — proving control of the domain and a secure channel. It says nothing about the site's honesty or security."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What problem does a certificate authority solve?",
+                options: [
+                    "It encrypts the traffic faster",
+                    "It vouches that a public key really belongs to the named identity, by signing its certificate",
+                    "It stores the website's password",
+                    "It assigns IP addresses"
+                ],
+                correct: 1,
+                why: "Encryption alone doesn't prove identity. A CA verifies and signs the certificate, so a key can be tied to a domain your browser can trust."),
+            QuizQuestion(
+                "How does a browser validate a server's certificate?",
+                options: [
+                    "It trusts any certificate presented",
+                    "It walks the signature chain up to a trusted root CA and checks hostname, expiry and revocation",
+                    "It asks the user to approve every time",
+                    "It compares the certificate to the IP address"
+                ],
+                correct: 1,
+                why: "The browser verifies each signature up the chain to a root in its trust store, and checks the hostname matches, the cert is unexpired, and it isn't revoked."),
+            QuizQuestion(
+                "Does the HTTPS padlock mean a website is trustworthy?",
+                options: [
+                    "Yes, it guarantees the site is safe",
+                    "No — it proves encryption and domain control, but phishing sites can have valid certs too",
+                    "Yes, CAs vet every site's content",
+                    "Only if it's a green padlock"
+                ],
+                correct: 1,
+                why: "The padlock secures the channel and proves control of the domain. It does not certify the site's intentions — attackers obtain valid certificates routinely.")
         ]
     )
 }
