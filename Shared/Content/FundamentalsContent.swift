@@ -393,7 +393,71 @@ Cookie: session=8f3b...   <-- plaintext over HTTP!
         title: "Data & Encoding",
         summary: "Bits, bytes, hex and Base64 — how data is dressed up for transport, and why recognizing an encoding is a daily hacking skill.",
         systemImage: "number",
-        lessons: [encodingLesson]
+        lessons: [encodingLesson, stegoLesson]
+    )
+
+    private static let stegoLesson = Lesson(
+        id: "fund-stego",
+        title: "Steganography & Data Hiding",
+        subtitle: "Encryption hides what a message says; steganography hides that there is a message at all.",
+        minutes: 8,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Hiding in plain sight"),
+            .paragraph("Cryptography makes data *unreadable*; **steganography** makes it *unnoticed*. A scrambled blob screams \"secret\" and invites scrutiny; a holiday photo does not. The two are complementary — encrypt first so the payload is meaningless even if found, then hide the ciphertext inside an innocent-looking carrier. Carriers are anything with spare, low-importance bits: images, audio, video, network packets, even whitespace in a text file."),
+            .animation(.steganography, caption: "A reading head sweeps a cover image and peels the least-significant bit off each pixel — reassembling a hidden byte the eye never saw change."),
+            .heading("The classic trick: least-significant bit (LSB)"),
+            .paragraph("In a 24-bit image each pixel is three bytes (red, green, blue). Flipping the *last* bit of a byte changes its value by 1 out of 255 — a colour shift no human eye can detect. Overwrite those last bits with your secret, eight pixels per character, and a photo silently carries a whole document. Extraction is just reading those same bits back."),
+            .terminal(prompt: "kali@lab",
+                      command: "steghide embed -cf cat.jpg -ef secret.txt -p hunter2\nsteghide extract -sf cat.jpg -p hunter2",
+                      output: """
+embedding "secret.txt" in "cat.jpg"... done
+...
+wrote extracted data to "secret.txt".
+"""),
+            .keyPoints([
+                "Carrier (cover) — the innocent file the data hides in: image, audio, PDF, packet.",
+                "Payload — the secret being hidden (ideally already encrypted).",
+                "LSB encoding — overwrite the lowest bit of each byte; invisible to perception.",
+                "Capacity vs detectability — the more you hide, the more statistical noise you add.",
+                "Tools — steghide, zsteg, binwalk, exiftool, stegsolve, OpenStego."
+            ]),
+            .definition(term: "Steganalysis", meaning: "The blue-team counterpart: detecting hidden data by spotting statistical anomalies (e.g. unusually uniform LSBs), file-size mismatches, or appended data after a file's logical end (`binwalk`, chi-square tests)."),
+            .callout(.tip, "On CTFs, steganography is everywhere. Reflex checklist for any media file: run `file`, `exiftool`, `strings`, `binwalk`, and `zsteg`/`steghide` before anything else — the flag is often appended after the image data or sitting in the metadata."),
+            .callout(.warning, "Steganography hides existence, not meaning. If the carrier is found and the method is known, the payload is recovered. Real operations encrypt the payload first — so finding it still yields nothing."),
+            .checkpoint(QuizQuestion(
+                "What is the core difference between encryption and steganography?",
+                options: [
+                    "Encryption is faster",
+                    "Encryption hides the meaning of a message; steganography hides its existence",
+                    "They are the same thing",
+                    "Steganography always uses a key and encryption never does"
+                ],
+                correct: 1,
+                why: "Encryption makes a message unreadable but obvious; steganography conceals that a message is present at all. They're often layered: encrypt, then hide."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why does flipping the least-significant bit of an image's pixels go unnoticed?",
+                options: [
+                    "Because images ignore the last bit",
+                    "Because it changes each colour value by at most 1/255 — below human perception",
+                    "Because the bits are encrypted",
+                    "Because JPEG deletes them"
+                ],
+                correct: 1,
+                why: "The LSB carries the least weight, so altering it shifts a colour channel by a single step out of 256 — imperceptible to the eye while still encoding usable data."),
+            QuizQuestion(
+                "You're given a suspicious PNG in a CTF. The single best first move is to…",
+                options: [
+                    "Open it and look harder",
+                    "Run tooling like strings, exiftool and binwalk to surface hidden or appended data",
+                    "Re-encrypt it",
+                    "Delete the metadata"
+                ],
+                correct: 1,
+                why: "Hidden flags are routinely tucked in metadata or appended after the image data. strings/exiftool/binwalk reveal those instantly — far faster than eyeballing pixels.")
+        ]
     )
 
     private static let encodingLesson = Lesson(

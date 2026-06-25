@@ -53,6 +53,9 @@ enum Flashcards {
         Flashcard("Certificate Authority", "A trusted org that verifies an identity and signs its certificate. Browsers ship with a trust store of root CAs.", .fundamentals),
         Flashcard("Chain of Trust", "Root CA signs intermediate signs the server's leaf cert; the browser validates the chain up to a trusted root.", .fundamentals),
         Flashcard("Self-Signed Cert", "A certificate signed by its own key, not a CA. It encrypts but proves no identity, so browsers warn. Fine for internal testing only.", .fundamentals),
+        Flashcard("Steganography", "Hiding the existence of a message inside an innocent carrier (image, audio, packet). Complements encryption, which hides only the meaning. Classic method: LSB encoding.", .fundamentals),
+        Flashcard("LSB Encoding", "Overwriting the least-significant bit of each pixel/sample byte with secret data. The ±1 change is invisible to the eye while quietly carrying a payload.", .fundamentals),
+        Flashcard("Steganalysis", "Detecting hidden data via statistical anomalies, file-size mismatches, or content appended past a file's logical end (binwalk, chi-square tests) — the blue-team counter to steganography.", .fundamentals),
 
         // Networking
         Flashcard("Node & Link", "A node is any device on a network (laptop, phone, server, router); a link is the connection between nodes — copper, fibre or radio.", .networking),
@@ -185,6 +188,18 @@ enum Flashcards {
         Flashcard("Phishing-Resistant MFA", "FIDO2/WebAuthn passkeys bind authentication to the real site's origin, so an AiTM proxy on another domain can't complete the login. The counter to AiTM.", .redTeam),
         Flashcard("Prompt Injection", "Hiding instructions in data an LLM ingests so it follows them — the AI-era SQL injection. Indirect injection plants them in fetched web/email/files.", .redTeam),
         Flashcard("Indirect Prompt Injection", "Adversarial instructions planted in third-party content (a page, PDF, invite) that an AI later processes — hijacking it without ever talking to the model.", .redTeam),
+        Flashcard("Clickjacking", "UI redress: a transparent iframe of a real action is layered under a decoy button, so the victim's click — carrying their live session — fires a sensitive action they never intended.", .redTeam),
+        Flashcard("X-Frame-Options / frame-ancestors", "The response header (or CSP directive) that tells a browser whether a page may be embedded in a frame. Denying framing is the decisive fix for clickjacking.", .redTeam),
+        Flashcard("Web Cache Poisoning", "Getting a shared cache to store a malicious response under a normal key — via an unkeyed input reflected into the page — so every later visitor is served the attacker's payload.", .redTeam),
+        Flashcard("Unkeyed Input", "A request component a cache ignores when building its key but the app still reflects into the response — the gap web cache poisoning exploits.", .redTeam),
+        Flashcard("BLE GATT", "Bluetooth Low Energy's data model: services and characteristics a device exposes to read/write. Enumerating it is BLE recon; cleartext commands invite sniff-and-replay.", .redTeam),
+        Flashcard("Replay Attack", "Re-sending a captured, still-valid message (a BLE unlock, an auth token) to repeat its effect. Defeated by a per-message nonce or rolling counter.", .redTeam),
+        Flashcard("RFID Cloning", "Copying an access card's credential. 125 kHz prox cards broadcast a static ID with no auth (trivially cloned); MIFARE Classic's Crypto1 cipher is broken.", .redTeam),
+        Flashcard("Tailgating", "Following an authorised person through a secured door to bypass any access-control tech by exploiting politeness. Countered only by physical controls (mantraps, turnstiles).", .redTeam),
+        Flashcard("DDoS Amplification", "Spoofing the victim's source IP to a service whose replies dwarf the request (DNS ~50×, NTP ~550×, memcached ~50,000×), multiplying the attacker's bandwidth onto the target.", .redTeam),
+        Flashcard("BCP 38", "Ingress filtering that drops packets with spoofed source addresses before they leave a network — the source-side defence that breaks reflection/amplification attacks.", .redTeam),
+        Flashcard("Bug Bounty Scope", "The binding list of in-scope targets and forbidden techniques in a program's rules. Testing within it earns safe harbor and bounties; straying outside forfeits both.", .redTeam),
+        Flashcard("CTF Flag", "The proof-of-solve token (e.g. flag{...}) hidden behind a challenge's intended exploit. Capture The Flag events are the safest, fastest way to drill offensive skills.", .redTeam),
 
         // Blue team
         Flashcard("Defense in Depth", "Layering independent controls so an attacker must defeat all of them.", .blueTeam),

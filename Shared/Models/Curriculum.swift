@@ -118,6 +118,14 @@ enum AnimationID: String, CaseIterable, Codable {
     case aitmProxy
     case promptInjection
 
+    // Expansion wave 2 — clickjacking, caching, short-range & availability, stego
+    case clickjacking
+    case cachePoisoning
+    case bleAttack
+    case rfidClone
+    case ddosAmplification
+    case steganography
+
     // Red team
     case cyberKillChain
     case portScan
@@ -204,6 +212,12 @@ enum AnimationID: String, CaseIterable, Codable {
         case .supplyChain:         return "Dependency Confusion"
         case .aitmProxy:           return "Adversary-in-the-Middle"
         case .promptInjection:     return "LLM Prompt Injection"
+        case .clickjacking:        return "Clickjacking (UI Redress)"
+        case .cachePoisoning:      return "Web Cache Poisoning"
+        case .bleAttack:           return "Bluetooth / BLE Replay"
+        case .rfidClone:           return "RFID / NFC Cloning"
+        case .ddosAmplification:   return "DDoS Amplification"
+        case .steganography:       return "LSB Steganography"
         case .symmetricEncryption: return "Symmetric Encryption"
         case .publicKeyExchange:   return "Public-Key Exchange"
         case .hashing:             return "Hashing"

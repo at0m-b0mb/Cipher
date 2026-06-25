@@ -33,6 +33,7 @@
 		68E34B8C1D5D509E3403A9C3 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90ED2D85AA008A67C1EE718 /* Theme.swift */; };
 		6F812F9B31339642901B136F /* CipherWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508EAFEAE1CFF42E877BDEF1 /* CipherWatchApp.swift */; };
 		711F4EA29990CE513459CFBE /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E04E220C83379035D1E2C1E /* Progress.swift */; };
+		7558FDDF5F21B859A385F19C /* AnimationsExpansion2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B03A95EB0EC1903613ECFCD /* AnimationsExpansion2.swift */; };
 		75CEFBFD34FE5BB5988A5989 /* BlueTeamContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0798D5BF432D53A48A4CE85 /* BlueTeamContent.swift */; };
 		79A9262D4977A9044A4CF61C /* WatchRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C6D27C215F7080C80F484DC /* WatchRootView.swift */; };
 		7CC687F640E5B74B174B4FB7 /* AnimationGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D75DF7201A55C6D933D493A9 /* AnimationGalleryView.swift */; };
@@ -116,6 +117,7 @@
 		6620E65F46D30F5C70BD65C3 /* FundamentalsContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FundamentalsContent.swift; sourceTree = "<group>"; };
 		6651BF477D7C9D273B5588F9 /* AnimationsHacking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsHacking.swift; sourceTree = "<group>"; };
 		67D746F83F06C811B1386295 /* CipherApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CipherApp.swift; sourceTree = "<group>"; };
+		6B03A95EB0EC1903613ECFCD /* AnimationsExpansion2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsExpansion2.swift; sourceTree = "<group>"; };
 		6EE2DC8F1441A0A9A2C6A4AB /* QuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizView.swift; sourceTree = "<group>"; };
 		72D81D5A775A678F391CE26F /* AnimationsExpansion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsExpansion.swift; sourceTree = "<group>"; };
 		7E6246D7749388061B81944D /* AnimationsAD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationsAD.swift; sourceTree = "<group>"; };
@@ -254,6 +256,7 @@
 				270D52C64D8488D41368E1AF /* AnimationsBinexp.swift */,
 				927B7F5E621E5BBDDFE40BD2 /* AnimationsBlue.swift */,
 				72D81D5A775A678F391CE26F /* AnimationsExpansion.swift */,
+				6B03A95EB0EC1903613ECFCD /* AnimationsExpansion2.swift */,
 				6651BF477D7C9D273B5588F9 /* AnimationsHacking.swift */,
 				DD5C5C85CF923F029DB6D987 /* AnimationsModern.swift */,
 				1DC1574538A0351D9400DD9C /* AnimationsModern2.swift */,
@@ -397,6 +400,7 @@
 				6317DC8C19C76EF4CC6C83F2 /* AnimationsBinexp.swift in Sources */,
 				9E819F70EB414B7A5A510A12 /* AnimationsBlue.swift in Sources */,
 				6161DA2B947317BEC10EF246 /* AnimationsExpansion.swift in Sources */,
+				7558FDDF5F21B859A385F19C /* AnimationsExpansion2.swift in Sources */,
 				FAB8C0FFB8EAFF3E865B5964 /* AnimationsHacking.swift in Sources */,
 				D4BE60486130665CD89BDE75 /* AnimationsModern.swift in Sources */,
 				947819F014CD57FDF09ACFBA /* AnimationsModern2.swift in Sources */,

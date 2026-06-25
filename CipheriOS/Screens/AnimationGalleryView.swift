@@ -6,7 +6,7 @@ struct AnimationGalleryView: View {
     private let groups: [(title: String, accent: Color, ids: [AnimationID])] = [
         ("Fundamentals", Theme.teal,
          [.osiModel, .tcpHandshake, .packetTravel, .symmetricEncryption, .publicKeyExchange, .hashing,
-          .processMemory, .certChain]),
+          .processMemory, .certChain, .steganography]),
         ("Networking", Theme.violet,
          [.internetMap, .ipAddressing, .subnetMask, .dnsResolution, .defaultGateway, .routingHops,
           .natTranslation, .dhcpLease, .tcpVsUdp, .wifiConnect, .vpnTunnel, .firewallFilter]),
@@ -14,7 +14,8 @@ struct AnimationGalleryView: View {
          [.cyberKillChain, .portScan, .phishingFlow, .sqlInjection, .xssReflected, .payloadStaging,
           .privilegeEscalation, .tokenTheft, .passwordCracking, .kerberoasting, .lateralMovement,
           .bufferOverflow, .reverseEngineering, .paddingOracle, .c2Beacon, .dnsTunneling, .supplyChain,
-          .aitmProxy, .promptInjection]),
+          .aitmProxy, .promptInjection, .clickjacking, .cachePoisoning, .bleAttack, .rfidClone,
+          .ddosAmplification]),
         ("Blue Team", Theme.blue,
          [.defenseInDepth, .siemPipeline, .idsDetection, .secureSdlc, .incidentResponse, .mitreAttack, .threatHunting])
     ]

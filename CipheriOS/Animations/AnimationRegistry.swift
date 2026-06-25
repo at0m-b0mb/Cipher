@@ -51,6 +51,13 @@ struct AnimationView: View {
         case .supplyChain:         SupplyChainView()
         case .aitmProxy:           AitmProxyView()
         case .promptInjection:     PromptInjectionView()
+        // Expansion wave 2
+        case .clickjacking:        ClickjackingView()
+        case .cachePoisoning:      CachePoisoningView()
+        case .bleAttack:           BleAttackView()
+        case .rfidClone:           RfidCloneView()
+        case .ddosAmplification:   DdosAmplificationView()
+        case .steganography:       SteganographyView()
         case .symmetricEncryption: SymmetricEncryptionView()
         case .publicKeyExchange:   PublicKeyExchangeView()
         case .hashing:             HashingView()
@@ -128,7 +135,8 @@ enum AnimationCatalog {
         .amsiBypass, .processInjection, .applockerBypass, .wifiHandshake, .arpPoisoning,
         .bufferOverflow, .ropChain, .sehOverflow, .formatString, .heapExploit, .c2Beacon,
         .payloadStaging, .tokenTheft,
-        .reverseEngineering, .paddingOracle, .dnsTunneling, .supplyChain, .aitmProxy, .promptInjection
+        .reverseEngineering, .paddingOracle, .dnsTunneling, .supplyChain, .aitmProxy, .promptInjection,
+        .clickjacking, .cachePoisoning, .bleAttack, .rfidClone, .ddosAmplification
     ]
     private static let blueIDs: Set<AnimationID> = [
         .defenseInDepth, .siemPipeline, .incidentResponse, .mitreAttack, .threatHunting,
@@ -187,6 +195,11 @@ enum AnimationCatalog {
         case .reverseEngineering, .paddingOracle: return 300
         case .supplyChain, .promptInjection: return 296
         case .dnsTunneling:                 return 272
+        // Expansion wave 2
+        case .cachePoisoning:               return 300
+        case .bleAttack, .ddosAmplification: return 288
+        case .clickjacking:                 return 272
+        case .rfidClone, .steganography:    return 270
         default:                            return 250
         }
     }
@@ -221,6 +234,12 @@ enum AnimationCatalog {
         case .supplyChain:         return "Dependency confusion — a malicious higher-version public package outranks the real internal one."
         case .aitmProxy:           return "A reverse proxy relays the login and MFA code, then steals the live session cookie."
         case .promptInjection:     return "Untrusted text in an LLM's context overrides its system prompt and hijacks the model."
+        case .clickjacking:        return "An invisible iframe of a real action is layered under a friendly button — your click lands on the trap."
+        case .cachePoisoning:      return "An unkeyed header is reflected into a cacheable response, so one request poisons the page for everyone."
+        case .bleAttack:           return "A plaintext BLE unlock command is sniffed off the air and replayed verbatim — no key needed."
+        case .rfidClone:           return "A covert reader lifts a badge's UID, writes it to a blank card, and the clone opens the door."
+        case .ddosAmplification:   return "A spoofed source makes open resolvers fire huge replies at the victim — a tiny query becomes a flood."
+        case .steganography:       return "The secret hides in the least-significant bit of each pixel — invisible to the eye, trivial to extract."
         case .symmetricEncryption: return "One shared key turns plaintext to ciphertext and back."
         case .publicKeyExchange:   return "A public key locks a message that only the private key can open."
         case .hashing:             return "A one-way fingerprint where a tiny change avalanches the output."
