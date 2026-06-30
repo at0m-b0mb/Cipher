@@ -13,7 +13,7 @@ enum NetworkingContent {
         kind: .networking,
         title: "Networking",
         tagline: "How computers really talk — addresses, routing, DNS, Wi-Fi and the protocols that run the internet.",
-        modules: [foundations, addressing, routing, protocols, wireless]
+        modules: [foundations, addressing, routing, protocols, wireless, modern, infra, webtech]
     )
 
     // MARK: N1 — Networking foundations
@@ -359,7 +359,7 @@ HostMin:   192.168.1.1     HostMax: 192.168.1.254   (254 hosts)
         title: "Moving Data Across Networks",
         summary: "How a packet actually finds its way — switches, routers and gateways, hop-by-hop routing, NAT, and how devices get their addresses automatically.",
         systemImage: "arrow.triangle.branch",
-        lessons: [switchRouterLesson, routingLesson, natLesson, dhcpLesson]
+        lessons: [switchRouterLesson, routingLesson, natLesson, dhcpLesson, vlanLesson]
     )
 
     private static let switchRouterLesson = Lesson(
@@ -911,6 +911,595 @@ strict-transport-security: max-age=31536000
                 ],
                 correct: 1,
                 why: "They address different problems: filtering (firewall) vs confidentiality in transit (VPN). Strong setups use both together.")
+        ]
+    )
+
+    // MARK: N6 — The modern internet
+
+    private static let modern = Module(
+        id: "net-modern",
+        title: "The Modern Internet",
+        summary: "How today's internet scales: the move to IPv6 for endless addresses, and the load balancers, CDNs and anycast that keep huge sites fast and online.",
+        systemImage: "globe.americas.fill",
+        lessons: [ipv6Lesson, cdnLesson, quicLesson]
+    )
+
+    private static let ipv6Lesson = Lesson(
+        id: "net-ipv6",
+        title: "IPv6 & the Address Crunch",
+        subtitle: "Why we ran out of IPv4 — and how a 128-bit address makes NAT a thing of the past.",
+        minutes: 10,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("The internet ran out of numbers"),
+            .paragraph("IPv4 has 32 bits of address space — about 4.3 billion addresses. That sounded limitless in the 1980s and is laughably small today, with phones, laptops, servers and a fridge per household. The world officially exhausted the free IPv4 pool, and NAT (one public IP shared by a whole network) was the duct-tape fix. **IPv6** is the real solution: a **128-bit** address, which is roughly 3.4 × 10³⁸ addresses — enough to give every grain of sand its own."),
+            .animation(.ipv6Address, caption: "A 128-bit address splits into a 48-bit routing prefix (your ISP), a 16-bit subnet id (yours), and a 64-bit interface id (the host) — often auto-built from the MAC via SLAAC."),
+            .heading("Reading an IPv6 address"),
+            .paragraph("An IPv6 address is eight groups of four hex digits, separated by colons: `2001:0db8:85a3:1f00:0000:8a2e:0370:7334`. To keep it readable there are two shortcuts — and you'll see both constantly."),
+            .keyPoints([
+                "Drop leading zeros in each group: 0db8 → db8, 0000 → 0.",
+                "Collapse one run of all-zero groups with :: (used once per address): 2001:db8::1.",
+                "The first 64 bits are typically the network (prefix + subnet); the last 64 identify the interface.",
+                "Loopback is ::1 (the IPv6 'localhost'); a link-local address starts fe80:: and works only on the local link.",
+                "/64 is the standard subnet size — every LAN gets a full 64 bits of host space."
+            ]),
+            .definition(term: "SLAAC", meaning: "Stateless Address Autoconfiguration — a host hears a Router Advertisement announcing the /64 prefix, then builds its own address by appending an interface id (from its MAC via EUI-64, or a randomized 'privacy' value). No DHCP server required, though DHCPv6 still exists for managed networks."),
+            .terminal(prompt: "kali@lab",
+                      command: "ip -6 addr show dev eth0 | grep inet6",
+                      output: """
+inet6 2001:db8:85a3:1f00:8a2e:370:7334/64 scope global dynamic
+inet6 fe80::a00:27ff:fe94:1234/64 scope link
+"""),
+            .heading("What changes for security"),
+            .paragraph("IPv6 isn't just 'more addresses' — it shifts the threat model. Because every device can have a globally routable address, the NAT that accidentally hid your devices is gone, so a host firewall matters more, not less. And huge /64 subnets make old-style ping-sweep scanning impractical — but attackers pivot to enumerating DNS, multicast and neighbor caches instead."),
+            .callout(.warning, "Dual-stack hosts run IPv4 and IPv6 at once. A firewall rule set lovingly tuned for IPv4 that forgets IPv6 leaves a wide-open parallel path — a classic real-world gap. Always test both stacks."),
+            .callout(.tip, "Link-local fe80:: addresses and IPv6 Router Advertisements enable LAN attacks too (rogue RA, SLAAC spoofing) — the IPv6 cousins of DHCP/ARP spoofing. RA Guard on switches is the mitigation."),
+            .checkpoint(QuizQuestion(
+                "Why does the move to IPv6 make a host-based firewall more important than it was behind IPv4 NAT?",
+                options: [
+                    "IPv6 has no encryption",
+                    "Every device can have a globally routable address, so it's no longer accidentally hidden behind NAT",
+                    "IPv6 disables all firewalls",
+                    "IPv6 addresses are easier to guess"
+                ],
+                correct: 1,
+                why: "NAT incidentally shielded internal hosts because they had no public address. With IPv6 every device can be directly addressable, so explicit firewalling — not NAT side-effects — is what controls inbound access."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "How many bits is an IPv6 address?",
+                options: ["32", "64", "128", "256"],
+                correct: 2,
+                why: "IPv6 uses 128-bit addresses (versus IPv4's 32), which is why it has enough space to abandon NAT entirely."),
+            QuizQuestion(
+                "What does `::` mean in an IPv6 address?",
+                options: [
+                    "The end of the address",
+                    "A single collapsed run of one or more all-zero 16-bit groups",
+                    "A separator between IPv4 and IPv6",
+                    "The subnet mask"
+                ],
+                correct: 1,
+                why: "`::` is shorthand for one contiguous run of zero groups, and may appear only once per address so it's unambiguous. 2001:db8::1 expands the omitted groups back to zeros."),
+            QuizQuestion(
+                "What does SLAAC let a host do?",
+                options: [
+                    "Encrypt its traffic automatically",
+                    "Configure its own IPv6 address from a router-advertised prefix, without a DHCP server",
+                    "Translate IPv6 to IPv4",
+                    "Pick a faster route"
+                ],
+                correct: 1,
+                why: "Stateless Address Autoconfiguration lets a host build its address from the advertised /64 prefix plus an interface id — no stateful DHCP server needed (though DHCPv6 remains an option).")
+        ]
+    )
+
+    private static let cdnLesson = Lesson(
+        id: "net-cdn",
+        title: "Load Balancers, CDNs & Anycast",
+        subtitle: "How one website serves millions at once — and stays up when a server dies.",
+        minutes: 11,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("One name, many servers"),
+            .paragraph("A busy site can't run on a single machine — it would melt, and one crash would take everything down. Instead, many identical servers sit behind a **load balancer**: a single front door that spreads incoming requests across the pool. To the user it's one address; behind it, the work is shared and any one server can fail without anyone noticing."),
+            .animation(.loadBalancer, caption: "Each request is handed to the next healthy backend; the node failing its health check is skipped automatically — the foundation of both scale and uptime."),
+            .keyPoints([
+                "Load balancing algorithms — round-robin (take turns), least-connections (send to the idlest), or hash-based (sticky per client).",
+                "Health checks — the balancer probes each backend and stops routing to one that stops responding.",
+                "Horizontal scaling — handle more load by adding more servers to the pool, not by buying one bigger machine.",
+                "High availability — because the pool has redundancy, a single server (or whole datacentre) can fail with no outage.",
+                "L4 vs L7 — a layer-4 balancer routes by IP/port; a layer-7 one understands HTTP and can route by URL, host or cookie."
+            ]),
+            .definition(term: "CDN", meaning: "Content Delivery Network — a global mesh of edge servers that cache a site's static content (images, scripts, video) close to users. A visitor in Tokyo is served from a nearby edge instead of an origin server an ocean away, cutting latency dramatically and absorbing traffic spikes and DDoS floods."),
+            .heading("Anycast: the same IP in many places"),
+            .paragraph("How does a CDN send you to the *nearest* edge automatically? **Anycast.** The same IP address is announced from datacentres all over the world, and internet routing (BGP) naturally delivers your packets to the closest one. One address, dozens of physical locations — it's how DNS roots, big CDNs and DDoS scrubbing centres all work."),
+            .terminal(prompt: "kali@lab",
+                      command: "curl -sI https://cdn.shop.lab/logo.png | grep -iE 'cf-(cache|ray)|x-cache|server'",
+                      output: """
+server: cloudflare
+cf-cache-status: HIT
+cf-ray: 8a1f3c2d4e5f-NRT
+"""),
+            .callout(.tip, "`cf-cache-status: HIT` means the edge served a cached copy without bothering the origin; `NRT` in the ray id is the Tokyo (Narita) datacentre — anycast routed this request to the nearest edge. Reading these headers tells you a site's architecture for free."),
+            .callout(.info, "This is why a CDN is a front-line DDoS defence: a globally distributed anycast network has far more capacity than any single origin, so a flood is spread across the whole mesh and absorbed at the edges instead of crushing one server."),
+            .callout(.warning, "A CDN can also hide the origin's real IP. Attackers hunt for it via old DNS records, SSL-certificate scans or misconfigured subdomains — and if they find it, they can bypass the CDN's protection entirely. Lock origin firewalls to only accept traffic from the CDN."),
+            .checkpoint(QuizQuestion(
+                "A load balancer's health check finds one backend has stopped responding. What happens to user requests?",
+                options: [
+                    "All requests fail until an admin intervenes",
+                    "The balancer stops routing to the dead node and keeps serving from the healthy ones",
+                    "Every request is sent to the dead node anyway",
+                    "The website's IP address changes"
+                ],
+                correct: 1,
+                why: "Health checks let the balancer route around failure automatically — it simply removes the unhealthy node from rotation, so users keep getting served by the rest of the pool with no outage."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What problem does a load balancer primarily solve?",
+                options: [
+                    "Encrypting traffic",
+                    "Spreading requests across many servers for scale and resilience behind one address",
+                    "Assigning IP addresses",
+                    "Blocking ports"
+                ],
+                correct: 1,
+                why: "A load balancer presents one front door and distributes requests across a pool, enabling horizontal scaling and high availability — no single server is a bottleneck or a single point of failure."),
+            QuizQuestion(
+                "How does anycast send a user to the nearest CDN edge?",
+                options: [
+                    "The user manually picks a city",
+                    "The same IP is announced from many locations, and internet routing delivers packets to the closest one",
+                    "The CDN emails the user a new address",
+                    "It uses the user's MAC address"
+                ],
+                correct: 1,
+                why: "Anycast advertises one IP from many datacentres; BGP routing naturally chooses the topologically nearest, so the same address resolves to whichever edge is closest to each user."),
+            QuizQuestion(
+                "Why is a large CDN an effective defence against DDoS?",
+                options: [
+                    "It hides the website from search engines",
+                    "Its distributed anycast capacity absorbs and spreads a flood across many edges instead of one origin",
+                    "It blocks all traffic from other countries",
+                    "It encrypts the attack traffic"
+                ],
+                correct: 1,
+                why: "A globally distributed network has vastly more aggregate bandwidth than any single origin, so attack traffic is spread across the mesh and filtered at the edges rather than overwhelming one server.")
+        ]
+    )
+
+    private static let quicLesson = Lesson(
+        id: "net-quic",
+        title: "QUIC & HTTP/3",
+        subtitle: "Why the modern web ditched TCP for a faster, connection-migrating protocol over UDP.",
+        minutes: 9,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The cost of the old stack"),
+            .paragraph("For decades the web ran on **TCP**, with **TLS** layered on top for encryption. It works, but it's slow to start: TCP needs a round trip to connect, then TLS needs another to secure it, before a single byte of your page is sent. And TCP has a nasty quirk — **head-of-line blocking** — where one lost packet stalls *everything* behind it, even unrelated requests."),
+            .animation(.quicHandshake, caption: "TCP+TLS spends two round trips before any data; QUIC folds transport and crypto into one handshake over UDP — zero round trips when resuming."),
+            .heading("What QUIC changes"),
+            .paragraph("**QUIC** is a new transport built on UDP that powers **HTTP/3**. It rolls TCP's reliability and TLS 1.3's encryption into one protocol, so a connection is both established and encrypted in a single round trip — and instantly on a repeat visit. Crucially, encryption is mandatory: there's no unencrypted QUIC."),
+            .keyPoints([
+                "1-RTT setup (0-RTT on resume) — transport + crypto handshake combined.",
+                "No head-of-line blocking — independent streams, so one lost packet only stalls its own stream.",
+                "Connection migration — a connection id (not the IP/port) names the session, so it survives switching Wi-Fi → cellular.",
+                "Always encrypted — TLS 1.3 is built in; even the transport headers are largely protected.",
+                "Runs in user space over UDP — so it can evolve without waiting for operating-system TCP changes."
+            ]),
+            .definition(term: "Connection migration", meaning: "Because a QUIC connection is identified by a connection ID rather than the source IP and port, it keeps working when your address changes — walking out of Wi-Fi range onto cellular doesn't drop the download. TCP, tied to the 4-tuple, can't do this."),
+            .callout(.info, "QUIC is already huge: most traffic to Google, YouTube, Meta and Cloudflare-fronted sites uses HTTP/3. If you see lots of UDP/443 in a capture, that's QUIC — not a misconfiguration."),
+            .callout(.warning, "For defenders, QUIC complicates monitoring: it's UDP/443, fully encrypted including most metadata, so old TCP-oriented inspection misses it. Some networks block UDP/443 to force a fallback to inspectable HTTP/2 — a real trade-off between performance and visibility."),
+            .checkpoint(QuizQuestion(
+                "Why can a QUIC connection survive moving from Wi-Fi to cellular while a TCP one drops?",
+                options: [
+                    "QUIC reconnects faster",
+                    "QUIC identifies the connection by a connection id, not the IP/port, so a changed address doesn't break it",
+                    "Cellular is faster",
+                    "TCP also survives it"
+                ],
+                correct: 1,
+                why: "TCP is bound to the source IP+port 4-tuple, so an address change kills the connection. QUIC's connection id lets the session continue seamlessly across network changes — connection migration."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What transport does QUIC (HTTP/3) run on?",
+                options: ["TCP", "UDP", "ICMP", "A new IP protocol"],
+                correct: 1,
+                why: "QUIC is built on UDP, implementing its own reliability, ordering and (mandatory TLS 1.3) encryption in user space — sidestepping TCP's limitations."),
+            QuizQuestion(
+                "What problem does QUIC's independent-streams design solve?",
+                options: [
+                    "Weak encryption",
+                    "Head-of-line blocking — one lost packet no longer stalls all the other requests",
+                    "DNS resolution",
+                    "IP exhaustion"
+                ],
+                correct: 1,
+                why: "In TCP a single lost segment blocks everything behind it. QUIC's separate streams mean a loss only delays its own stream, so other requests keep flowing."),
+            QuizQuestion(
+                "Why does QUIC complicate network monitoring?",
+                options: [
+                    "It uses plaintext",
+                    "It's UDP/443 and fully encrypted including most metadata, so TCP-oriented inspection misses it",
+                    "It only runs on servers",
+                    "It disables logging"
+                ],
+                correct: 1,
+                why: "QUIC encrypts not just the payload but much of the transport metadata, and rides UDP/443, so traditional TCP-based inspection tooling has little to see — a visibility challenge for defenders.")
+        ]
+    )
+
+    // MARK: N7 — Internet infrastructure
+
+    private static let infra = Module(
+        id: "net-infra",
+        title: "Internet Infrastructure",
+        summary: "The plumbing that ties the whole internet together: BGP, the routing protocol that decides global paths, and the SMTP/MX/IMAP chain that actually delivers your email.",
+        systemImage: "point.3.connected.trianglepath.dotted",
+        lessons: [bgpLesson, emailLesson]
+    )
+
+    private static let bgpLesson = Lesson(
+        id: "net-bgp",
+        title: "BGP & How the Internet Routes",
+        subtitle: "The protocol that glues 70,000 networks into one internet — and how it goes wrong.",
+        minutes: 11,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The internet is a network of networks"),
+            .paragraph("The 'inter' in internet is literal: it's tens of thousands of independent networks — **Autonomous Systems** (AS) — that agree to carry each other's traffic. Each AS (an ISP, a cloud, a big company) has a number, like AS15169 for Google. The protocol they use to tell each other 'I can reach these addresses, send that traffic to me' is **BGP**, the Border Gateway Protocol — the routing glue of the entire internet."),
+            .animation(.bgpRouting, caption: "Each AS announces the prefixes it can reach; BGP propagates those routes and every router picks the best, usually shortest, AS-path to the destination."),
+            .heading("How a route is chosen"),
+            .paragraph("BGP doesn't optimise for speed — it optimises for **policy and path length**. An AS hears multiple ways to reach a destination prefix and picks one based on rules (preferring shorter AS-paths, cheaper peering, configured preferences). Those choices, multiplied across every network, are how a packet finds its way across the planet."),
+            .keyPoints([
+                "Prefix — a block of addresses announced together, e.g. 203.0.113.0/24.",
+                "AS-path — the list of Autonomous Systems a route passes through; shorter usually wins.",
+                "Peering vs transit — networks peer (swap traffic free) or buy transit (pay to reach the rest of the internet).",
+                "BGP is built on trust — historically an AS could announce almost any prefix and neighbours would believe it.",
+                "RPKI — modern cryptographic route origin validation that checks an AS is actually authorised to announce a prefix."
+            ]),
+            .definition(term: "BGP hijacking", meaning: "When an AS announces a prefix it doesn't own — by accident or malice — and other networks believe it, traffic for those addresses is rerouted to the attacker. It has been used to intercept traffic and steal cryptocurrency. RPKI route validation is the primary defence."),
+            .terminal(prompt: "kali@lab",
+                      command: "whois -h whois.radb.net ' -i origin AS15169' | grep route | head -3",
+                      output: """
+route:      8.8.8.0/24
+route:      8.34.208.0/20
+route:      23.236.48.0/20
+"""),
+            .callout(.danger, "Because classic BGP trusts announcements, a single fat-fingered or malicious route can black-hole or intercept a chunk of the internet. The 2008 'Pakistan vs YouTube' incident and several crypto-theft hijacks are textbook cases. This is why RPKI adoption matters."),
+            .callout(.tip, "BGP also underpins anycast (one prefix announced from many sites) and DDoS scrubbing (announcing a victim's prefix to pull attack traffic into a cleaning centre). The same global routing you're learning powers both the attack and the defence."),
+            .checkpoint(QuizQuestion(
+                "What is an Autonomous System (AS) in BGP?",
+                options: [
+                    "A single router",
+                    "An independently-administered network (ISP, cloud, enterprise) that announces its routes to others",
+                    "A type of firewall",
+                    "A DNS server"
+                ],
+                correct: 1,
+                why: "An AS is a network under one administrative authority with its own AS number. BGP runs between ASes, exchanging reachability so the global internet's paths can be built."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does BGP primarily exchange between Autonomous Systems?",
+                options: [
+                    "Encryption keys",
+                    "Reachability — which IP prefixes each AS can deliver, and via what path",
+                    "DNS records",
+                    "User passwords"
+                ],
+                correct: 1,
+                why: "BGP advertises routes: which prefixes an AS can reach and the AS-path to them, letting every network compute how to forward traffic across the internet."),
+            QuizQuestion(
+                "What is BGP hijacking?",
+                options: [
+                    "Cracking a router password",
+                    "An AS announcing a prefix it doesn't own, so traffic is misrouted to it",
+                    "Flooding a link with packets",
+                    "Spoofing a MAC address"
+                ],
+                correct: 1,
+                why: "If an AS announces someone else's prefix and neighbours accept it, traffic for those addresses flows to the wrong network — enabling interception or outages. RPKI helps validate legitimate origins."),
+            QuizQuestion(
+                "Why is BGP historically vulnerable?",
+                options: [
+                    "It's encrypted too strongly",
+                    "It was built on trust — networks largely believed each other's announcements without validation",
+                    "It runs over UDP",
+                    "It has no addresses"
+                ],
+                correct: 1,
+                why: "Classic BGP has no built-in authentication of route ownership, so a false announcement is accepted by default. RPKI adds cryptographic origin validation to close that gap.")
+        ]
+    )
+
+    private static let emailLesson = Lesson(
+        id: "net-email",
+        title: "How Email Travels",
+        subtitle: "The SMTP / MX / IMAP chain behind every message — and why spoofing is so easy.",
+        minutes: 10,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Several protocols in a trench coat"),
+            .paragraph("Sending an email feels instant, but behind it is a relay of distinct protocols. Your client **submits** the message with SMTP, your provider looks up the recipient's mail server via a DNS **MX record**, **SMTP** carries it there, and finally the recipient's client pulls it down with **IMAP** (or the older POP). Understanding this chain explains both how mail works and why phishing is so effective."),
+            .animation(.emailFlow, caption: "Submit by SMTP, find the destination server by MX lookup, deliver by SMTP, then read with IMAP/POP — four protocols, one message."),
+            .keyPoints([
+                "SMTP (port 25/465/587) — the protocol that transfers mail between servers and accepts your submission.",
+                "MX record — a DNS entry naming which server receives mail for a domain (mail.bob.com handles bob.com).",
+                "IMAP (993) / POP (995) — how your client retrieves and syncs mail from your server.",
+                "MTA / MUA — Mail Transfer Agent (the servers) vs Mail User Agent (your app).",
+                "The envelope vs the headers — the SMTP envelope routes the mail; the visible From: header is separate and easily faked."
+            ]),
+            .definition(term: "Why spoofing is easy", meaning: "SMTP was designed in a trusting era and never authenticated the sender. The From: header you see is just text the sender writes — there's nothing in core SMTP stopping anyone claiming to be your bank. That gap is exactly why SPF, DKIM and DMARC were bolted on later."),
+            .terminal(prompt: "kali@lab",
+                      command: "dig +short MX bob.com",
+                      output: """
+10 mail.bob.com.
+20 backup-mx.bob.com.
+"""),
+            .callout(.danger, "Because the visible From: is unauthenticated by default, email spoofing underpins most phishing. The fix isn't in SMTP itself but in the layered checks — SPF (authorised sending IPs), DKIM (a cryptographic signature) and DMARC (alignment + policy) — covered in the Blue Team track."),
+            .callout(.tip, "Reading email headers (Received: lines, Authentication-Results:) traces the actual path a message took and whether SPF/DKIM/DMARC passed — a core skill for both phishing triage and incident response."),
+            .checkpoint(QuizQuestion(
+                "What does a domain's DNS MX record tell a sending mail server?",
+                options: [
+                    "The recipient's password",
+                    "Which mail server should receive email for that domain",
+                    "The fastest route to the domain",
+                    "Whether the domain uses encryption"
+                ],
+                correct: 1,
+                why: "The MX (Mail eXchange) record names the host that accepts mail for a domain, so a sender knows where to deliver. Multiple MX records with priorities provide fallback."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Which protocol transfers mail between mail servers?",
+                options: ["IMAP", "SMTP", "HTTP", "POP"],
+                correct: 1,
+                why: "SMTP (Simple Mail Transfer Protocol) both accepts your submission and carries mail server-to-server. IMAP and POP are for retrieving mail to your client."),
+            QuizQuestion(
+                "Why is basic email sender spoofing so easy?",
+                options: [
+                    "Mail is never encrypted",
+                    "Core SMTP doesn't authenticate the From: header — it's just text the sender supplies",
+                    "DNS is broken",
+                    "IMAP allows it"
+                ],
+                correct: 1,
+                why: "SMTP was designed without sender authentication, so the visible From: can be set to anything. SPF, DKIM and DMARC were added later specifically to combat this."),
+            QuizQuestion(
+                "What does a mail client use IMAP for?",
+                options: [
+                    "Sending mail to other servers",
+                    "Retrieving and syncing your mail from your mail server",
+                    "Looking up MX records",
+                    "Encrypting the connection"
+                ],
+                correct: 1,
+                why: "IMAP retrieves messages and keeps them synced across devices (POP typically downloads and removes them). Sending/transfer is SMTP's job.")
+        ]
+    )
+
+    // MARK: N8 — Web & real-time
+
+    private static let webtech = Module(
+        id: "net-webtech",
+        title: "Web & Real-Time",
+        summary: "The middle boxes and channels that shape modern web traffic: forward and reverse proxies, and the WebSockets that power live, two-way apps.",
+        systemImage: "arrow.left.arrow.right.circle.fill",
+        lessons: [proxiesLesson, webSocketsLesson]
+    )
+
+    private static let proxiesLesson = Lesson(
+        id: "net-proxies",
+        title: "Proxies & Reverse Proxies",
+        subtitle: "The middle-men of the web — one hides the clients, the other fronts the servers.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("A proxy is a middle-man for requests"),
+            .paragraph("A **proxy** is a server that makes requests on someone else's behalf. The crucial distinction is *whose* behalf — and that splits proxies into two opposite roles that confuse people endlessly. A **forward proxy** sits in front of the **clients**; a **reverse proxy** sits in front of the **servers**. Same machine in the middle, opposite direction of who it represents."),
+            .animation(.proxyFlow, caption: "Forward proxy: clients → proxy → internet (fronts the clients). Reverse proxy: internet → proxy → backend pool (fronts the servers)."),
+            .heading("Forward proxy — fronting the clients"),
+            .paragraph("A forward proxy is what a company puts between its employees and the internet. Outbound requests go through it, so it can **filter** (block categories), **log** (who went where), **cache**, and **anonymise** (the destination sees the proxy's IP, not the user's). A VPN is a close cousin of this idea."),
+            .heading("Reverse proxy — fronting the servers"),
+            .paragraph("A reverse proxy is what sits in front of a website. Clients on the internet hit it, and it forwards to one of many **backend servers**. It's where you do **TLS termination**, **caching**, **load balancing** and **WAF** filtering — and it hides the backend topology entirely. Nginx, HAProxy, Envoy and every CDN are reverse proxies."),
+            .keyPoints([
+                "Forward proxy — represents the client; used for egress filtering, logging, caching, anonymity.",
+                "Reverse proxy — represents the server; used for TLS termination, caching, load balancing, WAF.",
+                "Both terminate the connection and open a new one — so they see (and can inspect) the traffic.",
+                "TLS termination at the reverse proxy means it decrypts, inspects, then re-encrypts to the backend.",
+                "An API gateway is a specialised reverse proxy adding auth, rate-limiting and routing per API."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "curl -sI https://shop.lab | grep -iE 'server|via|x-cache'",
+                      output: """
+server: nginx
+via: 1.1 varnish (Varnish/7.0)
+x-cache: HIT
+"""),
+            .callout(.tip, "Recognising a reverse proxy from response headers (Server: nginx, Via:, X-Cache:) tells you the request isn't hitting the app directly — useful for both architecture mapping and understanding why an attack behaves oddly (the proxy may normalise or cache it)."),
+            .callout(.warning, "Proxies see your traffic. A forward proxy (or a TLS-terminating reverse proxy) decrypts and can log everything — which is exactly how request smuggling and cache-poisoning attacks exploit disagreements between the proxy and the backend about a request's meaning."),
+            .checkpoint(QuizQuestion(
+                "What is the key difference between a forward proxy and a reverse proxy?",
+                options: [
+                    "Forward proxies are faster",
+                    "A forward proxy fronts the clients (egress); a reverse proxy fronts the servers (ingress)",
+                    "Reverse proxies don't use TLS",
+                    "They are the same thing"
+                ],
+                correct: 1,
+                why: "It's about whose behalf the proxy acts: a forward proxy represents outbound clients, a reverse proxy represents the servers it protects and load-balances. Same middle position, opposite role."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is a reverse proxy commonly used for?",
+                options: [
+                    "Blocking employees from websites",
+                    "TLS termination, caching, load balancing and hiding the backend servers",
+                    "Assigning IP addresses",
+                    "Resolving DNS"
+                ],
+                correct: 1,
+                why: "A reverse proxy fronts servers — terminating TLS, caching responses, distributing load across a backend pool, and concealing the internal topology. Nginx, HAProxy and CDNs do this."),
+            QuizQuestion(
+                "An employer routes all staff web traffic through a server that filters and logs it. What is that?",
+                options: ["A reverse proxy", "A forward proxy", "A DNS server", "A load balancer"],
+                correct: 1,
+                why: "Fronting the clients for egress filtering, logging and caching is the forward-proxy role — it represents the users making outbound requests."),
+            QuizQuestion(
+                "Why can a TLS-terminating reverse proxy inspect HTTPS traffic?",
+                options: [
+                    "It cracks the encryption",
+                    "It terminates the TLS connection, so it decrypts, inspects, then re-encrypts to the backend",
+                    "HTTPS isn't encrypted",
+                    "It reads the browser's memory"
+                ],
+                correct: 1,
+                why: "Because the client's TLS session ends at the proxy, the proxy holds the keys and sees plaintext before forwarding (often re-encrypted) to the backend — enabling caching, WAF inspection and routing.")
+        ]
+    )
+
+    private static let webSocketsLesson = Lesson(
+        id: "net-websockets",
+        title: "WebSockets & Real-Time Web",
+        subtitle: "How the web escaped request/response to power live chat, dashboards and games.",
+        minutes: 9,
+        difficulty: .advanced,
+        blocks: [
+            .heading("Breaking out of request/response"),
+            .paragraph("Classic HTTP is strictly **request/response**: the client asks, the server answers, the connection is done. That's terrible for anything live — chat, trading dashboards, multiplayer games — where the *server* needs to push updates the moment they happen. The old workaround was 'polling' (asking again and again), which is wasteful and laggy. **WebSockets** fixed it properly."),
+            .animation(.webSocketUpgrade, caption: "An ordinary HTTP request carries an Upgrade header; after a 101 Switching Protocols, the same TCP connection becomes a persistent, bidirectional channel."),
+            .heading("The upgrade handshake"),
+            .paragraph("A WebSocket starts life as a normal HTTP GET with an `Upgrade: websocket` header. If the server agrees, it replies **101 Switching Protocols**, and from that point the same TCP connection is no longer HTTP — it's a full-duplex WebSocket where either side can send 'frames' at any time, with almost no per-message overhead."),
+            .keyPoints([
+                "ws:// and wss:// — the WebSocket schemes (wss is WebSocket over TLS, the secure form).",
+                "Starts as HTTP — so it works through the same ports (80/443) and most firewalls.",
+                "Full-duplex — server and client both push anytime; no polling, low latency.",
+                "Persistent — one long-lived connection instead of a request per update.",
+                "Used by — chat, live dashboards, collaborative editing, multiplayer games, trading."
+            ]),
+            .terminal(prompt: "browser",
+                      command: "GET /chat HTTP/1.1  ·  Upgrade: websocket  ·  Connection: Upgrade",
+                      output: """
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+← connection is now a two-way WebSocket
+"""),
+            .definition(term: "Cross-Site WebSocket Hijacking (CSWSH)", meaning: "Because the WebSocket handshake is an HTTP request, it rides the user's cookies — and crucially, it is NOT protected by the Same-Origin Policy the way fetch() is. If a server authenticates the socket by cookie alone, a malicious page can open a socket as the victim. The fix is validating the Origin header and using anti-CSRF tokens on the handshake."),
+            .callout(.warning, "WebSockets need their own security thinking. The Same-Origin Policy and CORS don't constrain them the way they do normal requests, so servers must explicitly check the Origin header on the handshake — or risk CSWSH, the WebSocket cousin of CSRF."),
+            .callout(.tip, "For defenders and testers: a tool like Burp can intercept and replay individual WebSocket frames, so the live channel is just as testable as HTTP — look for missing Origin checks and trust placed in client-sent frames."),
+            .checkpoint(QuizQuestion(
+                "How does a WebSocket connection begin?",
+                options: [
+                    "As a UDP packet",
+                    "As an HTTP request with an Upgrade header, answered by 101 Switching Protocols",
+                    "As a DNS lookup",
+                    "As a TLS handshake only"
+                ],
+                correct: 1,
+                why: "WebSockets bootstrap over HTTP: the client sends GET with Upgrade: websocket, and a 101 response switches the same connection to the bidirectional WebSocket protocol."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What problem do WebSockets solve that plain HTTP can't?",
+                options: [
+                    "Encryption",
+                    "Letting the server push data to the client anytime over a persistent two-way connection",
+                    "Resolving domain names",
+                    "Compressing images"
+                ],
+                correct: 1,
+                why: "HTTP is request/response, so the server can't initiate. WebSockets keep a persistent full-duplex channel open, letting the server push updates instantly — ideal for chat, dashboards and games."),
+            QuizQuestion(
+                "What does a 101 Switching Protocols response indicate in the WebSocket handshake?",
+                options: [
+                    "An error occurred",
+                    "The server agreed to upgrade the connection from HTTP to WebSocket",
+                    "The page moved",
+                    "Authentication failed"
+                ],
+                correct: 1,
+                why: "101 confirms the protocol switch: from that point the connection is a WebSocket, not HTTP, and both sides can exchange frames freely."),
+            QuizQuestion(
+                "Why is Cross-Site WebSocket Hijacking possible?",
+                options: [
+                    "WebSockets have no encryption",
+                    "The handshake carries cookies but isn't constrained by the Same-Origin Policy, so a server trusting cookies alone can be opened cross-site",
+                    "WebSockets use UDP",
+                    "Browsers don't support them"
+                ],
+                correct: 1,
+                why: "The handshake is a cookie-bearing HTTP request not protected like fetch() is. If the server authenticates by cookie without checking Origin, a malicious page can open an authenticated socket — so validate Origin and use handshake tokens.")
+        ]
+    )
+
+    private static let vlanLesson = Lesson(
+        id: "net-vlans",
+        title: "VLANs & Segmentation",
+        subtitle: "How one physical switch becomes many separate networks — and why that's a security win.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("One switch, many networks"),
+            .paragraph("By default, every device plugged into a switch shares one **broadcast domain** — they can all talk to each other. A **VLAN** (Virtual LAN) carves that single switch into several logical networks that behave as if physically separate. Finance, guest Wi-Fi and servers can share the same hardware yet be unable to reach one another."),
+            .animation(.vlanTagging, caption: "As a frame enters, the switch tags it with its VLAN id (802.1Q) and only forwards it to ports in the same VLAN — VLAN 10 can't reach VLAN 20."),
+            .heading("How it works"),
+            .paragraph("Each switch port is assigned to a VLAN. When a frame needs to travel between switches, the switch adds an **802.1Q tag** — a small VLAN id stamped into the frame — so the next switch knows which VLAN it belongs to. The link that carries multiple tagged VLANs between switches is a **trunk**."),
+            .keyPoints([
+                "Broadcast domain — the set of devices that receive each other's broadcasts; a VLAN is its own domain.",
+                "802.1Q tag — the 12-bit VLAN id added to a frame so switches keep traffic separated (4094 usable VLANs).",
+                "Access port — belongs to one VLAN, connects an end device. Trunk port — carries many tagged VLANs between switches.",
+                "Inter-VLAN routing — to move traffic between VLANs you must go through a router/L3 switch, where firewall rules can apply.",
+                "Security value — segmentation limits lateral movement: a compromised guest device can't reach the server VLAN."
+            ]),
+            .definition(term: "Segmentation", meaning: "Dividing a network into zones so that compromise of one doesn't grant access to all. VLANs are the classic switch-level tool for it; microsegmentation (a Zero Trust idea) pushes the same principle down to individual workloads. Either way, the goal is to shrink an attacker's blast radius."),
+            .callout(.tip, "Segmentation is one of the highest-value defensive controls: it directly blunts the lateral movement that turns one foothold into a domain takeover. A flat network is an attacker's dream — everything is one hop away."),
+            .callout(.danger, "VLANs are an isolation convenience, not a hard security boundary. VLAN hopping (double-tagging, or abusing dynamic trunking) can defeat weak configs — so disable auto-trunking, pick an unused native VLAN, and don't rely on VLANs alone for high-stakes isolation."),
+            .checkpoint(QuizQuestion(
+                "Two devices are on the same switch but in different VLANs. Can they communicate directly?",
+                options: [
+                    "Yes, always — they share a switch",
+                    "No — VLANs are separate broadcast domains; traffic between them must be routed (and can be filtered)",
+                    "Only if they have the same IP",
+                    "Only over Wi-Fi"
+                ],
+                correct: 1,
+                why: "Different VLANs are isolated broadcast domains even on one switch. Reaching from one to the other requires a router or L3 switch, which is exactly where access controls can be enforced."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does a VLAN let you do?",
+                options: [
+                    "Speed up a single connection",
+                    "Split one physical switch into multiple isolated logical networks",
+                    "Encrypt all traffic",
+                    "Assign public IP addresses"
+                ],
+                correct: 1,
+                why: "A VLAN logically partitions a switch into separate broadcast domains, so different groups share hardware without sharing a network — the basis of segmentation."),
+            QuizQuestion(
+                "What is the purpose of an 802.1Q tag?",
+                options: [
+                    "To encrypt the frame",
+                    "To stamp a frame with its VLAN id so switches keep VLAN traffic separated across trunks",
+                    "To compress the frame",
+                    "To assign an IP address"
+                ],
+                correct: 1,
+                why: "The 802.1Q tag carries the VLAN id within the frame, letting switches forward it only within its VLAN — essential on trunk links that carry several VLANs."),
+            QuizQuestion(
+                "Why is network segmentation a strong security control?",
+                options: [
+                    "It makes the network faster",
+                    "It limits lateral movement — a compromised device can't freely reach other zones",
+                    "It encrypts passwords",
+                    "It removes the need for firewalls"
+                ],
+                correct: 1,
+                why: "By isolating zones, segmentation shrinks an attacker's blast radius: a foothold in one segment can't pivot across the whole network, directly hampering lateral movement.")
         ]
     )
 }

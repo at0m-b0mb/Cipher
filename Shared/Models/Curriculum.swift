@@ -126,6 +126,46 @@ enum AnimationID: String, CaseIterable, Codable {
     case ddosAmplification
     case steganography
 
+    // Expansion wave 3 — TLS, IPv6, scaling, modern attacks & proactive defense
+    case tlsHandshake
+    case ipv6Address
+    case loadBalancer
+    case passwordSpray
+    case nosqlInjection
+    case purpleTeam
+    case threatModeling
+
+    // Expansion wave 4 — code foundations, internet infrastructure, identity & resilience
+    case xorCipher
+    case sqlQuery
+    case regexMatch
+    case bgpRouting
+    case emailFlow
+    case quicHandshake
+    case adcsEsc1
+    case ssrfAttack
+    case ransomwareRecovery
+
+    // Expansion wave 5 — identity, isolation, web tech & security operations
+    case mfaFactors
+    case vmContainer
+    case proxyFlow
+    case webSocketUpgrade
+    case corsMisconfig
+    case bucketExposure
+    case soarPlaybook
+    case secretsVault
+
+    // Expansion wave 6 — machine internals, LAN segmentation, hardware/loader attacks & governance
+    case compilePipeline
+    case entropyRng
+    case vlanTagging
+    case badusbInject
+    case dllHijack
+    case nistCsf
+    case riskMatrix
+    case yaraMatch
+
     // Red team
     case cyberKillChain
     case portScan
@@ -218,6 +258,38 @@ enum AnimationID: String, CaseIterable, Codable {
         case .rfidClone:           return "RFID / NFC Cloning"
         case .ddosAmplification:   return "DDoS Amplification"
         case .steganography:       return "LSB Steganography"
+        case .tlsHandshake:        return "TLS 1.3 Handshake"
+        case .ipv6Address:         return "IPv6 Address Anatomy"
+        case .loadBalancer:        return "Load Balancing & CDN"
+        case .passwordSpray:       return "Password Spraying"
+        case .nosqlInjection:      return "NoSQL Injection"
+        case .purpleTeam:          return "The Purple-Team Loop"
+        case .threatModeling:      return "STRIDE Threat Modeling"
+        case .xorCipher:           return "XOR & Bitwise Logic"
+        case .sqlQuery:            return "SQL SELECT Scan"
+        case .regexMatch:          return "Regex Matching"
+        case .bgpRouting:          return "BGP Route Selection"
+        case .emailFlow:           return "Email Delivery (SMTP)"
+        case .quicHandshake:       return "QUIC vs TCP+TLS"
+        case .adcsEsc1:            return "AD CS Abuse (ESC1)"
+        case .ssrfAttack:          return "Server-Side Request Forgery"
+        case .ransomwareRecovery:  return "Ransomware & Recovery"
+        case .mfaFactors:          return "Multi-Factor Authentication"
+        case .vmContainer:         return "VMs vs Containers"
+        case .proxyFlow:           return "Forward & Reverse Proxies"
+        case .webSocketUpgrade:    return "WebSocket Upgrade"
+        case .corsMisconfig:       return "CORS Misconfiguration"
+        case .bucketExposure:      return "Public Bucket Exposure"
+        case .soarPlaybook:        return "SOAR Auto-Response"
+        case .secretsVault:        return "Secrets Management"
+        case .compilePipeline:     return "Source to CPU"
+        case .entropyRng:          return "Randomness & Entropy"
+        case .vlanTagging:         return "VLAN Tagging"
+        case .badusbInject:        return "BadUSB Injection"
+        case .dllHijack:           return "DLL Hijacking"
+        case .nistCsf:             return "NIST CSF Functions"
+        case .riskMatrix:          return "Risk Matrix"
+        case .yaraMatch:           return "YARA Rule Matching"
         case .symmetricEncryption: return "Symmetric Encryption"
         case .publicKeyExchange:   return "Public-Key Exchange"
         case .hashing:             return "Hashing"

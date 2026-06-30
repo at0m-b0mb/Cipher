@@ -6,18 +6,25 @@ struct AnimationGalleryView: View {
     private let groups: [(title: String, accent: Color, ids: [AnimationID])] = [
         ("Fundamentals", Theme.teal,
          [.osiModel, .tcpHandshake, .packetTravel, .symmetricEncryption, .publicKeyExchange, .hashing,
-          .processMemory, .certChain, .steganography]),
+          .processMemory, .certChain, .tlsHandshake, .steganography,
+          .xorCipher, .sqlQuery, .regexMatch, .mfaFactors, .vmContainer,
+          .compilePipeline, .entropyRng]),
         ("Networking", Theme.violet,
          [.internetMap, .ipAddressing, .subnetMask, .dnsResolution, .defaultGateway, .routingHops,
-          .natTranslation, .dhcpLease, .tcpVsUdp, .wifiConnect, .vpnTunnel, .firewallFilter]),
+          .natTranslation, .dhcpLease, .tcpVsUdp, .wifiConnect, .vpnTunnel, .firewallFilter,
+          .ipv6Address, .loadBalancer, .bgpRouting, .emailFlow, .quicHandshake,
+          .proxyFlow, .webSocketUpgrade, .vlanTagging]),
         ("Red Team", Theme.red,
-         [.cyberKillChain, .portScan, .phishingFlow, .sqlInjection, .xssReflected, .payloadStaging,
-          .privilegeEscalation, .tokenTheft, .passwordCracking, .kerberoasting, .lateralMovement,
+         [.cyberKillChain, .portScan, .phishingFlow, .passwordSpray, .sqlInjection, .nosqlInjection,
+          .xssReflected, .ssrfAttack, .payloadStaging,
+          .privilegeEscalation, .tokenTheft, .passwordCracking, .kerberoasting, .lateralMovement, .adcsEsc1,
           .bufferOverflow, .reverseEngineering, .paddingOracle, .c2Beacon, .dnsTunneling, .supplyChain,
           .aitmProxy, .promptInjection, .clickjacking, .cachePoisoning, .bleAttack, .rfidClone,
-          .ddosAmplification]),
+          .ddosAmplification, .corsMisconfig, .bucketExposure, .badusbInject, .dllHijack]),
         ("Blue Team", Theme.blue,
-         [.defenseInDepth, .siemPipeline, .idsDetection, .secureSdlc, .incidentResponse, .mitreAttack, .threatHunting])
+         [.defenseInDepth, .siemPipeline, .idsDetection, .secureSdlc, .incidentResponse, .mitreAttack,
+          .threatHunting, .threatModeling, .purpleTeam, .ransomwareRecovery, .soarPlaybook, .secretsVault,
+          .nistCsf, .riskMatrix, .yaraMatch])
     ]
 
     var body: some View {

@@ -159,7 +159,7 @@ enum RedTeamContent {
         title: "Initial Access & Exploitation",
         summary: "Turn a foothold into a shell — by manipulating people, weaponizing documents they open, and exploiting vulnerable services.",
         systemImage: "key.fill",
-        lessons: [phishingLesson, clientSideLesson, exploitationLesson]
+        lessons: [phishingLesson, passwordAttacksLesson, clientSideLesson, badusbLesson, exploitationLesson]
     )
 
     private static let phishingLesson = Lesson(
@@ -352,7 +352,7 @@ uid=33(www-data) gid=33(www-data)
         title: "Web Application Attacks",
         summary: "The internet's biggest attack surface — injection, broken access control, file disclosure & upload, template/deserialization RCE, request forgery, token attacks, modern APIs and OAuth, subdomain takeover, request smuggling, race conditions, and the white-box review that finds them.",
         systemImage: "globe",
-        lessons: [sqliLesson, xssLesson, cmdiLesson, accessControlLesson, fileInclusionLesson, fileUploadLesson, webAdvancedLesson, csrfLesson, clickjackingLesson, jwtLesson, apiLesson, oauthLesson, subdomainLesson, smugglingLesson, cachePoisoningLesson, raceLesson, sourceReviewLesson]
+        lessons: [sqliLesson, nosqlLesson, xssLesson, cmdiLesson, ssrfLesson, accessControlLesson, corsLesson, fileInclusionLesson, fileUploadLesson, webAdvancedLesson, csrfLesson, clickjackingLesson, jwtLesson, apiLesson, oauthLesson, subdomainLesson, smugglingLesson, cachePoisoningLesson, raceLesson, sourceReviewLesson]
     )
 
     private static let clickjackingLesson = Lesson(
@@ -1589,9 +1589,9 @@ SMB  10.10.10.10  [+] CORP\\admin (Pwn3d!)   <-- domain controller
     private static let adAdvanced = Module(
         id: "red-ad-advanced",
         title: "Advanced Active Directory",
-        summary: "Past the basics — abuse Kerberos delegation, then ride domain and forest trusts to own everything.",
+        summary: "Past the basics — abuse Kerberos delegation, ride domain and forest trusts, and weaponize the PKI to own everything.",
         systemImage: "person.2.badge.gearshape.fill",
-        lessons: [delegationLesson, trustLesson]
+        lessons: [delegationLesson, trustLesson, adcsLesson]
     )
 
     private static let delegationLesson = Lesson(
@@ -1726,7 +1726,7 @@ SMB  10.10.10.10  [+] CORP\\admin (Pwn3d!)   <-- domain controller
         title: "Evasion & Defense Bypass",
         summary: "Modern endpoints fight back — get past antivirus, AMSI, application whitelisting and EDR, and run code where the defenders aren't looking.",
         systemImage: "eye.slash.fill",
-        lessons: [avEvasionLesson, processInjectionLesson, applockerLesson]
+        lessons: [avEvasionLesson, processInjectionLesson, applockerLesson, dllHijackLesson]
     )
 
     private static let avEvasionLesson = Lesson(
@@ -2799,9 +2799,9 @@ msf-pattern_offset -l 600 -q 39694438
     private static let cloud = Module(
         id: "red-cloud",
         title: "Cloud & Container Attacks",
-        summary: "The infrastructure most targets actually run on — cloud IAM and metadata, and breaking out of containers onto the host that hosts everything.",
+        summary: "The infrastructure most targets actually run on — cloud IAM and metadata, exposed storage, and breaking out of containers onto the host that hosts everything.",
         systemImage: "cloud.fill",
-        lessons: [cloudInfraLesson, containersLesson]
+        lessons: [cloudInfraLesson, cloudStorageLesson, containersLesson]
     )
 
     private static let cloudInfraLesson = Lesson(
@@ -4240,6 +4240,625 @@ nt authority\\system
                 ],
                 correct: 1,
                 why: "Parameterized queries separate code from data structurally. LLMs process one undifferentiated stream of tokens, so instructions and data can't be perfectly separated — only mitigated with layered controls.")
+        ]
+    )
+
+    // MARK: Password attacks (Initial Access)
+
+    private static let passwordAttacksLesson = Lesson(
+        id: "red-password-attacks",
+        title: "Password Spraying & Credential Stuffing",
+        subtitle: "Why attackers don't crack passwords anymore — they log in with them.",
+        minutes: 11,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("The front door is usually unlocked"),
+            .paragraph("Before reaching for an exploit, attackers try the simplest thing: logging in. People reuse weak, predictable passwords, and a single valid credential often skips the whole exploitation chain. The trick is doing it **without tripping account lockout**, which is exactly what spraying and stuffing are engineered around."),
+            .heading("Brute force vs spraying vs stuffing"),
+            .paragraph("These three get muddled constantly, but they're different shapes of the same idea. The distinction is what you hold fixed and what you vary."),
+            .keyPoints([
+                "Brute force — many passwords against ONE account. Fast lockout; rarely viable against real apps.",
+                "Password spraying — ONE common password against MANY accounts, one attempt each, then rotate. Stays under per-account lockout thresholds.",
+                "Credential stuffing — known username:password pairs from past breaches replayed against a new site, betting on reuse.",
+                "Low and slow — spread attempts over hours and across source IPs to dodge rate limits and velocity detection.",
+                "Timing windows — one spray round per lockout-reset window (e.g. one try every 30 min) keeps counters from ever reaching the threshold."
+            ]),
+            .animation(.passwordSpray, caption: "One password tried once against each account never trips a single lockout counter — and it only takes one user who reused it."),
+            .definition(term: "Account lockout", meaning: "A control that disables an account after N failed logins within a window. It stops brute force against one account, but does nothing against spraying — which only makes one attempt per account before moving on, so no single counter ever fills up."),
+            .terminal(prompt: "kali@lab",
+                      command: "kerbrute passwordspray -d corp.lab users.txt 'Spring2026!'",
+                      output: """
+[+] VALID LOGIN:  frank@corp.lab : Spring2026!
+[*] sprayed 312 accounts · 1 hit · 0 lockouts
+"""),
+            .paragraph("Seasonal passwords (`Spring2026!`, `Company123`) are spray gold because they satisfy most complexity policies while being trivially guessable. One hit on one reused password is all it takes for a foothold."),
+            .callout(.danger, "Spraying is loud if done carelessly: a burst of failed logins across hundreds of accounts is a textbook detection (e.g. one source authenticating to many users). Real operators throttle hard and rotate source IPs — and on an engagement you coordinate timing so you don't lock out a client's staff."),
+            .callout(.warning, "Credential stuffing works because of reuse: a password leaked from a hobby forum gets replayed against email, banking and corporate SSO. This is why 'don't reuse passwords' is the single highest-value piece of personal security advice."),
+            .callout(.tip, "The defences stack: MFA (a valid password alone isn't enough), passwordless/FIDO2, breached-password screening (block known-leaked passwords), and detection on 'one source → many accounts' patterns. MFA is the big one — it neutralises spraying and stuffing in one move."),
+            .checkpoint(QuizQuestion(
+                "Why does password spraying defeat standard account-lockout policies?",
+                options: [
+                    "It cracks the lockout system",
+                    "It makes only one or two attempts per account, so no single account's failure counter reaches the threshold",
+                    "It runs too fast to be logged",
+                    "Lockout only applies to admins"
+                ],
+                correct: 1,
+                why: "Lockout counts failures per account. Spraying tries one password across many accounts — one attempt each — so each counter stays well below the limit even though thousands of attempts happen overall."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the difference between password spraying and credential stuffing?",
+                options: [
+                    "They are the same thing",
+                    "Spraying tries one common password against many accounts; stuffing replays known username:password pairs from breaches",
+                    "Stuffing is slower brute force",
+                    "Spraying only targets admin accounts"
+                ],
+                correct: 1,
+                why: "Spraying guesses one likely password across many users to dodge lockout; stuffing reuses real leaked credential pairs, betting that people reuse passwords across sites."),
+            QuizQuestion(
+                "Which single control most directly neutralises both spraying and stuffing?",
+                options: [
+                    "A longer lockout window",
+                    "Multi-factor authentication",
+                    "Renaming the admin account",
+                    "Changing the login URL"
+                ],
+                correct: 1,
+                why: "Both attacks rely on a valid password being sufficient. MFA adds a second factor the attacker doesn't have, so even a correct guessed or reused password fails to complete login."),
+            QuizQuestion(
+                "Which log pattern is the clearest signal of a spraying attack?",
+                options: [
+                    "One account with many failures",
+                    "One source IP producing single failed logins across many different accounts in a short window",
+                    "A successful login from a known device",
+                    "A spike in DNS queries"
+                ],
+                correct: 1,
+                why: "Spraying shows up as breadth, not depth: one source touching many accounts with one failure each. Per-account lockout misses it, so detections look for the many-accounts-one-source shape.")
+        ]
+    )
+
+    // MARK: NoSQL injection (Web)
+
+    private static let nosqlLesson = Lesson(
+        id: "red-nosql",
+        title: "NoSQL Injection",
+        subtitle: "SQL injection escapes a string; NoSQL injection abuses the query being an object.",
+        minutes: 10,
+        difficulty: .advanced,
+        blocks: [
+            .heading("Same flaw, different shape"),
+            .paragraph("People assume NoSQL databases like MongoDB are 'injection-proof' because there's no SQL string to break out of. Wrong. The vulnerability is the same — untrusted input changing a query's meaning — it just takes a different shape. In document stores the query is a **structured object**, and if user input is placed into that object unsanitized, an attacker can smuggle in **query operators** that change the logic."),
+            .animation(.nosqlInjection, caption: "Swapping the password string for the operator object `{\"$ne\": null}` turns 'password must equal X' into 'password just has to exist' — login as admin, no password."),
+            .heading("The classic authentication bypass"),
+            .paragraph("Consider a login that builds `db.users.find({ user: input.user, pass: input.pass })`. If the app accepts JSON and drops the fields straight in, an attacker sends an **operator** instead of a value. `{\"$ne\": null}` means 'not equal to null' — true for every stored password — so the query matches the admin document and authentication succeeds with no password at all."),
+            .code(language: "json", """
+// normal login body
+{ "user": "admin", "pass": "hunter2" }
+
+// injected body — pass is now an operator object
+{ "user": "admin", "pass": { "$ne": null } }
+
+// even nastier with a JS evaluation sink:
+{ "user": "admin", "pass": { "$gt": "" } }
+"""),
+            .keyPoints([
+                "$ne / $gt / $regex — operators that turn an equality check into 'matches almost anything'.",
+                "$where / mapReduce — sinks that evaluate JavaScript server-side, escalating to code execution.",
+                "Query-parameter form too — user[$ne]=1 in a URL-encoded body becomes a nested operator object after parsing.",
+                "Blind extraction — $regex with ^a, ^b… leaks a secret one character at a time from boolean responses.",
+                "It isn't MongoDB-only — any datastore that builds queries from structured user input (some ORMs, GraphQL filters) can be vulnerable."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "curl -s shop.lab/api/login -H 'Content-Type: application/json' -d '{\"user\":\"admin\",\"pass\":{\"$ne\":null}}'",
+                      output: """
+{"ok":true,"token":"eyJhbGc...","role":"admin"}
+"""),
+            .definition(term: "Operator injection", meaning: "Supplying a query operator (a key starting with $, or a nested object) where the app expected a plain scalar value. The database faithfully executes the richer query the attacker assembled, because the app never enforced that the input was a simple string or number."),
+            .callout(.danger, "The deepest sinks ($where, mapReduce, some aggregation stages) run server-side JavaScript. There, NoSQL injection isn't just an auth bypass — it's remote code execution, the same severity as a classic SQLi-to-RCE chain."),
+            .callout(.tip, "Fixes mirror SQLi: validate and cast types (a password must be a String — reject objects), never pass raw request bodies into queries, disable server-side JS evaluation, and use the driver/ODM's typed query builders instead of hand-merging user input."),
+            .checkpoint(QuizQuestion(
+                "An app runs `find({user, pass})` from a JSON body. An attacker sends `\"pass\": {\"$ne\": null}`. Why does login succeed?",
+                options: [
+                    "It overflows the password field",
+                    "$ne null matches any non-null stored password, so the query matches the user document",
+                    "It deletes the password column",
+                    "It guesses the password correctly"
+                ],
+                correct: 1,
+                why: "`$ne: null` evaluates to 'password is not null', which is true for every account that has a password. The query therefore matches the admin document and the app treats it as a valid login."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why are NoSQL databases NOT immune to injection?",
+                options: [
+                    "They store passwords in plaintext",
+                    "Untrusted input placed into a structured query object can smuggle in operators that change the query's logic",
+                    "They have no authentication",
+                    "They run on the client"
+                ],
+                correct: 1,
+                why: "The root cause of injection — input altering query meaning — applies regardless of query language. In document stores the query is an object, so operator injection replaces SQL string-breakout."),
+            QuizQuestion(
+                "What makes a `$where` or JavaScript-evaluation sink especially dangerous?",
+                options: [
+                    "It only slows the server",
+                    "It can execute attacker-controlled JavaScript server-side — escalating from auth bypass to remote code execution",
+                    "It encrypts the database",
+                    "It logs the attacker out"
+                ],
+                correct: 1,
+                why: "Operators that evaluate JavaScript run attacker code on the server, turning NoSQL injection into RCE — far beyond reading or bypassing data."),
+            QuizQuestion(
+                "Which fix most directly prevents the `{\"$ne\": null}` auth bypass?",
+                options: [
+                    "Hashing the password again",
+                    "Validate/cast input types so a password field must be a string and operator objects are rejected",
+                    "Hiding the login page",
+                    "Using a longer connection string"
+                ],
+                correct: 1,
+                why: "Type validation forces the field to be a scalar string, so a JSON object carrying $ne is rejected before it ever reaches the query — closing the operator-injection path.")
+        ]
+    )
+
+    // MARK: SSRF (Web)
+
+    private static let ssrfLesson = Lesson(
+        id: "red-ssrf",
+        title: "Server-Side Request Forgery",
+        subtitle: "Make the server fetch a URL for you — and reach the things you never could directly.",
+        minutes: 11,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The confused deputy"),
+            .paragraph("**SSRF** tricks a server into making a request *on your behalf* to a URL you control. The server is a 'confused deputy' — it has access you don't (to the internal network, to the cloud metadata service, to localhost-only admin panels) and you borrow that access by feeding it the right URL. Anywhere an app fetches a URL — webhooks, image-from-URL, PDF generators, link previews, import-by-URL — is a candidate."),
+            .animation(.ssrfAttack, caption: "The app fetches any URL you supply, from inside the trusted network — point it at the metadata service and it reflects the IAM credentials straight back."),
+            .heading("What makes it dangerous"),
+            .paragraph("On its own, SSRF lets you scan and reach internal services. In the cloud, it's frequently catastrophic: the **instance metadata service** at `169.254.169.254` hands out the VM's temporary IAM credentials to anything that can reach it — and a vulnerable app can. That single pivot has caused some of the largest cloud breaches on record."),
+            .keyPoints([
+                "Internal recon — reach 10.x/192.168.x hosts and ports the firewall blocks from outside.",
+                "Cloud metadata — http://169.254.169.254/… leaks IAM role credentials (the classic AWS SSRF → account compromise).",
+                "Localhost services — admin panels and databases bound to 127.0.0.1 that trust local callers.",
+                "Protocol smuggling — file://, gopher:// and redirects can turn a fetch into reading files or hitting non-HTTP services.",
+                "Blind SSRF — even with no response shown, timing and out-of-band (DNS/HTTP callback) confirm and exploit it."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "curl 'https://shop.lab/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/'",
+                      output: """
+web-app-role
+# then fetch …/web-app-role for the temporary AccessKeyId / SecretAccessKey / Token
+"""),
+            .definition(term: "IMDSv2", meaning: "A hardened version of the cloud metadata service that requires a PUT request to obtain a short-lived token first, which simple SSRF (a plain GET) can't perform. Enforcing IMDSv2 blunts the metadata-credential-theft class of SSRF — a key cloud hardening step."),
+            .callout(.danger, "Blocklists of 'bad' hosts are a weak defence — attackers bypass them with alternate IP encodings (2852039166, 0x A9FE A9FE), DNS rebinding, and redirects from an allowed host to 169.254.169.254. Validate with an allowlist of permitted destinations instead."),
+            .callout(.tip, "Defences that actually work: allowlist outbound destinations, block link-local/RFC1918 ranges at the egress, disable unused URL schemes, enforce IMDSv2, and don't let the fetcher follow redirects to internal addresses. Treat any user-supplied URL as hostile."),
+            .checkpoint(QuizQuestion(
+                "Why is SSRF especially severe on a cloud VM?",
+                options: [
+                    "Cloud servers are slower",
+                    "The app can reach the metadata service (169.254.169.254) and leak the VM's temporary IAM credentials",
+                    "Cloud apps have no firewalls",
+                    "It deletes the instance"
+                ],
+                correct: 1,
+                why: "The instance metadata endpoint hands IAM role credentials to any local caller. SSRF makes the vulnerable app that caller, so an internal-only secret becomes an attacker's cloud credentials — often escalating to full account compromise."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does an SSRF vulnerability let an attacker do?",
+                options: [
+                    "Crack passwords",
+                    "Make the server send requests to URLs of the attacker's choosing, reaching internal/otherwise-unreachable services",
+                    "Encrypt the database",
+                    "Read the user's browser cookies"
+                ],
+                correct: 1,
+                why: "SSRF coerces the server into issuing requests the attacker specifies, borrowing the server's network position to reach internal hosts, localhost services and cloud metadata."),
+            QuizQuestion(
+                "Why are blocklists a poor SSRF defence?",
+                options: [
+                    "They're too slow",
+                    "Alternate IP encodings, DNS rebinding and redirects bypass them; an allowlist of permitted destinations is far stronger",
+                    "They block legitimate traffic only",
+                    "They require a database"
+                ],
+                correct: 1,
+                why: "There are too many ways to express 169.254.169.254 or pivot via a redirect for a denylist to catch them all. Allowlisting the few destinations the feature legitimately needs is the robust approach."),
+            QuizQuestion(
+                "What does enforcing IMDSv2 achieve against SSRF?",
+                options: [
+                    "It encrypts the disk",
+                    "It requires a token-issuing PUT first, which simple GET-based SSRF can't perform — blunting metadata credential theft",
+                    "It disables the network",
+                    "It rotates the IP address"
+                ],
+                correct: 1,
+                why: "IMDSv2's session-token requirement means a basic SSRF GET can't retrieve credentials, closing the most damaging cloud SSRF path. It's a key hardening measure alongside egress controls.")
+        ]
+    )
+
+    // MARK: AD CS abuse (Advanced AD)
+
+    private static let adcsLesson = Lesson(
+        id: "red-adcs",
+        title: "AD CS Abuse (ESC1)",
+        subtitle: "When the enterprise PKI hands out Domain Admin — the certificate path to total compromise.",
+        minutes: 12,
+        difficulty: .expert,
+        blocks: [
+            .heading("Certificates as credentials"),
+            .paragraph("Active Directory Certificate Services (**AD CS**) is Microsoft's enterprise PKI, issuing certificates for everything from VPN to smart-card logon. Crucially, a certificate can be used to **authenticate** to AD (via PKINIT/Kerberos). That means: if you can get a certificate that names you as someone else, you can log in *as* that someone else. The Certified Pre-Owned research turned this into a family of escalations named **ESC1–ESC8**."),
+            .animation(.adcsEsc1, caption: "A misconfigured template lets a normal user enroll while supplying the subject — they request a cert as 'Administrator', then authenticate as Domain Admin."),
+            .heading("The ESC1 misconfiguration"),
+            .paragraph("ESC1 is the cleanest example. A certificate **template** is vulnerable when it simultaneously: lets low-privileged users **enroll**, permits **client authentication** (the EKU usable for logon), and allows the **enrollee to supply the subject** (ENROLLEE_SUPPLIES_SUBJECT). With all three, a normal user requests a cert and simply *names themselves* `Administrator` in the Subject Alternative Name."),
+            .terminal(prompt: "kali@lab",
+                      command: "certipy req -u bob@corp.lab -p '…' -ca CORP-CA -template VulnTemplate -upn administrator@corp.lab",
+                      output: """
+[*] Requesting certificate for 'bob' with UPN 'administrator@corp.lab'
+[+] Successfully requested certificate
+[+] Saved certificate and private key to 'administrator.pfx'
+"""),
+            .keyPoints([
+                "Find it — tools like Certipy/Certify enumerate templates and flag the vulnerable settings automatically.",
+                "Request — enroll for the vulnerable template, supplying a privileged UPN (administrator) as the subject.",
+                "Authenticate — use the issued cert with PKINIT to get a TGT, or extract the target's NT hash (UnPAC-the-hash).",
+                "Persist — a stolen CA key (ESC1's cousins) forges 'golden certificates' that survive password resets.",
+                "It's patch-resistant — these are misconfigurations, not CVEs; fixing them means correcting template permissions."
+            ]),
+            .definition(term: "ENROLLEE_SUPPLIES_SUBJECT", meaning: "A certificate-template flag that lets the requester specify the certificate's subject/SAN rather than having AD CS derive it from the account. Combined with client-auth EKU and low-priv enrollment rights, it's the core of ESC1 — the requester can name themselves anyone, including Domain Admin."),
+            .callout(.danger, "AD CS is a Tier-0 asset — owning the CA is equivalent to owning the domain. It's chronically under-monitored, making it a top target on modern internal engagements. A single vulnerable template can collapse an entire forest."),
+            .callout(.tip, "Defence: audit templates for the ESC1 combination and remove ENROLLEE_SUPPLIES_SUBJECT where it isn't required, restrict enrollment rights, enable manager approval, turn on CA auditing, and apply Microsoft's strong certificate-mapping enforcement. Run Certipy/PSPKIAudit yourself before an attacker does."),
+            .checkpoint(QuizQuestion(
+                "Which combination of template settings makes ESC1 exploitable?",
+                options: [
+                    "Long key length and SHA-256",
+                    "Low-priv enrollment + client-authentication EKU + enrollee-supplies-subject",
+                    "Auto-enrollment disabled",
+                    "Manager approval required"
+                ],
+                correct: 1,
+                why: "ESC1 needs all three: a normal user can enroll, the cert is usable for authentication, and the requester chooses the subject — so they request a cert naming themselves a privileged account and then authenticate as it."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why can a certificate lead to Domain Admin in AD CS abuse?",
+                options: [
+                    "Certificates store passwords",
+                    "AD supports certificate-based authentication (PKINIT), so a cert naming a privileged user logs in as them",
+                    "Certificates disable MFA",
+                    "They crash the domain controller"
+                ],
+                correct: 1,
+                why: "AD accepts certificates for Kerberos authentication. If an attacker obtains a cert whose subject is a privileged account, they can authenticate as that account — turning a PKI misconfiguration into full compromise."),
+            QuizQuestion(
+                "Why are ESC1-style issues described as patch-resistant?",
+                options: [
+                    "Microsoft refuses to fix them",
+                    "They're misconfigurations of template permissions, not software bugs — remediation means fixing the configuration",
+                    "They only affect old servers",
+                    "Antivirus blocks them"
+                ],
+                correct: 1,
+                why: "There's no patch for a dangerous-but-valid template setting; the fix is correcting the template's permissions and flags. That's why auditing AD CS configuration is essential."),
+            QuizQuestion(
+                "Why is the Certificate Authority considered a Tier-0 asset?",
+                options: [
+                    "It stores backups",
+                    "Control of the CA lets an attacker issue/forge certificates to authenticate as anyone — equivalent to owning the domain",
+                    "It runs the website",
+                    "It manages DNS"
+                ],
+                correct: 1,
+                why: "The CA underpins identity for the whole forest. Compromise it and you can mint trusted certificates for any user, so it must be protected and monitored at the same level as domain controllers.")
+        ]
+    )
+
+    // MARK: CORS misconfiguration (Web)
+
+    private static let corsLesson = Lesson(
+        id: "red-cors",
+        title: "CORS Misconfiguration",
+        subtitle: "When a sloppy cross-origin policy hands another site the keys to read your data.",
+        minutes: 10,
+        difficulty: .advanced,
+        blocks: [
+            .heading("The rule CORS relaxes"),
+            .paragraph("The browser's **Same-Origin Policy** stops a script on evil.com from reading responses from bank.com — it's the boundary that makes the web survivable. **CORS** (Cross-Origin Resource Sharing) is the controlled way a server can *opt in* to sharing with specific other origins, via response headers. Done right it's safe. Done wrong it tears a hole straight through the Same-Origin Policy."),
+            .animation(.corsMisconfig, caption: "The server reflects the attacker's Origin into Access-Control-Allow-Origin and allows credentials — so evil.com's script gets to read the victim's authenticated response."),
+            .heading("The dangerous combination"),
+            .paragraph("Two headers matter. `Access-Control-Allow-Origin` (ACAO) says which origin may read the response; `Access-Control-Allow-Credentials: true` says cookies may be sent with the cross-origin request. The lethal mistake is **reflecting the request's Origin into ACAO while also allowing credentials** — now *any* site, including the attacker's, can make authenticated requests as the victim and read the results."),
+            .code(language: "http", """
+# attacker's page makes the victim's browser send:
+GET /api/account HTTP/1.1
+Host: bank.com
+Origin: https://evil.com
+Cookie: session=<victim's cookie>
+
+# vulnerable server reflects the origin AND allows credentials:
+Access-Control-Allow-Origin: https://evil.com
+Access-Control-Allow-Credentials: true
+# → evil.com's JavaScript can now READ the victim's account data
+"""),
+            .keyPoints([
+                "Reflected origin + credentials — the classic critical misconfig; any origin can read authenticated data.",
+                "ACAO: * — wildcard. Can't be combined with credentials, but still leaks any non-credentialed sensitive data.",
+                "Weak origin checks — endsWith('bank.com') matches evil-bank.com; startsWith matches bank.com.evil.com.",
+                "null origin trust — some flows send Origin: null, which sandboxed iframes can forge.",
+                "Impact — read user data, CSRF-like actions that need to read a token, API-key theft."
+            ]),
+            .definition(term: "Access-Control-Allow-Origin reflection", meaning: "Instead of returning a fixed trusted origin, the server echoes back whatever Origin the request carried. Combined with Allow-Credentials: true, it effectively whitelists every origin — including the attacker's — to read authenticated responses. The single most common critical CORS bug."),
+            .callout(.danger, "CORS does NOT stop the request from being sent — the browser still sends it (with cookies). CORS only controls whether the calling script may *read the response*. So a permissive policy doesn't just leak data; it can also expose anti-CSRF tokens that enable follow-on attacks."),
+            .callout(.tip, "Fix: maintain a strict server-side allowlist of exact trusted origins; never reflect arbitrary origins; don't combine wildcard with credentials; and validate the full origin, not a substring. Treat ACAO reflection on an authenticated endpoint as a high-severity finding."),
+            .checkpoint(QuizQuestion(
+                "Why is reflecting the request's Origin into Access-Control-Allow-Origin AND setting Allow-Credentials: true critical?",
+                options: [
+                    "It slows the server",
+                    "It lets any origin — including the attacker's — make authenticated requests and read the victim's data",
+                    "It disables HTTPS",
+                    "It only affects images"
+                ],
+                correct: 1,
+                why: "Reflecting the origin whitelists everyone, and allowing credentials means the victim's cookies ride along. Together, the attacker's script can read authenticated responses for the logged-in victim."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does CORS actually control?",
+                options: [
+                    "Whether a cross-origin request is sent",
+                    "Whether the calling script is allowed to READ a cross-origin response",
+                    "Whether the server encrypts data",
+                    "Which ports are open"
+                ],
+                correct: 1,
+                why: "The browser still sends the request (often with cookies); CORS governs whether the requesting script may read the response. That's why a permissive policy leaks data rather than blocking requests."),
+            QuizQuestion(
+                "Why is `endsWith('bank.com')` a broken origin check?",
+                options: [
+                    "It's too slow",
+                    "An attacker origin like https://evil-bank.com also ends with 'bank.com' and passes",
+                    "It blocks legitimate users",
+                    "It only works on HTTP"
+                ],
+                correct: 1,
+                why: "Substring checks are bypassable: evil-bank.com ends with bank.com, and bank.com.evil.com starts with it. Only exact-match allowlisting of full origins is safe."),
+            QuizQuestion(
+                "What is the correct way to configure CORS for sensitive APIs?",
+                options: [
+                    "Reflect whatever Origin is sent",
+                    "Allowlist exact trusted origins server-side and never combine wildcard with credentials",
+                    "Use Access-Control-Allow-Origin: *",
+                    "Disable the Same-Origin Policy"
+                ],
+                correct: 1,
+                why: "A strict server-side allowlist of exact origins, with no arbitrary reflection and no wildcard-plus-credentials, preserves the Same-Origin Policy while permitting only the intended partners.")
+        ]
+    )
+
+    // MARK: Cloud storage exposure (Cloud)
+
+    private static let cloudStorageLesson = Lesson(
+        id: "red-cloud-storage",
+        title: "Cloud Storage Exposure",
+        subtitle: "The breach that needs no exploit — just a bucket someone left open to the world.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("The most common cloud breach"),
+            .paragraph("Year after year, a huge share of cloud data leaks come down to one thing: a storage **bucket** (AWS S3, Azure Blob, Google Cloud Storage) left publicly readable. There's no clever exploit — an attacker who knows or guesses the URL simply downloads the data. It's the purest illustration of the cloud **shared-responsibility model**: the provider secured the infrastructure; the customer left the front door open."),
+            .animation(.bucketExposure, caption: "An anonymous LIST on a world-readable bucket dumps every object name; the attacker then just GETs the sensitive files — no credentials, no exploit."),
+            .heading("How attackers find them"),
+            .paragraph("Open buckets are discovered at scale. Bucket names are often guessable (`acme-backups`, `acme-prod-assets`), wordlist tools brute-force them, and public scanners continuously index exposed storage. Once a bucket allows anonymous **list**, the attacker enumerates every object; if it allows anonymous **read**, they download them."),
+            .keyPoints([
+                "Misconfigured ACL / bucket policy — 'public' or 'authenticated users' (which in AWS means ANY AWS account).",
+                "Guessable names — company-themed bucket names fall to wordlists quickly.",
+                "List vs read — listing leaks the inventory; read leaks the data. Both are common.",
+                "What leaks — backups, database dumps, PII, source code, and .env files full of secrets.",
+                "Secondary blast — keys found in an exposed bucket pivot into the cloud account itself."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "aws s3 ls s3://acme-backups --no-sign-request   # --no-sign-request = anonymous",
+                      output: """
+2026-05-02 03:14:22   48127344 db-dump-2026-05-02.sql
+2026-05-02 03:14:25       1842 .env
+# no credentials used — the bucket is world-readable
+"""),
+            .definition(term: "Shared-responsibility model", meaning: "In the cloud, the provider secures the underlying infrastructure (hardware, hypervisor, managed-service internals) while the customer secures their data, identities and configuration. Public-bucket leaks are squarely on the customer side — which is why the overwhelming majority of cloud incidents are misconfigurations, not provider failures."),
+            .callout(.danger, "An exposed `.env` or backup is a double disaster: it leaks the data AND the credentials inside it, which often unlock the rest of the cloud account (IAM keys, database passwords, API tokens). One open bucket can cascade into full account compromise."),
+            .callout(.tip, "Defence is configuration, not firewalls: enable account-wide 'Block Public Access', default to private ACLs, scan continuously with CSPM tooling, and alert on any policy change that makes storage public. Test it yourself with --no-sign-request before someone else does."),
+            .checkpoint(QuizQuestion(
+                "Why are public-bucket leaks usually the customer's fault, not the cloud provider's?",
+                options: [
+                    "The provider's servers are insecure",
+                    "Under the shared-responsibility model, securing data and access configuration is the customer's job",
+                    "Buckets can't be made private",
+                    "The provider shares all data by default"
+                ],
+                correct: 1,
+                why: "The provider secures the infrastructure; the customer owns their data and its access settings. A bucket made public is a customer misconfiguration, which is why these are the most common cloud breaches."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What makes a public cloud-storage bucket so easy to exploit?",
+                options: [
+                    "It requires a zero-day",
+                    "No exploit is needed — an attacker who reaches the URL can list and download the data anonymously",
+                    "It only leaks to other clouds",
+                    "It needs the admin password"
+                ],
+                correct: 1,
+                why: "World-readable storage answers anonymous requests, so the 'attack' is simply listing and downloading. It's a configuration failure, not a software vulnerability."),
+            QuizQuestion(
+                "Why is an exposed `.env` file in a bucket especially dangerous?",
+                options: [
+                    "It's a large file",
+                    "It typically contains credentials that can unlock the rest of the cloud account",
+                    "It can't be deleted",
+                    "It breaks the website"
+                ],
+                correct: 1,
+                why: "Environment files hold API keys, database passwords and tokens. Leaking one doesn't just expose data — it hands over credentials that often pivot into broader account compromise."),
+            QuizQuestion(
+                "What is the most effective defence against public-bucket exposure?",
+                options: [
+                    "A network firewall",
+                    "Account-wide Block Public Access, private-by-default ACLs, and continuous CSPM scanning for public storage",
+                    "A longer bucket name",
+                    "Disabling logging"
+                ],
+                correct: 1,
+                why: "Because the risk is configuration, the fix is configuration: enforce block-public-access, default to private, and continuously detect any setting that exposes storage — far more reliable than obscure naming.")
+        ]
+    )
+
+    // MARK: BadUSB (Initial Access)
+
+    private static let badusbLesson = Lesson(
+        id: "red-badusb",
+        title: "Physical Access & BadUSB",
+        subtitle: "The dropped USB stick that's secretly a keyboard — and types its own attack.",
+        minutes: 10,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Trust built into the port"),
+            .paragraph("Every operating system trusts a keyboard implicitly — plug one in and it just works, no prompt, no driver dialog. **BadUSB** abuses exactly that: a device that looks like an innocent flash drive (or cable, or charger) declares itself a **USB HID keyboard** and 'types' a pre-programmed payload at machine speed the instant it's connected. There's no software vulnerability — just abused trust in the Human Interface Device class."),
+            .animation(.badusbInject, caption: "The device enumerates as a trusted HID keyboard, then injects keystrokes — opening a shell and running a payload in under two seconds."),
+            .heading("Why it works so well"),
+            .paragraph("Antivirus watches files; BadUSB writes none — it just sends keystrokes a human could have typed. It runs in the context of the logged-in, unlocked user, faster than anyone can react. Tools like the USB Rubber Ducky and Flipper Zero make the payloads trivial to author in a simple scripting language."),
+            .keyPoints([
+                "HID injection — the device acts as a keyboard, sending scripted keystrokes (DuckyScript) at ~1000 wpm.",
+                "No malware on disk — nothing for signature-based AV to catch; the 'attack' is just typing.",
+                "Delivery — a dropped USB in a car park, a 'charging' cable, or a malicious peripheral left at a desk.",
+                "Variants — devices that also emulate network adapters to hijack DNS, or storage to exfiltrate.",
+                "Speed — payloads complete before a watching user could intervene."
+            ]),
+            .terminal(prompt: "DuckyScript",
+                      command: "GUI r\\nDELAY 200\\nSTRING powershell -w hidden -enc <base64>\\nENTER",
+                      output: """
+# Win+R → Run → launch a hidden PowerShell stage
+# typed by the 'keyboard' the instant it's plugged in
+"""),
+            .definition(term: "HID (Human Interface Device)", meaning: "The USB device class for keyboards, mice and similar input. Because input devices are inherently trusted and need no special permission, a gadget that claims to be an HID keyboard can send keystrokes the OS treats as the user's own — the core trick behind BadUSB and keystroke-injection attacks."),
+            .callout(.danger, "This is a physical-access attack, and physical access is a powerful threat model: locked screens, disabled USB ports, and 'never plug in found drives' training all matter. A few seconds at an unlocked machine is all a BadUSB needs."),
+            .callout(.tip, "Defences: lock screens on absence, USB port control / device-allowlisting (e.g. only known keyboard VID/PIDs), endpoint rules that flag a 'new keyboard' rapidly issuing commands, and detectors that fingerprint impossibly-fast keystroke timing — the approach behind keystroke-injection detectors."),
+            .checkpoint(QuizQuestion(
+                "Why does antivirus often miss a BadUSB attack?",
+                options: [
+                    "It runs too slowly",
+                    "BadUSB writes no file — it just injects keystrokes, so there's no malware on disk to scan",
+                    "Antivirus ignores USB ports",
+                    "It encrypts the payload"
+                ],
+                correct: 1,
+                why: "Signature-based AV looks for malicious files. A BadUSB simply sends keystrokes (like a human typing), leaving nothing on disk to match — which is why behaviour- and timing-based detection is needed."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does a BadUSB device pretend to be?",
+                options: [
+                    "A network router",
+                    "A trusted HID keyboard that types a scripted payload",
+                    "An antivirus update",
+                    "A printer"
+                ],
+                correct: 1,
+                why: "It declares itself a USB HID keyboard — implicitly trusted by every OS — and injects keystrokes at machine speed, running commands as the logged-in user."),
+            QuizQuestion(
+                "What threat model does BadUSB rely on?",
+                options: [
+                    "Remote network access",
+                    "Physical access — getting a device into a USB port (a dropped stick, a malicious cable)",
+                    "A phishing email",
+                    "A weak password"
+                ],
+                correct: 1,
+                why: "BadUSB is a physical-access attack: someone must connect the device. That's why locked screens, USB controls and 'don't plug in found drives' awareness are the relevant defences."),
+            QuizQuestion(
+                "Which defence best addresses keystroke-injection attacks?",
+                options: [
+                    "A longer password",
+                    "USB device control plus detection of a new 'keyboard' issuing commands at impossibly fast timing",
+                    "Disabling the firewall",
+                    "Using HTTPS"
+                ],
+                correct: 1,
+                why: "Allowlisting known input devices and flagging a freshly-attached keyboard that types faster than any human combine to catch HID injection that file-based AV can't.")
+        ]
+    )
+
+    // MARK: DLL search-order hijacking (Evasion)
+
+    private static let dllHijackLesson = Lesson(
+        id: "red-dll-hijacking",
+        title: "DLL Search-Order Hijacking",
+        subtitle: "Plant a library where Windows looks first, and a trusted app loads your code.",
+        minutes: 10,
+        difficulty: .advanced,
+        blocks: [
+            .heading("Loading by name is dangerous"),
+            .paragraph("Windows programs constantly load shared libraries (**DLLs**). When an app requests one by name without a full path, the loader searches a **fixed list of directories** in order — and, critically, it checks the **application's own folder first**. If an attacker can write a malicious DLL of the expected name into a directory searched before the legitimate one, the trusted app loads the attacker's code instead."),
+            .animation(.dllHijack, caption: "The loader checks the app's own folder first; a planted DLL of the right name is loaded ahead of the real one — and runs with the app's trust."),
+            .heading("Why attackers love it"),
+            .paragraph("The malicious code runs inside a **signed, trusted process**, so it inherits that program's reputation and often its privileges — excellent for defence evasion, privilege escalation and persistence. If the vulnerable app auto-starts or runs as a service/admin, the hijack runs the same way."),
+            .keyPoints([
+                "Search order — app directory → system dirs → Windows dir → PATH. First match wins.",
+                "Missing DLL — apps that reference a DLL not present in system dirs are prime targets (the slot is empty).",
+                "Writable location — the attack needs write access to a directory the app searches early.",
+                "Proxying — a good malicious DLL also forwards real exports to the genuine library so the app keeps working (stealth).",
+                "Uses — evasion (run inside a trusted binary), privilege escalation, and persistence."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "# app loads CRYPTSP-like helper by name from its own folder\ncopy evil.dll \"C:\\\\Program Files\\\\VendorApp\\\\helper.dll\"",
+                      output: """
+# next launch: VendorApp.exe loads helper.dll from its own dir FIRST
+# → DllMain runs our code inside the signed, trusted process
+"""),
+            .definition(term: "DLL proxying", meaning: "A stealthy hijack technique where the malicious DLL also re-exports (forwards) all the functions of the legitimate library it's impersonating. The host application keeps working normally, so nothing looks broken — while the attacker's DllMain code has already executed. It hides the hijack in plain sight."),
+            .callout(.danger, "Because the payload executes inside an already-trusted, often-signed application, this is a favourite for bypassing application allowlisting and EDR reputation checks — the code 'belongs' to a program the defender trusts."),
+            .callout(.tip, "Defences: have apps load DLLs by full path (and call SetDefaultDllDirectories to harden the search order), keep app directories non-writable by standard users, sign and verify DLLs, and monitor for DLLs loading from unusual paths — a high-signal EDR detection."),
+            .checkpoint(QuizQuestion(
+                "Why does DLL search-order hijacking give an attacker code execution inside a trusted app?",
+                options: [
+                    "It cracks the app's password",
+                    "The loader checks the app's own (writable) folder before system dirs, so a planted DLL of the right name loads first",
+                    "It disables Windows Defender",
+                    "It only works on Linux"
+                ],
+                correct: 1,
+                why: "Windows searches the application directory early. A malicious DLL placed there with the expected name is loaded ahead of the legitimate one, so its code runs within the trusted process."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the root cause that DLL hijacking abuses?",
+                options: [
+                    "Weak encryption",
+                    "Loading a library by name (not full path), so the loader's search order can be subverted",
+                    "Open network ports",
+                    "Short passwords"
+                ],
+                correct: 1,
+                why: "When a DLL is requested by name, Windows resolves it via a fixed search order. Controlling a directory searched before the real one lets an attacker substitute their DLL."),
+            QuizQuestion(
+                "Why is running code via a hijacked DLL good for evasion?",
+                options: [
+                    "It runs offline",
+                    "The code executes inside a signed, trusted process and inherits its reputation and privileges",
+                    "It deletes logs automatically",
+                    "It needs no payload"
+                ],
+                correct: 1,
+                why: "Application allowlisting and EDR reputation often trust a signed program. Code loaded as one of its DLLs runs under that trust, helping it slip past defences."),
+            QuizQuestion(
+                "Which is an effective defence against DLL hijacking?",
+                options: [
+                    "Using a longer DLL name",
+                    "Loading DLLs by full path, hardening the search order, and keeping app directories non-writable",
+                    "Disabling the firewall",
+                    "Running everything as admin"
+                ],
+                correct: 1,
+                why: "Specifying full paths and restricting the search order removes the ambiguity, while non-writable app folders deny the attacker the place to plant the DLL — closing the hijack.")
         ]
     )
 }
