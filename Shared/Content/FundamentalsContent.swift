@@ -10,7 +10,233 @@ enum FundamentalsContent {
         kind: .fundamentals,
         title: "Fundamentals",
         tagline: "Mindset, the shell, networks & crypto — the ground floor of everything.",
-        modules: [mindset, shell, os, networking, encoding, crypto, web, windows]
+        modules: [mindset, shell, os, networking, encoding, crypto, web, windows, code, identity, machine]
+    )
+
+    // MARK: F6 — Code & data foundations
+
+    private static let code = Module(
+        id: "fund-code",
+        title: "Code & Data",
+        summary: "The literacy under every exploit: bitwise logic and XOR, how databases answer questions in SQL, and the regular expressions that find structure in text.",
+        systemImage: "chevron.left.forwardslash.chevron.right",
+        lessons: [bitwiseLesson, databasesLesson, regexLesson]
+    )
+
+    private static let bitwiseLesson = Lesson(
+        id: "fund-bitwise",
+        title: "Bits, Bytes & XOR",
+        subtitle: "The bitwise operations that underpin crypto, exploitation and every clever trick.",
+        minutes: 10,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Everything is bits"),
+            .paragraph("Underneath every file, packet and password is a string of bits — 1s and 0s, grouped into 8-bit **bytes**. Security work constantly means manipulating data at this level: masking flags, combining keys, flipping a single bit to corrupt a structure. The four **bitwise operators** are the tools for that, and one of them — XOR — is the quiet workhorse of cryptography."),
+            .keyPoints([
+                "AND (&) — 1 only if both bits are 1. Used to mask: keep some bits, zero the rest.",
+                "OR (|) — 1 if either bit is 1. Used to set flags on.",
+                "XOR (^) — 1 if the bits differ. Self-inverse: a ^ b ^ b == a.",
+                "NOT (~) — flips every bit. Shifts (<< >>) move bits left/right, multiplying or dividing by powers of two."
+            ]),
+            .heading("Why XOR is everywhere in crypto"),
+            .paragraph("XOR has a magical property: applying the same value twice cancels out. So if you XOR plaintext with a key to get ciphertext, XOR-ing the ciphertext with the *same* key returns the plaintext. That single fact is the heart of stream ciphers, one-time pads, and a thousand CTF challenges."),
+            .animation(.xorCipher, caption: "Plaintext XOR key gives ciphertext; XOR-ing again with the same key reverses it perfectly back to the original byte."),
+            .definition(term: "XOR (exclusive or)", meaning: "A bitwise operation that outputs 1 only when its two input bits differ: 0⊕0=0, 1⊕1=0, 0⊕1=1, 1⊕0=1. Its self-inverse property (x ⊕ k ⊕ k = x) makes it the basis of symmetric stream encryption and the simplest reversible 'scrambler'."),
+            .terminal(prompt: "kali@lab",
+                      command: "python3 -c \"print(bytes([b ^ 0x42 for b in b'Hi']).hex())\"",
+                      output: """
+0a2b
+# XOR each byte of 'Hi' with the key 0x42 → ciphertext 0a2b
+# repeat the same XOR on 0a2b → back to 'Hi'
+"""),
+            .callout(.warning, "XOR with a single repeating byte is trivially breakable — frequency analysis or a known-plaintext guess recovers the key instantly. XOR is a building block of strong ciphers, not a cipher by itself. If you ever see 'encryption' that's just XOR with a fixed key, treat the data as effectively plaintext."),
+            .callout(.tip, "Hex is the natural way to read bytes: one byte = exactly two hex digits, so 0x48 = 0100 1000 = 'H'. Fluently flipping between binary, hex and ASCII is a skill you'll use in every hash dump, packet capture and exploit."),
+            .checkpoint(QuizQuestion(
+                "You XOR a secret byte with key 0x3C and get 0x7A. What do you get if you XOR 0x7A with 0x3C again?",
+                options: [
+                    "A new random byte",
+                    "The original secret byte",
+                    "0x00",
+                    "0xFF"
+                ],
+                correct: 1,
+                why: "XOR is self-inverse: (secret ⊕ key) ⊕ key = secret. Applying the same key a second time cancels it out and recovers the original byte."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Which property makes XOR the basis of symmetric stream ciphers?",
+                options: [
+                    "It always outputs zero",
+                    "Applying the same key twice cancels out, so the same operation encrypts and decrypts",
+                    "It is impossible to reverse",
+                    "It compresses data"
+                ],
+                correct: 1,
+                why: "Because x ⊕ k ⊕ k = x, XOR-ing plaintext with a keystream produces ciphertext, and XOR-ing that ciphertext with the same keystream restores the plaintext — one operation for both directions."),
+            QuizQuestion(
+                "What does the AND operator (&) let you do to a byte?",
+                options: [
+                    "Turn bits on",
+                    "Mask bits — keep selected bits and force the others to zero",
+                    "Reverse the byte",
+                    "Add two bytes"
+                ],
+                correct: 1,
+                why: "ANDing with a mask keeps bits where the mask is 1 and zeros bits where the mask is 0 — the standard way to extract or clear specific fields."),
+            QuizQuestion(
+                "Why is 'encryption' that's just XOR with one fixed byte insecure?",
+                options: [
+                    "It's too slow",
+                    "A repeating single-byte key is trivially recovered with frequency analysis or known plaintext",
+                    "It can't be decrypted at all",
+                    "It changes the file size"
+                ],
+                correct: 1,
+                why: "A short repeating key leaks structure: statistical analysis of the ciphertext, or a single known plaintext/ciphertext pair, recovers the key immediately. XOR needs a long, non-repeating keystream to be secure.")
+        ]
+    )
+
+    private static let databasesLesson = Lesson(
+        id: "fund-databases",
+        title: "Databases & SQL",
+        subtitle: "How apps store and ask for data — the query language behind the web's #1 injection bug.",
+        minutes: 11,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Where the data lives"),
+            .paragraph("Almost every application keeps its data in a **database**: tables of rows and columns, like a spreadsheet with rules. The app talks to it in **SQL** (Structured Query Language) — a remarkably English-like language for asking questions and making changes. You can't understand SQL injection until you can read a SQL query, so let's read one."),
+            .animation(.sqlQuery, caption: "SELECT picks the columns; the WHERE clause filters rows. The scan keeps the rows that satisfy the condition and drops the rest."),
+            .heading("The four verbs"),
+            .paragraph("Most of SQL is four operations on rows. Learn these and you can follow what nearly any app is doing to its data."),
+            .keyPoints([
+                "SELECT … FROM … WHERE — read rows that match a condition. The bread and butter.",
+                "INSERT INTO … VALUES — add a new row.",
+                "UPDATE … SET … WHERE — change existing rows.",
+                "DELETE FROM … WHERE — remove rows. (Forget the WHERE and you delete the whole table.)"
+            ]),
+            .terminal(prompt: "sql>",
+                      command: "SELECT name, email FROM users WHERE role = 'admin';",
+                      output: """
+ name   | email
+--------+------------------
+ alice  | alice@corp.lab
+(1 row)
+"""),
+            .definition(term: "Primary key & foreign key", meaning: "A primary key uniquely identifies each row (e.g. a user id). A foreign key in another table references it (an order's user_id points at a user) — that's how relational databases link data together without duplicating it."),
+            .heading("Why this matters for security"),
+            .paragraph("Look closely at a query built by gluing strings together: `\"SELECT * FROM users WHERE name = '\" + input + \"'\"`. If the attacker's input contains a quote, it breaks out of the string and becomes part of the *command*. That's **SQL injection** — the entire Red Team web module's most famous bug — and it only makes sense once you see that the query is just text the database executes."),
+            .callout(.danger, "The fix is **parameterized queries** (prepared statements): the SQL structure and the user data travel separately, so input is always treated as a value, never as code. Never build SQL by concatenating user input — that's the root cause of injection."),
+            .callout(.tip, "`ORDER BY`, `LIMIT`, `JOIN` and `GROUP BY` show up constantly. A JOIN combines rows from two tables on a matching key — exactly how an app shows you 'your orders' by joining the orders table to your user row."),
+            .checkpoint(QuizQuestion(
+                "What does the WHERE clause do in `SELECT name FROM users WHERE age > 30`?",
+                options: [
+                    "Chooses which columns to return",
+                    "Filters which rows are returned — only those satisfying the condition",
+                    "Sorts the results",
+                    "Deletes rows over 30"
+                ],
+                correct: 1,
+                why: "WHERE is the filter: it keeps only rows matching the condition (age > 30). SELECT chooses the columns; WHERE chooses the rows."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Which SQL statement reads data without changing it?",
+                options: ["INSERT", "UPDATE", "SELECT", "DELETE"],
+                correct: 2,
+                why: "SELECT queries (reads) rows. INSERT adds, UPDATE modifies and DELETE removes — those three change the data."),
+            QuizQuestion(
+                "Why does building a query by concatenating user input cause SQL injection?",
+                options: [
+                    "It's too slow",
+                    "Input like a quote can break out of the data and become part of the executed command",
+                    "It uses too much memory",
+                    "It only happens in old databases"
+                ],
+                correct: 1,
+                why: "When data is glued into the query string, a crafted input (e.g. a quote plus SQL) escapes the intended value and is executed as code — the essence of injection."),
+            QuizQuestion(
+                "What is the correct defence against SQL injection?",
+                options: [
+                    "Hiding the database",
+                    "Parameterized queries (prepared statements) that keep SQL and data separate",
+                    "Making passwords longer",
+                    "Blocking the SELECT keyword"
+                ],
+                correct: 1,
+                why: "Prepared statements send the query structure and the user values separately, so input is bound as a value and can never be interpreted as SQL — closing the injection path structurally.")
+        ]
+    )
+
+    private static let regexLesson = Lesson(
+        id: "fund-regex",
+        title: "Regular Expressions",
+        subtitle: "The pattern language for finding needles in text — used by red and blue alike.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Patterns, not exact text"),
+            .paragraph("A **regular expression** (regex) describes the *shape* of text rather than its exact content. Instead of searching for one fixed string, you describe a pattern — 'three digits, a dash, four digits' — and it finds every phone number. Regex is everywhere in security: hunting secrets in source code, writing detection rules, scraping data from tool output, and validating input."),
+            .animation(.regexMatch, caption: "Character classes, quantifiers and literals sweep the input; when the pattern lines up, the matching span is captured."),
+            .heading("The core building blocks"),
+            .keyPoints([
+                "Character classes — [a-z] any lowercase letter, \\d a digit, \\w a word char, . any character.",
+                "Quantifiers — + one or more, * zero or more, ? optional, {3} exactly three.",
+                "Anchors — ^ start of line, $ end of line; \\b a word boundary.",
+                "Groups & alternation — (…) captures a part, a|b matches a or b.",
+                "Literals — most characters match themselves; escape special ones with a backslash (\\. for a real dot)."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "grep -rEo '[A-Za-z0-9+/]{40}' . | head -3   # hunt for base64-ish secrets",
+                      output: """
+config.py:AKIA8EXAMPLEKEY1234567890ABCDEFGH1234
+backup.env:c2VjcmV0LXRva2VuLXZhbHVlLWRvLW5vdC1jb21t
+"""),
+            .definition(term: "Greedy vs lazy", meaning: "By default quantifiers are greedy — they match as much as possible. Adding ? makes them lazy (as little as possible): .* grabs everything to the last match, while .*? stops at the first. Getting this wrong is the classic regex bug."),
+            .callout(.tip, "Red team uses regex to grep secrets (API keys, JWTs, hashes) out of source dumps and responses. Blue team uses the very same patterns in Sigma/YARA rules and SIEM queries to detect them. Same skill, both sides of the fence."),
+            .callout(.warning, "A poorly written regex can hang on crafted input — 'catastrophic backtracking' (ReDoS) — turning a validation routine into a denial-of-service bug. Avoid nested quantifiers like (a+)+ on untrusted input."),
+            .checkpoint(QuizQuestion(
+                "What does the pattern `\\d{3}-\\d{4}` match?",
+                options: [
+                    "Any three letters",
+                    "Three digits, a dash, then four digits — like 555-1234",
+                    "Exactly the text d3-d4",
+                    "Any word of length 7"
+                ],
+                correct: 1,
+                why: "\\d is a digit and {n} means exactly n of them, with the dash a literal. So it matches three digits, a hyphen, and four digits — a classic phone-number shape."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does the `+` quantifier mean in a regex?",
+                options: [
+                    "Exactly one",
+                    "One or more of the preceding element",
+                    "Zero or more",
+                    "Addition"
+                ],
+                correct: 1,
+                why: "`+` matches one or more repetitions of the preceding token. (`*` is zero or more, `?` is optional.)"),
+            QuizQuestion(
+                "Why might both red and blue teams use the same regex patterns?",
+                options: [
+                    "They never do",
+                    "Red uses them to find secrets in data; blue uses them in detection rules to catch the same patterns",
+                    "Regex only works for attackers",
+                    "Regex is only for formatting"
+                ],
+                correct: 1,
+                why: "A pattern that recognises an API key or a malicious command is equally useful for offensive hunting and defensive detection — the skill transfers directly between the two roles."),
+            QuizQuestion(
+                "What is 'catastrophic backtracking' (ReDoS)?",
+                options: [
+                    "A regex that matches too little",
+                    "A pathological pattern that takes exponential time on crafted input, causing a denial of service",
+                    "A typo in the pattern",
+                    "A way to speed up matching"
+                ],
+                correct: 1,
+                why: "Certain patterns (e.g. nested quantifiers) can explode into exponential work on adversarial input, hanging the matcher — a real availability risk when regex runs on untrusted data.")
+        ]
     )
 
     // MARK: F-S — Systems & the shell
@@ -705,9 +931,9 @@ ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f  -
     private static let web = Module(
         id: "fund-web",
         title: "How the Web Works",
-        summary: "HTTP, cookies and sessions — the request/response machinery every web attack in the Red Team track builds on.",
+        summary: "HTTP, cookies and sessions — plus the TLS handshake that turns plain HTTP into the padlock — the machinery every web attack builds on.",
         systemImage: "globe",
-        lessons: [webBasicsLesson]
+        lessons: [webBasicsLesson, tlsLesson]
     )
 
     private static let webBasicsLesson = Lesson(
@@ -780,6 +1006,83 @@ ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f  -
                 ],
                 correct: 1,
                 why: "An intercepting proxy sits between browser and server so you can tamper with any request — the core workflow for finding and exploiting web vulnerabilities.")
+        ]
+    )
+
+    private static let tlsLesson = Lesson(
+        id: "fund-tls",
+        title: "How HTTPS Works: TLS",
+        subtitle: "The handshake that turns plaintext HTTP into the padlock — and why the lock means private, not safe.",
+        minutes: 12,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("The padlock is a handshake"),
+            .paragraph("HTTP sends everything in the clear — anyone on the path can read or rewrite it. **HTTPS is just HTTP carried inside TLS** (Transport Layer Security), the protocol behind the browser padlock. Before any page loads, the client and server run a short negotiation — the **handshake** — that agrees a shared secret key and proves the server's identity. After that, every byte is encrypted and tamper-evident."),
+            .animation(.tlsHandshake, caption: "ClientHello and ServerHello each carry a key share, so TLS 1.3 derives a shared secret in a single round trip — then encrypts the certificate and everything after it."),
+            .heading("What the handshake achieves"),
+            .paragraph("TLS gives you three guarantees at once. It's worth separating them, because each defeats a different attack and each can fail independently."),
+            .keyPoints([
+                "Confidentiality — a key agreed via ephemeral Diffie-Hellman (ECDHE) encrypts the traffic, so an eavesdropper sees only ciphertext.",
+                "Integrity — every record carries an authentication tag (AEAD), so flipping a bit in transit is detected and rejected.",
+                "Authenticity — the server presents a certificate signed by a CA your device trusts, proving you're really talking to the named host.",
+                "Forward secrecy — because the DH key is ephemeral, stealing the server's private key later still can't decrypt yesterday's recorded traffic."
+            ]),
+            .definition(term: "Cipher suite", meaning: "The agreed bundle of algorithms for a connection — key exchange, the bulk cipher (e.g. AES-GCM or ChaCha20-Poly1305) and the hash. TLS 1.3 pruned the list to only modern, safe suites, which is a big part of why it's faster and harder to misconfigure."),
+            .terminal(prompt: "kali@lab",
+                      command: "openssl s_client -connect shop.lab:443 -tls1_3 </dev/null 2>/dev/null | grep -E 'Protocol|Cipher|verify'",
+                      output: """
+verify return:1
+Protocol  : TLSv1.3
+Cipher    : TLS_AES_256_GCM_SHA384
+"""),
+            .heading("Identity rests on the certificate chain"),
+            .paragraph("Encryption alone is worthless if you've encrypted a channel to an attacker. That's what the **certificate** prevents: the server proves it owns the name by presenting a chain that links its leaf certificate up to a **root CA** already in your device's trust store. Break or skip that check and TLS gives you a beautifully encrypted line to the wrong party."),
+            .animation(.certChain, caption: "The leaf certificate is signed by an intermediate, signed by a root the browser already trusts — validated link by link up to that anchor."),
+            .callout(.warning, "The padlock means *private*, not *safe*. A phishing site at paypa1-login.com can get a perfectly valid certificate for its own name — the lock just proves the channel is encrypted to whoever owns that domain. Always read the actual hostname, not the icon."),
+            .callout(.danger, "An adversary-in-the-middle proxy (Evilginx, mitmproxy) terminates TLS at the attacker and opens a fresh TLS connection onward — so the victim still sees a valid padlock. The defence isn't TLS, it's certificate/origin binding: HSTS, certificate pinning and phishing-resistant FIDO2 keys."),
+            .callout(.tip, "TLS 1.3 dropped the older 2-round-trip handshake, RSA key transport (no forward secrecy) and all the legacy ciphers behind attacks like BEAST and POODLE. If you ever see TLS 1.0/1.1 or RC4 in a scan, that's a finding — recommend TLS 1.2+ with AEAD suites."),
+            .checkpoint(QuizQuestion(
+                "A user reaches a phishing page and the browser shows a valid padlock. What does that padlock actually prove?",
+                options: [
+                    "The site is legitimate and safe to trust",
+                    "The connection is encrypted to whoever owns that exact domain — nothing about their honesty",
+                    "The server has no vulnerabilities",
+                    "The user's antivirus has scanned the page"
+                ],
+                correct: 1,
+                why: "TLS proves confidentiality, integrity and that you're talking to the holder of *that* certificate's name. An attacker can obtain a valid cert for their own look-alike domain, so the lock says 'private', never 'trustworthy'."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the main thing the TLS handshake produces before encrypted data flows?",
+                options: [
+                    "A compressed copy of the web page",
+                    "A shared secret key (and a verified server identity)",
+                    "A new IP address for the server",
+                    "A username and password"
+                ],
+                correct: 1,
+                why: "The handshake's job is to agree a symmetric key (via ECDHE) and authenticate the server with its certificate. Only then does encrypted application data begin."),
+            QuizQuestion(
+                "Why does TLS 1.3 with ephemeral Diffie-Hellman give 'forward secrecy'?",
+                options: [
+                    "It never stores any keys",
+                    "Each session's key is temporary, so stealing the server's long-term private key can't decrypt past recorded sessions",
+                    "It uses a longer password",
+                    "It changes the server's IP each session"
+                ],
+                correct: 1,
+                why: "Ephemeral DH generates a throwaway key per session that isn't derivable from the server's long-term key. So a future key compromise can't retroactively decrypt traffic an attacker recorded earlier."),
+            QuizQuestion(
+                "During a test you find a server still offering TLS 1.0 and RC4. What's the right call?",
+                options: [
+                    "Ignore it — any TLS is fine",
+                    "Flag it: legacy protocol/cipher with known attacks; recommend TLS 1.2+ and AEAD suites",
+                    "Recommend turning encryption off for speed",
+                    "It only matters for email servers"
+                ],
+                correct: 1,
+                why: "TLS 1.0/1.1 and RC4 are deprecated and carry known weaknesses (BEAST, POODLE, RC4 biases). Supporting them weakens every client, so it's a legitimate finding with a clear remediation.")
         ]
     )
 
@@ -1014,6 +1317,317 @@ notBefore=... notAfter=...   <-- validity window the browser checks
                 ],
                 correct: 1,
                 why: "The padlock secures the channel and proves control of the domain. It does not certify the site's intentions — attackers obtain valid certificates routinely.")
+        ]
+    )
+
+    // MARK: F7 — Identity & isolation
+
+    private static let identity = Module(
+        id: "fund-identity",
+        title: "Identity & Isolation",
+        summary: "Two pillars of modern security: how we prove who someone is (passwords, MFA, passkeys) and how we keep workloads apart (virtual machines and containers).",
+        systemImage: "person.badge.key.fill",
+        lessons: [authLesson, virtualizationLesson]
+    )
+
+    private static let authLesson = Lesson(
+        id: "fund-auth",
+        title: "Authentication & MFA",
+        subtitle: "How systems prove you're you — and why a password alone stopped being enough.",
+        minutes: 11,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Authentication vs authorization"),
+            .paragraph("Two words that get muddled constantly. **Authentication** answers *who are you?* — proving identity. **Authorization** answers *what are you allowed to do?* — granting access. You authenticate once (log in), then every action is authorized against your permissions. Most of the attacks in this course target one or the other: stealing identity, or escaping the limits of your permissions."),
+            .heading("The three factors"),
+            .paragraph("Authentication evidence falls into three categories. Strong authentication combines factors from **different** categories — that's what 'multi-factor' means. Two passwords aren't MFA; a password plus a phone code is."),
+            .keyPoints([
+                "Something you KNOW — a password, PIN or passphrase. Cheap, but phishable and reusable.",
+                "Something you HAVE — a phone (TOTP app), a hardware key, a smart card. Possession is harder to steal remotely.",
+                "Something you ARE — a fingerprint or face (biometrics). Convenient, but can't be changed if compromised.",
+                "MFA = two or more from DIFFERENT categories — so one stolen factor isn't enough.",
+                "Passwordless / passkeys (FIDO2) — a private key on your device, unlocked by biometric, that proves identity without a shared secret to phish."
+            ]),
+            .animation(.mfaFactors, caption: "Factor one (password) then factor two (a time-based code) are each verified — a phished password alone is stopped cold at the second factor."),
+            .definition(term: "TOTP", meaning: "Time-based One-Time Password — a 6-digit code that both your authenticator app and the server compute from a shared seed plus the current time, so it changes every 30 seconds. It proves you hold the seed without transmitting a reusable secret."),
+            .heading("Storing passwords the right way"),
+            .paragraph("Servers must never store passwords in plaintext. They store a **salted hash**: run the password through a slow, one-way hashing function (bcrypt, scrypt, Argon2) with a unique random **salt** per user. A breach then leaks hashes, not passwords, and the unique salt defeats precomputed 'rainbow table' attacks."),
+            .terminal(prompt: "kali@lab",
+                      command: "echo -n 'hunter2' | argon2 $(openssl rand -hex 8) -id -t 3 -m 16 | grep Encoded",
+                      output: """
+Encoded: $argon2id$v=19$m=65536,t=3,p=1$NWE3Y2…$Jt0c…hash…
+# slow + salted: each guess costs real time, and the salt is unique per user
+"""),
+            .callout(.danger, "Not all second factors are equal. SMS codes can be phished or SIM-swapped, and push prompts invite 'MFA fatigue' (spam until the user taps Approve). Phishing-resistant FIDO2/passkeys bind the login to the real site's origin, so even an adversary-in-the-middle proxy can't replay it."),
+            .callout(.tip, "Reuse is the real enemy: one breached password unlocks every site where it was reused (credential stuffing). A password manager + unique passwords + MFA is the single highest-value security setup for any person or org."),
+            .checkpoint(QuizQuestion(
+                "Which of these is genuine multi-factor authentication?",
+                options: [
+                    "A password plus a security question",
+                    "A password (something you know) plus a code from your phone (something you have)",
+                    "Two different passwords",
+                    "A longer password"
+                ],
+                correct: 1,
+                why: "MFA requires factors from different categories. A password and a phone code combine 'know' and 'have'; passwords plus security questions are both 'know', so that's still single-factor in spirit."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the difference between authentication and authorization?",
+                options: [
+                    "They are the same",
+                    "Authentication proves who you are; authorization determines what you're allowed to do",
+                    "Authorization happens first",
+                    "Authentication is only for admins"
+                ],
+                correct: 1,
+                why: "Authentication establishes identity (login); authorization governs permitted actions afterward. Many attacks target one or the other — stealing identity, or exceeding granted permissions."),
+            QuizQuestion(
+                "Why do servers store a salted hash of a password instead of the password?",
+                options: [
+                    "To save space",
+                    "So a breach leaks irreversible hashes, and the unique salt defeats precomputed rainbow tables",
+                    "To make login faster",
+                    "Because hashing encrypts the password"
+                ],
+                correct: 1,
+                why: "A slow salted hash can't be reversed to the password, and a per-user salt means identical passwords hash differently — neutralising rainbow-table and bulk-cracking shortcuts."),
+            QuizQuestion(
+                "Why are FIDO2 passkeys considered phishing-resistant?",
+                options: [
+                    "They use longer passwords",
+                    "The private key is bound to the real site's origin, so a look-alike phishing site can't complete the login",
+                    "They are stored on the server",
+                    "They never expire"
+                ],
+                correct: 1,
+                why: "Passkeys cryptographically tie authentication to the legitimate origin. An adversary-in-the-middle on a different domain can't satisfy that binding, so the stolen interaction is useless.")
+        ]
+    )
+
+    private static let virtualizationLesson = Lesson(
+        id: "fund-virtualization",
+        title: "Virtual Machines & Containers",
+        subtitle: "How one physical server safely runs many isolated workloads — two ways, two trade-offs.",
+        minutes: 10,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Why isolate at all"),
+            .paragraph("Running every app on its own physical box is wasteful and slow to scale. Virtualization lets one machine host many **isolated** workloads — each believing it has its own computer — so resources are shared safely and a problem in one workload doesn't sink the others. There are two dominant approaches, and the difference matters enormously for security."),
+            .animation(.vmContainer, caption: "A VM ships a full guest OS on a hypervisor (strong isolation, heavy); a container shares the host kernel through a runtime (light and instant, thinner boundary)."),
+            .heading("Virtual machines"),
+            .paragraph("A **hypervisor** (VMware, Hyper-V, KVM) carves the hardware into virtual machines, each running a complete **guest operating system**. The isolation is strong because each VM has its own kernel — escaping to the host means defeating the hypervisor, a high bar. The cost is weight: gigabytes of disk, minutes to boot, real overhead."),
+            .heading("Containers"),
+            .paragraph("A **container** (Docker, containerd) packages just an app and its dependencies, and they all **share the host's kernel** through a runtime using Linux namespaces and cgroups. That makes them tiny and near-instant to start — perfect for microservices and CI. But the shared kernel is a thinner boundary: a kernel bug or a misconfiguration (a privileged container, a mounted Docker socket) can become a host compromise — the 'container escape' you'll meet in the Red Team track."),
+            .keyPoints([
+                "VM — full guest OS per instance, isolated by the hypervisor. Strong boundary, heavy (GBs, slow boot).",
+                "Container — shares the host kernel via namespaces/cgroups. Light (MBs, instant), thinner boundary.",
+                "Image — a read-only template a container is started from; layered and reproducible.",
+                "Orchestration — Kubernetes schedules and scales containers across many hosts.",
+                "Defence in depth — run containers unprivileged, drop capabilities, and isolate sensitive workloads in their own VMs."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "docker run --rm alpine cat /proc/1/cgroup | head -1   # am I in a container?",
+                      output: """
+0::/docker/3f9a…   ← the cgroup path reveals the container runtime
+"""),
+            .definition(term: "Namespaces & cgroups", meaning: "The Linux kernel features that make containers possible. Namespaces give a container its own view of processes, network and filesystem (isolation); cgroups limit how much CPU/memory it can use (resource control). They run on the one shared kernel — which is exactly why container isolation is weaker than a VM's."),
+            .callout(.warning, "'It's in a container, so it's safe' is a dangerous assumption. Containers are an isolation *convenience*, not a strong security boundary by default. A --privileged container or one with the host's Docker socket mounted is effectively root on the host."),
+            .callout(.tip, "Rule of thumb: containers for packaging and scaling trusted workloads; a VM (or stronger sandbox like gVisor/Firecracker) when you must run untrusted code with a hard isolation guarantee."),
+            .checkpoint(QuizQuestion(
+                "What is the key isolation difference between a container and a virtual machine?",
+                options: [
+                    "Containers use more memory",
+                    "Containers share the host's kernel, while each VM runs its own full guest OS",
+                    "VMs can't run Linux",
+                    "Containers can't be networked"
+                ],
+                correct: 1,
+                why: "A VM virtualizes the hardware and runs a separate kernel per guest (strong isolation); containers share the single host kernel, making them lightweight but giving a thinner security boundary."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why do containers start almost instantly compared to VMs?",
+                options: [
+                    "They use a faster CPU",
+                    "They share the running host kernel instead of booting a whole guest OS",
+                    "They have no filesystem",
+                    "They skip authentication"
+                ],
+                correct: 1,
+                why: "A container just starts a process group on the already-running host kernel, so there's no OS to boot — unlike a VM, which must start a complete guest operating system."),
+            QuizQuestion(
+                "Why is a VM generally a stronger isolation boundary than a container?",
+                options: [
+                    "It uses encryption",
+                    "Each VM has its own kernel, so escaping requires defeating the hypervisor — a much higher bar than a shared kernel",
+                    "VMs are newer technology",
+                    "Containers have no network"
+                ],
+                correct: 1,
+                why: "Containers share the host kernel, so a kernel flaw or misconfiguration can breach the boundary. A VM's separate kernel means an attacker must break the hypervisor itself to escape — substantially harder."),
+            QuizQuestion(
+                "What makes a `--privileged` container dangerous?",
+                options: [
+                    "It runs slower",
+                    "It removes the usual restrictions, so compromising it is effectively root on the host",
+                    "It can't access the network",
+                    "It uses more disk"
+                ],
+                correct: 1,
+                why: "A privileged container drops the capability and device restrictions that normally contain it, so an attacker inside it can reach the host kernel and devices directly — a straight path to host compromise.")
+        ]
+    )
+
+    // MARK: F8 — Inside the machine
+
+    private static let machine = Module(
+        id: "fund-machine",
+        title: "Inside the Machine",
+        summary: "What's really happening under your code: how source becomes the instructions a CPU runs, and why true randomness is a security-critical resource.",
+        systemImage: "cpu.fill",
+        lessons: [compilationLesson, entropyLesson]
+    )
+
+    private static let compilationLesson = Lesson(
+        id: "fund-compilation",
+        title: "How Code Runs: Source to CPU",
+        subtitle: "From the text you type to the binary instructions a processor actually executes.",
+        minutes: 10,
+        difficulty: .foundational,
+        blocks: [
+            .heading("The CPU only speaks binary"),
+            .paragraph("You write code in a human-friendly language, but a CPU understands only **machine code** — raw binary instructions. A **compiler** bridges that gap, translating your source into the specific instruction set of the target processor. Interpreted languages (Python, JavaScript) take a different route — a runtime executes them on the fly — but in every case, something turns your text into operations a chip can run."),
+            .animation(.compilePipeline, caption: "Source is translated by the compiler into machine code, which the CPU then runs one instruction at a time in a fetch-decode-execute loop."),
+            .heading("The build pipeline"),
+            .paragraph("For a compiled language like C, the journey has distinct stages — and knowing them demystifies a huge amount of security work, from reverse engineering to exploit development."),
+            .keyPoints([
+                "Source code — the human-readable text you write (main.c).",
+                "Compiler — parses, optimises and emits assembly for the target CPU architecture.",
+                "Assembler & linker — turn assembly into object code and stitch in libraries to make an executable.",
+                "Machine code — the binary instructions in the final program file.",
+                "CPU — fetches each instruction, decodes it, executes it, and moves to the next — billions of times a second."
+            ]),
+            .definition(term: "Fetch-decode-execute", meaning: "The fundamental cycle a CPU repeats endlessly: fetch the next instruction from memory (tracked by the program counter), decode what it means, execute it (arithmetic, memory access, a jump), then repeat. Hijacking control of a program — the goal of memory-corruption exploits — means hijacking what gets fetched next."),
+            .terminal(prompt: "kali@lab",
+                      command: "gcc hello.c -o hello && objdump -d hello | grep -A4 '<main>:'",
+                      output: """
+0000000000001139 <main>:
+    1139:  55                 push   %rbp
+    113a:  48 89 e5           mov    %rsp,%rbp
+    113d:  bf 00 20 00 00     mov    $0x2000,%edi
+"""),
+            .callout(.tip, "Those hex bytes on the left ARE the machine code; the text on the right is the assembly the disassembler recovered. Reverse engineers (Red Team track) live in this view — reading a program with no source by turning its bytes back into instructions."),
+            .callout(.info, "Compiled vs interpreted matters for attackers: a compiled binary must be disassembled to understand, while interpreted source often ships readable. Just-in-time (JIT) compilers blur the line and introduce their own exploitable surface."),
+            .checkpoint(QuizQuestion(
+                "What does a compiler do?",
+                options: [
+                    "Runs the program faster",
+                    "Translates human-readable source code into the CPU's machine instructions",
+                    "Encrypts the source code",
+                    "Connects to the internet"
+                ],
+                correct: 1,
+                why: "A compiler converts source into machine code for a target architecture. The CPU can then execute those binary instructions directly — it can't run the original text."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the CPU's fetch-decode-execute cycle?",
+                options: [
+                    "A way to encrypt data",
+                    "The repeating loop of fetching the next instruction, decoding it, and executing it",
+                    "A network protocol",
+                    "A compiler optimisation"
+                ],
+                correct: 1,
+                why: "It's the fundamental operation of a processor: read the next instruction, work out what it is, carry it out, repeat — billions of times per second."),
+            QuizQuestion(
+                "Why must a reverse engineer disassemble a compiled program?",
+                options: [
+                    "To make it run faster",
+                    "Because it ships as machine code, not readable source — disassembly turns bytes back into instructions",
+                    "To encrypt it",
+                    "Because compiled code is always malware"
+                ],
+                correct: 1,
+                why: "Compilation discards the source; the binary is just machine code. Disassemblers reconstruct the assembly so the program's logic can be studied without the original source."),
+            QuizQuestion(
+                "How do interpreted languages like Python differ from compiled ones?",
+                options: [
+                    "They can't be run",
+                    "A runtime executes the source on the fly rather than producing a standalone machine-code binary",
+                    "They don't use a CPU",
+                    "They are always faster"
+                ],
+                correct: 1,
+                why: "Interpreted languages are executed by a runtime/interpreter at run time, so they typically ship as (readable) source rather than as a pre-compiled machine-code executable.")
+        ]
+    )
+
+    private static let entropyLesson = Lesson(
+        id: "fund-entropy",
+        title: "Randomness & Entropy",
+        subtitle: "Why 'pick a random number' is one of the hardest — and most security-critical — things a computer does.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Computers are bad at random"),
+            .paragraph("A CPU is deterministic — same input, same output — which makes genuine randomness surprisingly hard. Yet almost all of cryptography depends on it: keys, tokens, session ids, password salts and nonces must be **unpredictable**. Get the randomness wrong and the strongest cipher in the world collapses, because the attacker can simply predict the secret."),
+            .animation(.entropyRng, caption: "A seeded PRNG produces a predictable sequence an attacker can foresee; a CSPRNG fed by hardware entropy produces output that can't be guessed."),
+            .heading("PRNG vs CSPRNG"),
+            .paragraph("There are two kinds of random-number generator, and confusing them is a classic, catastrophic bug. A plain **PRNG** is fast and fine for simulations or games. A **CSPRNG** is the only acceptable source for anything security-related."),
+            .keyPoints([
+                "PRNG — pseudo-random: a deterministic formula from a seed. Predictable if you know (or guess) the seed.",
+                "CSPRNG — cryptographically secure: seeded from real entropy and built so outputs can't be predicted or reversed.",
+                "Entropy — true unpredictability the OS harvests from hardware: timing jitter, interrupts, mouse/keyboard input.",
+                "Seeding — a CSPRNG mixes in entropy so its starting state can't be reproduced.",
+                "Use the right API — /dev/urandom, getrandom(), os.urandom, crypto.randomBytes — never rand() or Math.random() for secrets."
+            ]),
+            .definition(term: "Entropy", meaning: "A measure of unpredictability — how much genuine uncertainty there is in a value. Operating systems collect entropy from physical, hard-to-predict events (hardware timing, interrupt jitter, sensor noise) into a pool that seeds the CSPRNG. Low entropy at boot is a real risk for devices that generate keys early."),
+            .callout(.danger, "Predictable randomness has broken real systems: guessable session tokens that let attackers hijack accounts, password-reset links an attacker could foresee, and crypto keys recreated because the RNG was seeded with the current time. If you can predict the 'random', there is no security."),
+            .callout(.tip, "Rule of thumb: if a random value protects anything, it must come from the platform's cryptographic RNG. Reaching for a general-purpose rand() for a token, key or salt is a security bug, full stop."),
+            .checkpoint(QuizQuestion(
+                "Why is a plain PRNG unsafe for generating a session token?",
+                options: [
+                    "It's too slow",
+                    "It's deterministic from its seed, so an attacker who learns or guesses the seed can predict the tokens",
+                    "It uses too much memory",
+                    "It only makes even numbers"
+                ],
+                correct: 1,
+                why: "A PRNG's output is a fixed function of its seed. If the seed is guessable (e.g. the time), the whole sequence — including 'random' tokens — can be reproduced by an attacker. Tokens need a CSPRNG."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the key difference between a PRNG and a CSPRNG?",
+                options: [
+                    "Speed only",
+                    "A CSPRNG is seeded from real entropy and built so its output can't be predicted or reversed",
+                    "A PRNG is newer",
+                    "There is no difference"
+                ],
+                correct: 1,
+                why: "Both are algorithmic, but a CSPRNG is designed for unpredictability — properly seeded with entropy and resistant to output prediction — which a general-purpose PRNG is not."),
+            QuizQuestion(
+                "Where does an operating system get entropy?",
+                options: [
+                    "From the system clock only",
+                    "From hard-to-predict physical events: timing jitter, interrupts, input and sensor noise",
+                    "From the user's password",
+                    "From the internet"
+                ],
+                correct: 1,
+                why: "The OS harvests unpredictability from physical sources (hardware timing, interrupts, I/O jitter) into an entropy pool that seeds its cryptographic RNG."),
+            QuizQuestion(
+                "Which function is appropriate for generating a cryptographic key?",
+                options: [
+                    "rand() / Math.random()",
+                    "A cryptographic RNG such as getrandom(), os.urandom or crypto.randomBytes",
+                    "The current timestamp",
+                    "A fixed seed for reproducibility"
+                ],
+                correct: 1,
+                why: "Only a cryptographically secure RNG provides the unpredictability keys require. General-purpose rand()/Math.random() are predictable and must never be used for secrets.")
         ]
     )
 }

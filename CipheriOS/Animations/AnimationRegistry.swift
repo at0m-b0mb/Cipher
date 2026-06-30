@@ -58,6 +58,42 @@ struct AnimationView: View {
         case .rfidClone:           RfidCloneView()
         case .ddosAmplification:   DdosAmplificationView()
         case .steganography:       SteganographyView()
+        // Expansion wave 3
+        case .tlsHandshake:        TLSHandshakeView()
+        case .ipv6Address:         IPv6AddressView()
+        case .loadBalancer:        LoadBalancerView()
+        case .passwordSpray:       PasswordSprayView()
+        case .nosqlInjection:      NoSQLInjectionView()
+        case .purpleTeam:          PurpleTeamView()
+        case .threatModeling:      ThreatModelingView()
+        // Expansion wave 4
+        case .xorCipher:           XORCipherView()
+        case .sqlQuery:            SQLQueryView()
+        case .regexMatch:          RegexMatchView()
+        case .bgpRouting:          BGPRoutingView()
+        case .emailFlow:           EmailFlowView()
+        case .quicHandshake:       QUICHandshakeView()
+        case .adcsEsc1:            ADCSEsc1View()
+        case .ssrfAttack:          SSRFAttackView()
+        case .ransomwareRecovery:  RansomwareRecoveryView()
+        // Expansion wave 5
+        case .mfaFactors:          MFAFactorsView()
+        case .vmContainer:         VMvsContainerView()
+        case .proxyFlow:           ProxyFlowView()
+        case .webSocketUpgrade:    WebSocketUpgradeView()
+        case .corsMisconfig:       CORSMisconfigView()
+        case .bucketExposure:      BucketExposureView()
+        case .soarPlaybook:        SOARPlaybookView()
+        case .secretsVault:        SecretsVaultView()
+        // Expansion wave 6
+        case .compilePipeline:     CompilePipelineView()
+        case .entropyRng:          EntropyRngView()
+        case .vlanTagging:         VlanTaggingView()
+        case .badusbInject:        BadUsbInjectView()
+        case .dllHijack:           DllHijackView()
+        case .nistCsf:             NistCsfView()
+        case .riskMatrix:          RiskMatrixView()
+        case .yaraMatch:           YaraMatchView()
         case .symmetricEncryption: SymmetricEncryptionView()
         case .publicKeyExchange:   PublicKeyExchangeView()
         case .hashing:             HashingView()
@@ -136,17 +172,21 @@ enum AnimationCatalog {
         .bufferOverflow, .ropChain, .sehOverflow, .formatString, .heapExploit, .c2Beacon,
         .payloadStaging, .tokenTheft,
         .reverseEngineering, .paddingOracle, .dnsTunneling, .supplyChain, .aitmProxy, .promptInjection,
-        .clickjacking, .cachePoisoning, .bleAttack, .rfidClone, .ddosAmplification
+        .clickjacking, .cachePoisoning, .bleAttack, .rfidClone, .ddosAmplification,
+        .passwordSpray, .nosqlInjection, .adcsEsc1, .ssrfAttack, .corsMisconfig, .bucketExposure,
+        .badusbInject, .dllHijack
     ]
     private static let blueIDs: Set<AnimationID> = [
         .defenseInDepth, .siemPipeline, .incidentResponse, .mitreAttack, .threatHunting,
         .adTiering, .threatIntel, .zeroTrust, .emailAuth, .honeyToken,
-        .idsDetection, .secureSdlc
+        .idsDetection, .secureSdlc, .purpleTeam, .threatModeling, .ransomwareRecovery,
+        .soarPlaybook, .secretsVault, .nistCsf, .riskMatrix, .yaraMatch
     ]
     private static let networkIDs: Set<AnimationID> = [
         .internetMap, .ipAddressing, .subnetMask, .dnsResolution, .defaultGateway,
         .routingHops, .natTranslation, .dhcpLease, .tcpVsUdp, .wifiConnect,
-        .vpnTunnel, .firewallFilter
+        .vpnTunnel, .firewallFilter, .ipv6Address, .loadBalancer,
+        .bgpRouting, .emailFlow, .quicHandshake, .proxyFlow, .webSocketUpgrade, .vlanTagging
     ]
 
     static func accent(_ id: AnimationID) -> Color {
@@ -200,6 +240,31 @@ enum AnimationCatalog {
         case .bleAttack, .ddosAmplification: return 288
         case .clickjacking:                 return 272
         case .rfidClone, .steganography:    return 270
+        // Expansion wave 3
+        case .threatModeling:               return 300
+        case .tlsHandshake, .nosqlInjection, .purpleTeam: return 286
+        case .loadBalancer, .passwordSpray: return 280
+        case .ipv6Address:                  return 272
+        // Expansion wave 4
+        case .adcsEsc1:                     return 296
+        case .bgpRouting, .emailFlow, .ssrfAttack: return 290
+        case .sqlQuery, .quicHandshake:     return 286
+        case .ransomwareRecovery:           return 280
+        case .xorCipher:                    return 270
+        case .regexMatch:                   return 262
+        // Expansion wave 5
+        case .corsMisconfig:                return 300
+        case .proxyFlow, .bucketExposure:   return 290
+        case .mfaFactors, .vmContainer:     return 286
+        case .secretsVault:                 return 282
+        case .webSocketUpgrade:             return 272
+        case .soarPlaybook:                 return 250
+        // Expansion wave 6
+        case .riskMatrix:                   return 300
+        case .vlanTagging, .dllHijack:      return 290
+        case .compilePipeline, .badusbInject, .yaraMatch: return 286
+        case .entropyRng:                   return 280
+        case .nistCsf:                      return 262
         default:                            return 250
         }
     }
@@ -240,6 +305,38 @@ enum AnimationCatalog {
         case .rfidClone:           return "A covert reader lifts a badge's UID, writes it to a blank card, and the clone opens the door."
         case .ddosAmplification:   return "A spoofed source makes open resolvers fire huge replies at the victim — a tiny query becomes a flood."
         case .steganography:       return "The secret hides in the least-significant bit of each pixel — invisible to the eye, trivial to extract."
+        case .tlsHandshake:        return "ClientHello and ServerHello each carry a key share, so TLS 1.3 agrees a secret in one round trip — then encrypts everything."
+        case .ipv6Address:         return "128 bits split into a routing prefix, a subnet id and an interface id — enough addresses to retire NAT for good."
+        case .loadBalancer:        return "One balancer spreads requests across a pool of healthy backends and skips any node that fails its health check."
+        case .passwordSpray:       return "One common password tried once against many accounts — under the lockout threshold, and one reuse is enough."
+        case .nosqlInjection:      return "A smuggled `$ne` operator turns 'password must equal X' into 'password just has to exist' — an auth bypass."
+        case .purpleTeam:          return "Red emulates, blue checks, the gap is closed with a tested detection — and measured coverage climbs."
+        case .threatModeling:      return "Walk a design's trust boundaries through STRIDE — six prompts, each tied to the security property it breaks."
+        case .xorCipher:           return "Combine plaintext with a key bit by bit — and XOR-ing with the same key again returns the original."
+        case .sqlQuery:            return "A SELECT scans the table; the WHERE clause keeps the rows that match and drops the rest."
+        case .regexMatch:          return "A pattern of classes, quantifiers and literals sweeps the text and captures the part that fits."
+        case .bgpRouting:          return "Autonomous Systems announce the prefixes they can reach; BGP picks the shortest AS-path to the destination."
+        case .emailFlow:           return "SMTP submits, a DNS MX lookup finds the server, SMTP delivers, and IMAP/POP pulls it down."
+        case .quicHandshake:       return "TCP+TLS spends two round trips before any data; QUIC folds them into one over UDP — and survives a network switch."
+        case .adcsEsc1:            return "A misconfigured cert template lets a normal user enroll as Administrator, then authenticate as Domain Admin."
+        case .ssrfAttack:          return "The app fetches any URL you give it from inside the network — reaching internal services and reflecting the secret back."
+        case .ransomwareRecovery:  return "Files fall to encryption one by one; an offline, immutable backup is the only thing that brings them back."
+        case .mfaFactors:          return "Verify something you know, then something you have — a phished password alone never gets past factor two."
+        case .vmContainer:         return "VMs ship a whole guest OS for strong isolation; containers share the host kernel — light and fast, thinner boundary."
+        case .proxyFlow:           return "A forward proxy fronts the clients; a reverse proxy fronts the servers — same box, opposite direction."
+        case .webSocketUpgrade:    return "An HTTP request asks to UPGRADE; after a 101 the connection becomes a persistent two-way channel."
+        case .corsMisconfig:       return "A server that reflects an untrusted Origin and allows credentials lets evil.com read the victim's data."
+        case .bucketExposure:      return "A world-readable bucket answers an anonymous LIST and serves the files — misconfiguration, not exploit."
+        case .soarPlaybook:        return "An alert is enriched, judged, contained and ticketed automatically — seconds instead of hours."
+        case .secretsVault:        return "A hardcoded secret leaks forever; a vault issues short-lived, auto-expiring credentials at runtime."
+        case .compilePipeline:     return "Source you write becomes the CPU's binary instructions, run one at a time in a fetch-decode-execute loop."
+        case .entropyRng:          return "A seeded PRNG is predictable; a CSPRNG fed by hardware entropy isn't — and keys depend on the difference."
+        case .vlanTagging:         return "One switch, many isolated networks: an 802.1Q tag keeps VLAN 10 from ever reaching VLAN 20."
+        case .badusbInject:        return "A USB device declares itself a keyboard — trusted with no prompt — and types a payload at machine speed."
+        case .dllHijack:           return "Windows checks the app's own folder first, so a planted DLL of the right name loads instead of the real one."
+        case .nistCsf:             return "The five continuous functions of the NIST CSF — Identify, Protect, Detect, Respond, Recover — as a cycle."
+        case .riskMatrix:          return "Plot each risk by likelihood × impact; the top-right (likely and damaging) is what you fix first."
+        case .yaraMatch:           return "A rule of strings plus a condition scans a file — match enough patterns and it's flagged as malware."
         case .symmetricEncryption: return "One shared key turns plaintext to ciphertext and back."
         case .publicKeyExchange:   return "A public key locks a message that only the private key can open."
         case .hashing:             return "A one-way fingerprint where a tiny change avalanches the output."
