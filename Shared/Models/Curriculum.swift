@@ -166,6 +166,22 @@ enum AnimationID: String, CaseIterable, Codable {
     case riskMatrix
     case yaraMatch
 
+    // Expansion wave 7 — core concepts
+    case ciaTriad
+    case threatActors
+
+    // Expansion wave 8 — social engineering & log analysis
+    case socialEngineering
+    case logAnalysis
+
+    // Expansion wave 9 — deeper foundations
+    case numberBases
+    case endianness
+    case charEncoding
+    case filePermissions
+    case booleanLogic
+    case saltHashing
+
     // Red team
     case cyberKillChain
     case portScan
@@ -290,6 +306,16 @@ enum AnimationID: String, CaseIterable, Codable {
         case .nistCsf:             return "NIST CSF Functions"
         case .riskMatrix:          return "Risk Matrix"
         case .yaraMatch:           return "YARA Rule Matching"
+        case .ciaTriad:            return "The CIA Triad"
+        case .threatActors:        return "Threat Actors"
+        case .socialEngineering:   return "Social Engineering"
+        case .logAnalysis:         return "Log Analysis"
+        case .numberBases:         return "Number Bases"
+        case .endianness:          return "Endianness"
+        case .charEncoding:        return "Character Encoding"
+        case .filePermissions:     return "Linux Permissions"
+        case .booleanLogic:        return "Bitwise Logic Gates"
+        case .saltHashing:         return "Salted Hashing"
         case .symmetricEncryption: return "Symmetric Encryption"
         case .publicKeyExchange:   return "Public-Key Exchange"
         case .hashing:             return "Hashing"
@@ -364,7 +390,41 @@ enum LessonBlock {
     case terminal(prompt: String, command: String, output: String)
     case code(language: String, String)
     case animation(AnimationID, caption: String)
+    case interactiveLab(InteractiveLab)
     case checkpoint(QuizQuestion)
+}
+
+// MARK: - Interactive lab
+
+/// A hands-on, tap-to-play mini-lab embedded in a lesson. The learner works
+/// through ordered steps, choosing the right command/action at each; a simulated
+/// terminal builds up as they go, so they *do* the technique instead of just
+/// reading it. Pure data — the iOS `InteractiveLabView` renders and drives it.
+struct InteractiveLab {
+    let title: String
+    let goal: String
+    let steps: [LabStep]
+}
+
+struct LabStep: Identifiable {
+    let id = UUID()
+    let instruction: String        // what to accomplish at this step
+    let options: [LabOption]
+}
+
+struct LabOption: Identifiable {
+    let id = UUID()
+    let command: String            // the tappable command / action
+    let correct: Bool
+    let output: String             // terminal output shown when chosen
+    let feedback: String           // why it's the right (or wrong) move
+
+    init(_ command: String, correct: Bool = false, output: String = "", feedback: String) {
+        self.command = command
+        self.correct = correct
+        self.output = output
+        self.feedback = feedback
+    }
 }
 
 // MARK: - Quiz

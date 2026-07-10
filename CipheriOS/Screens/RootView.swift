@@ -4,6 +4,7 @@ import SwiftUI
 enum CipherRoute: Hashable {
     case track(String)
     case lesson(String)
+    case path(String)
 }
 
 /// A NavigationStack pre-wired with the app's route destinations, so each tab
@@ -17,6 +18,7 @@ struct NavStack<Content: View>: View {
                     switch route {
                     case .track(let id):  TrackDetailView(trackID: id)
                     case .lesson(let id): LessonView(lessonID: id)
+                    case .path(let id):   PathDetailView(pathID: id)
                     }
                 }
         }
@@ -31,20 +33,24 @@ struct RootView: View {
 
     var body: some View {
         TabView(selection: $tab) {
-            NavStack { DashboardView(goToLearn: { tab = 1 }) }
+            NavStack { DashboardView(goToLearn: { tab = 2 }, goToPaths: { tab = 1 }) }
                 .tag(0)
                 .tabItem { Label("Home", systemImage: "house.fill") }
 
-            NavStack { TracksView() }
+            NavStack { LearningPathsView() }
                 .tag(1)
+                .tabItem { Label("Paths", systemImage: "map.fill") }
+
+            NavStack { TracksView() }
+                .tag(2)
                 .tabItem { Label("Learn", systemImage: "books.vertical.fill") }
 
             NavStack { AnimationGalleryView() }
-                .tag(2)
+                .tag(3)
                 .tabItem { Label("Animations", systemImage: "play.square.stack.fill") }
 
             NavStack { ProfileView() }
-                .tag(3)
+                .tag(4)
                 .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
         }
         .tint(Theme.teal)

@@ -117,6 +117,24 @@ enum RedTeamContent {
             ]),
             .definition(term: "Banner grabbing", meaning: "Reading the identifying text a service announces on connect (e.g. an SMTP or SSH banner). Versions map directly to known vulnerabilities via CVE databases and searchsploit."),
             .callout(.warning, "A full -p- scan is loud — it lights up IDS/IPS instantly. On a real engagement you balance thoroughness against stealth; in a lab, go loud and complete."),
+            .interactiveLab(InteractiveLab(
+                title: "Enumerate a target with nmap",
+                goal: "Find the open ports on 10.10.10.5, then identify an exploitable service.",
+                steps: [
+                    LabStep(instruction: "You've got one host: `10.10.10.5`. Which scan gives you a thorough view of what's listening?", options: [
+                        LabOption("ping 10.10.10.5", output: "Request timed out. (host may just be blocking ICMP)", feedback: "A ping only tells you if ICMP is answered — many hosts block it, and it reveals no services. You need a port scan."),
+                        LabOption("nmap -p- 10.10.10.5", correct: true, output: "PORT     STATE  SERVICE\n22/tcp   open   ssh\n80/tcp   open   http\n445/tcp  open   microsoft-ds\n3306/tcp open   mysql", feedback: "`-p-` scans all 65,535 ports, so nothing hides on a high port. Four services are open — now enumerate them."),
+                        LabOption("nmap -F 10.10.10.5", output: "PORT   STATE SERVICE\n22/tcp open  ssh\n80/tcp open  http", feedback: "A fast scan only checks the top 100 ports — it missed 445 and 3306. Fine for speed, but you can leave services undiscovered.")
+                    ]),
+                    LabStep(instruction: "Ports are open, but not their versions. How do you fingerprint the services to map them to known CVEs?", options: [
+                        LabOption("nmap -sV -sC -p22,80,445,3306 10.10.10.5", correct: true, output: "80/tcp   Apache httpd 2.4.49 ((Unix))\n445/tcp  Samba smbd 4.6.2\n3306/tcp MySQL 5.7.29", feedback: "`-sV` grabs versions and `-sC` runs default scripts. Apache 2.4.49 jumps out — that version has a notorious path-traversal/RCE (CVE-2021-41773)."),
+                        LabOption("nmap -sn 10.10.10.5", output: "Host is up. (no port info)", feedback: "`-sn` is a ping/host-discovery sweep — it disables port scanning entirely, so you learn nothing about the services.")
+                    ]),
+                    LabStep(instruction: "Apache 2.4.49 is your lead. What's the right next move?", options: [
+                        LabOption("searchsploit apache 2.4.49", correct: true, output: "Apache 2.4.49 - Path Traversal & Remote Code Execution (CVE-2021-41773)", feedback: "Map the exact version to a known exploit before firing anything. searchsploit (and CVE databases) turn a version string into a concrete attack path."),
+                        LabOption("Brute-force the SSH password", output: "1000 attempts… account locked.", feedback: "Blindly brute-forcing is slow, loud and often locked out. You already found a version with a public RCE — enumerate the lead you have first.")
+                    ])
+                ])),
             .checkpoint(QuizQuestion(
                 "Your fast scan found nothing exploitable. What's the most likely mistake?",
                 options: [
@@ -159,7 +177,7 @@ enum RedTeamContent {
         title: "Initial Access & Exploitation",
         summary: "Turn a foothold into a shell — by manipulating people, weaponizing documents they open, and exploiting vulnerable services.",
         systemImage: "key.fill",
-        lessons: [phishingLesson, passwordAttacksLesson, clientSideLesson, badusbLesson, exploitationLesson]
+        lessons: [phishingLesson, socialEngLesson, passwordAttacksLesson, clientSideLesson, badusbLesson, exploitationLesson]
     )
 
     private static let phishingLesson = Lesson(
@@ -508,6 +526,25 @@ SELECT * FROM users WHERE user='admin'-- ' AND pass='x'
             ]),
             .callout(.danger, "The fix is not “filter bad words.” It's **parameterized queries (prepared statements)**, which send code and data on separate channels so input can never be parsed as SQL. Input validation and least-privilege DB accounts are defense in depth on top."),
             .definition(term: "Parameterized query", meaning: "A query where placeholders (?) are bound to values by the driver, never concatenated into the SQL string. The database treats bound values as pure data — structurally immune to injection."),
+            .interactiveLab(InteractiveLab(
+                title: "Bypass a login with SQLi",
+                goal: "Log in as admin without knowing the password.",
+                steps: [
+                    LabStep(instruction: "The login runs `SELECT * FROM users WHERE user='$u' AND pass='$p'`. First, probe whether the username field is injectable. What do you enter?", options: [
+                        LabOption("admin", output: "Login failed: incorrect password.", feedback: "That's an ordinary login attempt — you still need the password. Probe for injection instead."),
+                        LabOption("admin'", correct: true, output: "SQL error: unclosed quotation mark before '' AND pass=''", feedback: "A single quote broke the query's syntax — the input reaches SQL unescaped, so the field is injectable. That error is the tell."),
+                        LabOption("<script>alert(1)</script>", output: "Login failed.", feedback: "That's an XSS payload — useful against a browser, but it won't bypass a server-side SQL auth check.")
+                    ]),
+                    LabStep(instruction: "Injectable! Now defeat the password check — make the WHERE clause always true and comment out the rest.", options: [
+                        LabOption("' AND 1=2 -- ", output: "Login failed.", feedback: "1=2 is always FALSE, so no rows match. You want a condition that's always TRUE."),
+                        LabOption("' OR 1=1 -- ", correct: true, output: "Welcome, admin!  session=8f3b1c…", feedback: "OR 1=1 makes the condition always true and `-- ` comments out the ` AND pass=…` clause — authenticated with no password."),
+                        LabOption("'; DROP TABLE users -- ", output: "Error: multiple statements not permitted.", feedback: "Destructive, usually blocked by the driver, and it doesn't log you in. Stay surgical.")
+                    ]),
+                    LabStep(instruction: "You're in. What's the real fix a developer should ship to close this for good?", options: [
+                        LabOption("Blacklist the word OR", output: "bypassed with /**/Or/**/, %4fR, and other encodings.", feedback: "Blacklists are trivially bypassed with casing, comments and encodings. Don't filter — parameterize."),
+                        LabOption("Prepared statement: WHERE user=? AND pass=?", correct: true, output: "input bound as data — the payload is now just a (failed) literal password. Injection impossible.", feedback: "Parameterized queries send code and data on separate channels, so input can never change the query's structure. The complete fix.")
+                    ])
+                ])),
             .checkpoint(QuizQuestion(
                 "What is the correct, complete fix for SQL injection?",
                 options: [
@@ -4859,6 +4896,89 @@ Access-Control-Allow-Credentials: true
                 ],
                 correct: 1,
                 why: "Specifying full paths and restricting the search order removes the ambiguity, while non-writable app folders deny the attacker the place to plant the DLL — closing the hijack.")
+        ]
+    )
+
+    // MARK: Social engineering (Initial Access)
+
+    private static let socialEngLesson = Lesson(
+        id: "red-social-engineering",
+        title: "Social Engineering",
+        subtitle: "The human is the vulnerability no patch can fix — how attackers hack people, not computers.",
+        minutes: 10,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Why bother with exploits?"),
+            .paragraph("The fastest way past a firewall is often to ask someone to open the door. **Social engineering** is manipulating people into breaking security — handing over a password, running a file, letting you through a door. It sidesteps every technical control because it targets the one component you can't patch: human trust, helpfulness and fear."),
+            .animation(.socialEngineering, caption: "Recon → a believable pretext → borrowed authority and urgency → the target hands over what no exploit could reach."),
+            .heading("The levers attackers pull"),
+            .paragraph("Effective social engineering is applied psychology. A handful of principles show up again and again — recognising them is the first step to resisting them."),
+            .keyPoints([
+                "Authority — people comply with perceived power ('this is IT / the CEO').",
+                "Urgency & scarcity — 'act now or the account is locked' short-circuits careful thinking.",
+                "Trust & likeability — a friendly, familiar-sounding contact lowers defences.",
+                "Reciprocity & social proof — a small favour, or 'everyone else already did it', nudges compliance.",
+                "Pretext — the fabricated backstory that makes the request feel legitimate."
+            ]),
+            .definition(term: "Pretexting, phishing, vishing, baiting", meaning: "The delivery methods: pretexting is the invented scenario; phishing is by email, vishing by voice call, smishing by SMS; baiting leaves a tempting lure (a malicious USB, a free download). All ride the same psychological levers — only the channel changes."),
+            .callout(.danger, "Social engineering underlies most real breaches — the majority start with phishing or a manipulated human, not a zero-day. Attackers target people because it works, it's cheap, and it bypasses millions of dollars of security tooling."),
+            .interactiveLab(InteractiveLab(
+                title: "Survive a vishing call",
+                goal: "You're an employee. A caller is trying to social-engineer you — don't get played.",
+                steps: [
+                    LabStep(instruction: "Your phone rings: *\"Hi, this is Dave from IT Security. We've detected a breach on your account and need to act fast.\"* What do you do first?", options: [
+                        LabOption("Give him your username so he can 'check'", output: "Caller: \"Great, and your password to verify it's really you?\"", feedback: "Urgency + authority is the classic pressure combo. Handing over any detail keeps the con rolling — slow down."),
+                        LabOption("Ask for his name and say you'll call IT back on the official number", correct: true, output: "Caller hesitates: \"Uh… there's really no time for that…\"", feedback: "Verifying out-of-band via a known-good number defeats vishing. A real request survives a callback; a scam falls apart under one."),
+                        LabOption("Panic and do whatever he says", output: "Caller walks you into installing 'support software'…", feedback: "Fear is exactly the lever being pulled. Manufactured urgency is a red flag, not a reason to comply.")
+                    ]),
+                    LabStep(instruction: "He pushes harder: *\"Your manager approved this. Just read me the 6-digit code we texted you.\"* Now what?", options: [
+                        LabOption("Read him the MFA code — his manager approved it", output: "Attacker completes the login with your code. Account compromised.", feedback: "That code is your second factor. NO legitimate IT process ever needs you to read it aloud — that request alone proves it's an attack."),
+                        LabOption("Refuse — no one should ever ask for your MFA code", correct: true, output: "You hang up and report it. The attacker moves on to an easier target.", feedback: "Correct. An MFA code is for you to enter, never to share. Refusing + reporting is exactly right."),
+                        LabOption("Put him on hold and keep him waiting", output: "He stays on the line, still pressuring…", feedback: "Stalling doesn't hurt, but the decisive move is to refuse the code outright and report the call.")
+                    ]),
+                    LabStep(instruction: "After you hang up, what's the most useful thing you can do for everyone else?", options: [
+                        LabOption("Say nothing — it didn't work on you", output: "The attacker calls three of your colleagues next.", feedback: "Your report is the early-warning signal that protects coworkers who might fall for the same script."),
+                        LabOption("Report the call to security so they can warn others", correct: true, output: "Security sends an alert: 'active vishing campaign — IT will never ask for your MFA code.'", feedback: "Reporting turns your near-miss into organisation-wide defence. Human sensors are a real detection layer.")
+                    ])
+                ])),
+            .callout(.tip, "Defences are mostly human: verify out-of-band on a known-good number, never share passwords or MFA codes, treat urgency as a red flag, and report attempts. Security-awareness training and simulated phishing measurably reduce click rates — the human firewall is trainable."),
+            .checkpoint(QuizQuestion(
+                "A caller claiming to be IT urgently asks you to read back the MFA code you were just texted. What's the right response?",
+                options: [
+                    "Read it — IT needs it to help you",
+                    "Refuse and report it — no legitimate process ever needs your MFA code",
+                    "Give a wrong code",
+                    "Ask for their employee ID first"
+                ],
+                correct: 1,
+                why: "An MFA code is a second factor only you should ever enter. Anyone asking you to read it aloud is attacking you — refusing and reporting is the correct, decisive move."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does social engineering target?",
+                options: [
+                    "Software vulnerabilities",
+                    "Human trust, helpfulness and fear — manipulating people into breaking security",
+                    "Network hardware",
+                    "Encryption keys"
+                ],
+                correct: 1,
+                why: "Social engineering hacks people, not machines — using psychology (authority, urgency, trust) to make someone break security, bypassing technical controls entirely."),
+            QuizQuestion(
+                "Which psychological lever does 'your account will be locked in 10 minutes' exploit?",
+                options: ["Reciprocity", "Urgency", "Social proof", "Scarcity of memory"],
+                correct: 1,
+                why: "A ticking clock creates urgency, which short-circuits careful thinking and pressures the target into acting before they verify. Manufactured urgency is a hallmark of the con."),
+            QuizQuestion(
+                "What is the single best defence against a suspicious 'IT support' phone call?",
+                options: [
+                    "Comply quickly to end the call",
+                    "Verify out-of-band by calling IT back on a known-good number",
+                    "Give partial information only",
+                    "Record the call"
+                ],
+                correct: 1,
+                why: "Out-of-band verification on a trusted number defeats vishing: a legitimate request survives a callback, while a scam collapses. Never act on identity claimed over an inbound call.")
         ]
     )
 }

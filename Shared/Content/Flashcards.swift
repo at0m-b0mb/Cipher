@@ -56,6 +56,17 @@ enum Flashcards {
         Flashcard("Steganography", "Hiding the existence of a message inside an innocent carrier (image, audio, packet). Complements encryption, which hides only the meaning. Classic method: LSB encoding.", .fundamentals),
         Flashcard("LSB Encoding", "Overwriting the least-significant bit of each pixel/sample byte with secret data. The ±1 change is invisible to the eye while quietly carrying a payload.", .fundamentals),
         Flashcard("Steganalysis", "Detecting hidden data via statistical anomalies, file-size mismatches, or content appended past a file's logical end (binwalk, chi-square tests) — the blue-team counter to steganography.", .fundamentals),
+        Flashcard("Binary (Base-2)", "Counting with only 0 and 1, where each column is a power of two (1,2,4,8,16…). Read a byte by summing the place values under each 1: 01001101 = 64+8+4+1 = 77.", .fundamentals),
+        Flashcard("Nibble", "Half a byte — 4 bits — which equals exactly one hexadecimal digit (0–f). Two nibbles make a byte, so one byte is always two hex characters.", .fundamentals),
+        Flashcard("Endianness", "The order multi-byte values are stored in. Big-endian writes the most-significant byte first; little-endian (x86/ARM) writes it last — why integers often look 'reversed' in a hex dump.", .fundamentals),
+        Flashcard("ASCII", "The original 7-bit character set mapping 0–127 to English letters, digits and punctuation. 'A'=65, 'a'=97, '0'=48. Every ASCII char is one byte with the top bit clear.", .fundamentals),
+        Flashcard("Unicode", "A universal catalog giving every character on earth a unique number (code point), e.g. '→' is U+2192. It defines the characters; an encoding like UTF-8 defines their bytes.", .fundamentals),
+        Flashcard("UTF-8", "The dominant Unicode encoding: code points 0–127 are one byte (identical to ASCII), higher ones use 2–4 bytes. Backwards-compatible with ASCII, which is why it won.", .fundamentals),
+        Flashcard("Code Point", "The abstract number Unicode assigns a character (U+0041 for 'A'), independent of how it's stored. One code point can map to different byte sequences under UTF-8 vs UTF-16.", .fundamentals),
+        Flashcard("Homoglyph Attack", "Abusing visually-identical characters from different scripts (a Cyrillic 'а' vs Latin 'a') to spoof look-alike domains or usernames that pass a human's eye but differ underneath.", .fundamentals),
+        Flashcard("Bitmask", "A value ANDed against data to read or clear specific bits, or ORed to set them. The everyday use of bitwise logic — testing TCP flags, permission bits and feature toggles.", .fundamentals),
+        Flashcard("Octal Permissions", "Linux file permissions written as three digits (owner/group/other), scoring r=4, w=2, x=1 per triple. -rwxr-xr-- = 754; -rw-r--r-- = 644.", .fundamentals),
+        Flashcard("SUID Bit", "A permission flag making an executable run with its owner's privileges regardless of who launches it. A SUID-root binary that can be abused is a classic privilege-escalation path.", .fundamentals),
 
         // Networking
         Flashcard("Node & Link", "A node is any device on a network (laptop, phone, server, router); a link is the connection between nodes — copper, fibre or radio.", .networking),
@@ -313,7 +324,23 @@ enum Flashcards {
         Flashcard("YARA", "A rule language for hunting malware by content: strings/byte patterns plus a condition, matched against files and process memory. The file-side counterpart to a SIEM's Sigma rule.", .blueTeam),
         Flashcard("Risk = Likelihood × Impact", "The core risk formula: rate each risk by how likely it is and how damaging it would be, so disparate threats can be compared and prioritised on one scale.", .blueTeam),
         Flashcard("Risk Treatment", "The four choices for an assessed risk: mitigate (add a control), transfer (insurance), avoid (stop the activity), or accept (consciously live with it). What remains is residual risk.", .blueTeam),
-        Flashcard("Risk Register", "The living, owned list of an organisation's risks — each rated, assigned a treatment and tracked — turning vague worry into a prioritised, accountable plan.", .blueTeam)
+        Flashcard("Risk Register", "The living, owned list of an organisation's risks — each rated, assigned a treatment and tracked — turning vague worry into a prioritised, accountable plan.", .blueTeam),
+
+        // Expansion wave 7
+        Flashcard("CIA Triad (Core)", "Confidentiality, Integrity, Availability — the three properties all security protects. Every attack breaks one; every control defends one. The compass for any security question.", .fundamentals),
+        Flashcard("Threat Actor", "A category of attacker defined by capability, resources and motivation: script kiddie, hacktivist, cybercriminal, insider, or nation-state APT. Knowing yours shapes your defence.", .fundamentals),
+        Flashcard("APT", "Advanced Persistent Threat — a well-resourced, patient (usually nation-state) adversary that targets a specific victim and stays hidden to achieve a strategic goal like espionage.", .fundamentals),
+        Flashcard("Threat vs Vulnerability vs Exploit", "A threat is a possible bad event; a vulnerability is the weakness; an exploit is the technique that abuses it; risk is the likelihood × impact of them combining.", .fundamentals),
+        Flashcard("Home Lab", "A safe, legal place to practise — a couple of VMs (a Kali attacker + a vulnerable target) you own. Snapshots let you break things and roll back. The right way to learn offensive skills.", .fundamentals),
+
+        // Expansion wave 8
+        Flashcard("Social Engineering", "Manipulating people — via authority, urgency and trust — into breaking security (sharing a password, running a file, holding a door). Targets the human, bypassing technical controls.", .redTeam),
+        Flashcard("Pretexting", "Inventing a believable scenario and identity ('IT support', 'the CEO') to justify a request. The backstory that makes social engineering feel legitimate.", .redTeam),
+        Flashcard("Vishing / Smishing", "Social engineering by voice call (vishing) or SMS (smishing). Same psychological levers as phishing, different channel — and often harder to verify in the moment.", .redTeam),
+        Flashcard("MFA Code Handling", "A one-time code is a second factor only you should ever enter — never read aloud or share. Anyone asking you to relay it is attacking you. The single clearest vishing red flag.", .redTeam),
+        Flashcard("Log Analysis", "Reading logs to separate malicious signal from normal noise — the raw defender skill a SIEM automates. Detection is deviation from a baseline of normal activity.", .blueTeam),
+        Flashcard("Baseline", "A documented picture of normal — who logs in when, what runs, typical volumes. Anomalies only stand out against it, so knowing normal is the foundation of detection.", .blueTeam),
+        Flashcard("Log Correlation", "Tying events across sources into a story: failed logins → a success → a new admin account. One line is noise; the sequence is the incident.", .blueTeam)
     ]
 
     static func cards(for category: TrackKind) -> [Flashcard] {

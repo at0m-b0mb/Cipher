@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
     var goToLearn: () -> Void = {}
+    var goToPaths: () -> Void = {}
     @EnvironmentObject private var progress: ProgressStore
 
     private var featuredAnimationID: AnimationID {
@@ -17,6 +18,7 @@ struct DashboardView: View {
                     rankHeader
                     statsRow
                     continueCard
+                    pathsSection
                     tracksSection
                     termOfDay
                     featured
@@ -120,6 +122,35 @@ struct DashboardView: View {
                 Spacer()
             }
             .cipherCard()
+        }
+    }
+
+    // MARK: Learning paths
+
+    private func pathCompletion(_ p: LearningPath) -> Double {
+        guard p.lessonCount > 0 else { return 0 }
+        return Double(p.lessons.filter { progress.isComplete($0.id) }.count) / Double(p.lessonCount)
+    }
+
+    private var pathsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                SectionHeader(title: "Learning paths", systemImage: "map.fill", accent: Theme.amber)
+                Button(action: goToPaths) {
+                    Text("All").font(Theme.mono(11, .bold)).foregroundStyle(Theme.amber)
+                }
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(LearningPaths.all.prefix(5)) { path in
+                        NavigationLink(value: CipherRoute.path(path.id)) {
+                            PathMiniCard(path: path, completion: pathCompletion(path))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 1).padding(.bottom, 4)
+            }
         }
     }
 

@@ -42,6 +42,7 @@ struct Rank: Identifiable {
 final class ProgressStore: ObservableObject {
 
     @Published private(set) var completedLessons: Set<String> = []
+    @Published private(set) var bookmarked: Set<String> = []          // lessonIDs saved for later
     @Published private(set) var bestQuizScore: [String: Int] = [:]   // lessonID → best %
     @Published private(set) var streak: Int = 0
     @Published private(set) var longestStreak: Int = 0
@@ -68,6 +69,7 @@ final class ProgressStore: ObservableObject {
         let demo = ["fund-ethics", "fund-kill-chain", "fund-osi", "fund-tcp",
                     "fund-encryption", "red-osint", "red-scanning", "red-phishing", "blue-defense-in-depth"]
         completedLessons = Set(demo)
+        bookmarked = ["red-sqli", "fund-cia", "blue-log-analysis"]
         for id in demo { bestQuizScore[id] = [80, 90, 100][id.count % 3] }
         streak = 6
         longestStreak = 9
@@ -113,6 +115,11 @@ final class ProgressStore: ObservableObject {
 
     func isComplete(_ lessonID: String) -> Bool { completedLessons.contains(lessonID) }
 
+    func isBookmarked(_ lessonID: String) -> Bool { bookmarked.contains(lessonID) }
+
+    /// Bookmarked lessons in curriculum order — powers the "Saved" list.
+    var savedLessons: [Lesson] { Curriculum.allLessons.filter { bookmarked.contains($0.id) } }
+
     /// The next not-yet-completed lesson across the whole curriculum — powers
     /// the "Continue" button on the dashboard.
     var nextLesson: Lesson? {
@@ -124,6 +131,11 @@ final class ProgressStore: ObservableObject {
     func markComplete(_ lessonID: String) {
         completedLessons.insert(lessonID)
         touchToday()
+        save()
+    }
+
+    func toggleBookmark(_ lessonID: String) {
+        if bookmarked.contains(lessonID) { bookmarked.remove(lessonID) } else { bookmarked.insert(lessonID) }
         save()
     }
 
@@ -149,6 +161,7 @@ final class ProgressStore: ObservableObject {
 
     func resetAll() {
         completedLessons = []
+        bookmarked = []
         bestQuizScore = [:]
         streak = 0
         longestStreak = 0
@@ -200,6 +213,7 @@ final class ProgressStore: ObservableObject {
         var longest: Int
         var lastActive: Date?
         var ethics: Bool
+        var bookmarks: [String]?   // optional so older saved data still decodes
     }
 
     private func save() {
@@ -208,7 +222,8 @@ final class ProgressStore: ObservableObject {
                             streak: streak,
                             longest: longestStreak,
                             lastActive: lastActiveDay,
-                            ethics: hasAcceptedEthics)
+                            ethics: hasAcceptedEthics,
+                            bookmarks: Array(bookmarked))
         if let data = try? JSONEncoder().encode(snap) {
             defaults.set(data, forKey: key)
         }
@@ -218,6 +233,7 @@ final class ProgressStore: ObservableObject {
         guard let data = defaults.data(forKey: key),
               let snap = try? JSONDecoder().decode(Snapshot.self, from: data) else { return }
         completedLessons = Set(snap.completed)
+        bookmarked = Set(snap.bookmarks ?? [])
         bestQuizScore = snap.quiz
         streak = snap.streak
         longestStreak = snap.longest

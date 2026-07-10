@@ -56,6 +56,17 @@ struct LessonView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            if lesson != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { progress.toggleBookmark(lessonID) } label: {
+                        Image(systemName: progress.isBookmarked(lessonID) ? "bookmark.fill" : "bookmark")
+                            .foregroundStyle(accent)
+                    }
+                    .accessibilityLabel(progress.isBookmarked(lessonID) ? "Remove bookmark" : "Save lesson")
+                }
+            }
+        }
     }
 
     // MARK: Reading-progress bar

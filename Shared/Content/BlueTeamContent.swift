@@ -297,7 +297,7 @@ num  target  prot  dpt     comment
         title: "Detection Engineering",
         summary: "Model adversary behavior with MITRE ATT&CK, then write the rules that catch it.",
         systemImage: "scope",
-        lessons: [mitreLesson, detEngLesson, yaraLesson]
+        lessons: [mitreLesson, detEngLesson, yaraLesson, logAnalysisLesson]
     )
 
     private static let mitreLesson = Lesson(
@@ -1782,6 +1782,93 @@ rule SuspiciousDropper {
                 ],
                 correct: 1,
                 why: "Raw severity ignores context. Factoring exploitation likelihood (EPSS/KEV) and asset impact targets effort at what actually endangers the organisation — the essence of risk-based prioritisation.")
+        ]
+    )
+
+    // MARK: Log analysis (added to Detection)
+
+    private static let logAnalysisLesson = Lesson(
+        id: "blue-log-analysis",
+        title: "Log Analysis",
+        subtitle: "The defender's core skill — finding the one line that matters in a flood of normal events.",
+        minutes: 9,
+        difficulty: .intermediate,
+        blocks: [
+            .heading("Detection lives in the logs"),
+            .paragraph("Almost every attack leaves a trace somewhere — a failed login, a new process, an odd network connection. **Log analysis** is the craft of reading those traces to separate the malicious signal from an ocean of normal noise. It's the raw material a SIEM automates, and the skill every analyst falls back on when the alert is ambiguous and you have to actually *look*."),
+            .animation(.logAnalysis, caption: "Normal events scroll past as noise — until a burst of failures followed by a success from the same foreign IP resolves into a brute-force compromise."),
+            .heading("What to look for"),
+            .paragraph("You're hunting for deviations from normal. That means first knowing what normal looks like (a baseline), then watching for the things attackers can't avoid doing."),
+            .keyPoints([
+                "Authentication anomalies — failure spikes, logins at odd hours, impossible travel, a success after many failures.",
+                "New or rare things — a process, service, scheduled task or account that's never been seen before.",
+                "Volume & timing — data transfers far larger than usual, or beacon-like regular intervals.",
+                "Correlation — one event is noise; a sequence across sources (failed logins → success → new admin) is a story.",
+                "Know your sources — auth logs, web/access logs, Sysmon (process/network), firewall and DNS logs."
+            ]),
+            .definition(term: "Baseline", meaning: "A documented picture of normal activity — who logs in when, which processes run, typical traffic volumes. Detection is fundamentally deviation from a baseline, so the better you know normal, the faster the abnormal jumps out. Without a baseline, every log looks equally suspicious (or equally fine)."),
+            .interactiveLab(InteractiveLab(
+                title: "Triage the auth log",
+                goal: "Read the log, find the compromise, and take the right first response.",
+                steps: [
+                    LabStep(instruction: "You're handed `auth.log`. Which line is the real problem?", options: [
+                        LabOption("10:03  auth ok    bob    10.0.0.9", output: "Normal internal login from a known host.", feedback: "A successful login from an internal IP during work hours is routine — that's your baseline, not an incident."),
+                        LabOption("10:04  auth FAIL admin 45.13.x (x412) → 10:05 auth ok admin 45.13.x", correct: true, output: "412 failures then a SUCCESS, all from an external IP, against admin.", feedback: "That's the story: a brute-force burst that finally succeeded. Failures-then-success from one foreign IP against a privileged account is a classic compromise pattern."),
+                        LabOption("10:05  GET /js/app.js 200", output: "A static asset served normally.", feedback: "A 200 on a JavaScript file is ordinary web traffic — no security signal here.")
+                    ]),
+                    LabStep(instruction: "You've confirmed admin was brute-forced from 45.13.x and the attacker is likely logged in now. What's the right *first* action?", options: [
+                        LabOption("Delete the log so no one panics", output: "Evidence destroyed; the attacker still has access.", feedback: "Never destroy evidence — you need it for scope and forensics, and the attacker is still inside. This makes things worse."),
+                        LabOption("Disable the admin account and kill its sessions, then investigate", correct: true, output: "admin locked, active sessions revoked. Attacker's access cut. Now scope it.", feedback: "Contain first: cut the attacker's access by disabling the account and revoking sessions, then investigate scope. Stops the bleeding without destroying evidence."),
+                        LabOption("Email the attacker's IP a warning", output: "No effect. You've tipped your hand.", feedback: "Tipping off the attacker helps no one. Contain the account and preserve evidence instead.")
+                    ]),
+                    LabStep(instruction: "Contained. How do you stop this exact attack from simply working again tomorrow?", options: [
+                        LabOption("Enable MFA + lockout/rate-limiting, and block the source IP", correct: true, output: "brute-force now trips lockout; MFA blocks the reused password. Detection rule added.", feedback: "MFA neutralises a guessed password, lockout/rate-limiting stops the brute force, and a detection rule catches the next attempt. Fix the class of bug, not just this instance."),
+                        LabOption("Ask the admin to pick a slightly longer password", output: "Still brute-forceable, still no second factor.", feedback: "A marginally longer password doesn't stop brute forcing or credential reuse. MFA + lockout address the root cause.")
+                    ])
+                ])),
+            .callout(.tip, "The workflow is repeatable: baseline → spot the deviation → correlate across sources into a story → contain → remediate the root cause. A SIEM automates the spotting; your judgment does the correlation and response."),
+            .checkpoint(QuizQuestion(
+                "In an auth log, which pattern most strongly signals a compromised account?",
+                options: [
+                    "A single failed login",
+                    "Many failed logins followed by a success, all from the same external IP against a privileged account",
+                    "A successful login from a known internal host",
+                    "A 200 response on an image"
+                ],
+                correct: 1,
+                why: "A burst of failures then a success from one foreign IP against admin is the signature of a successful brute force — the correlation, not any single line, tells the story."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is log analysis fundamentally about?",
+                options: [
+                    "Deleting old logs to save space",
+                    "Separating malicious signal from normal noise by spotting deviations from a baseline",
+                    "Encrypting log files",
+                    "Making logs look nicer"
+                ],
+                correct: 1,
+                why: "Detection is deviation from normal. Log analysis finds the abnormal events (and the sequences they form) amid the flood of routine activity — the raw skill a SIEM automates."),
+            QuizQuestion(
+                "Why is a baseline of normal activity important?",
+                options: [
+                    "It encrypts the data",
+                    "Detection is deviation from normal — knowing normal makes the abnormal stand out",
+                    "It speeds up the network",
+                    "It replaces the firewall"
+                ],
+                correct: 1,
+                why: "Without knowing what's normal, everything looks equally (un)suspicious. A baseline is the reference point that lets anomalies surface quickly."),
+            QuizQuestion(
+                "You confirm an account was just brute-forced and the attacker is likely active. What's the right first move?",
+                options: [
+                    "Delete the logs",
+                    "Contain — disable the account and revoke its sessions — then investigate, preserving evidence",
+                    "Wait a week",
+                    "Warn the attacker"
+                ],
+                correct: 1,
+                why: "Containment comes first: cut the attacker's access without destroying evidence, then scope and remediate. Deleting logs destroys the forensics you need and leaves the attacker in.")
         ]
     )
 }
