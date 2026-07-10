@@ -12,6 +12,7 @@ struct ProfileView: View {
                     rankCard
                     statsGrid
                     trackProgress
+                    savedLink
                     glossaryLink
                     aboutCard
                     resetButton
@@ -107,6 +108,24 @@ struct ProfileView: View {
             }
         }
         .cipherCard()
+    }
+
+    private var savedLink: some View {
+        NavigationLink { SavedLessonsView() } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "bookmark.fill").font(.system(size: 18)).foregroundStyle(Theme.amber).frame(width: 26)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Saved lessons").font(Theme.rounded(16, .bold)).foregroundStyle(Theme.textPrimary)
+                    Text(progress.bookmarked.isEmpty ? "Bookmark lessons to build a reading list"
+                                                     : "\(progress.bookmarked.count) lesson\(progress.bookmarked.count == 1 ? "" : "s") saved")
+                        .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.textDim)
+            }
+            .cipherCard()
+        }
+        .buttonStyle(.plain)
     }
 
     private var glossaryLink: some View {

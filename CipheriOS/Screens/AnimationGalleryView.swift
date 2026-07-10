@@ -5,10 +5,12 @@ import SwiftUI
 struct AnimationGalleryView: View {
     private let groups: [(title: String, accent: Color, ids: [AnimationID])] = [
         ("Fundamentals", Theme.teal,
-         [.osiModel, .tcpHandshake, .packetTravel, .symmetricEncryption, .publicKeyExchange, .hashing,
+         [.ciaTriad, .threatActors, .osiModel, .tcpHandshake, .packetTravel, .symmetricEncryption, .publicKeyExchange, .hashing,
           .processMemory, .certChain, .tlsHandshake, .steganography,
           .xorCipher, .sqlQuery, .regexMatch, .mfaFactors, .vmContainer,
-          .compilePipeline, .entropyRng]),
+          .compilePipeline, .entropyRng,
+          .numberBases, .endianness, .charEncoding, .booleanLogic,
+          .filePermissions, .saltHashing]),
         ("Networking", Theme.violet,
          [.internetMap, .ipAddressing, .subnetMask, .dnsResolution, .defaultGateway, .routingHops,
           .natTranslation, .dhcpLease, .tcpVsUdp, .wifiConnect, .vpnTunnel, .firewallFilter,
@@ -20,11 +22,11 @@ struct AnimationGalleryView: View {
           .privilegeEscalation, .tokenTheft, .passwordCracking, .kerberoasting, .lateralMovement, .adcsEsc1,
           .bufferOverflow, .reverseEngineering, .paddingOracle, .c2Beacon, .dnsTunneling, .supplyChain,
           .aitmProxy, .promptInjection, .clickjacking, .cachePoisoning, .bleAttack, .rfidClone,
-          .ddosAmplification, .corsMisconfig, .bucketExposure, .badusbInject, .dllHijack]),
+          .ddosAmplification, .corsMisconfig, .bucketExposure, .badusbInject, .dllHijack, .socialEngineering]),
         ("Blue Team", Theme.blue,
          [.defenseInDepth, .siemPipeline, .idsDetection, .secureSdlc, .incidentResponse, .mitreAttack,
           .threatHunting, .threatModeling, .purpleTeam, .ransomwareRecovery, .soarPlaybook, .secretsVault,
-          .nistCsf, .riskMatrix, .yaraMatch])
+          .nistCsf, .riskMatrix, .yaraMatch, .logAnalysis])
     ]
 
     var body: some View {

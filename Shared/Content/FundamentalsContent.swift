@@ -10,7 +10,7 @@ enum FundamentalsContent {
         kind: .fundamentals,
         title: "Fundamentals",
         tagline: "Mindset, the shell, networks & crypto — the ground floor of everything.",
-        modules: [mindset, shell, os, networking, encoding, crypto, web, windows, code, identity, machine]
+        modules: [mindset, core, shell, os, networking, encoding, crypto, web, windows, code, identity, machine]
     )
 
     // MARK: F6 — Code & data foundations
@@ -20,7 +20,69 @@ enum FundamentalsContent {
         title: "Code & Data",
         summary: "The literacy under every exploit: bitwise logic and XOR, how databases answer questions in SQL, and the regular expressions that find structure in text.",
         systemImage: "chevron.left.forwardslash.chevron.right",
-        lessons: [bitwiseLesson, databasesLesson, regexLesson]
+        lessons: [numberSystemsLesson, bitwiseLesson, databasesLesson, regexLesson]
+    )
+
+    private static let numberSystemsLesson = Lesson(
+        id: "fund-number-systems",
+        title: "Number Systems: Binary, Decimal & Hex",
+        subtitle: "Why hackers count in twos and sixteens — and how to convert in your head.",
+        minutes: 10,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Three ways to write one number"),
+            .paragraph("Computers only really have two states — on and off, 1 and 0 — so at the lowest level everything is counted in **binary** (base-2). Humans count in **decimal** (base-10). And hackers live in **hexadecimal** (base-16), because it's the shortest way to write raw bytes. The number seventy-seven is `77` in decimal, `01001101` in binary and `0x4D` in hex — three costumes on one value. Getting fluent moving between them is the quiet skill under hashes, packets, colours and exploits."),
+            .animation(.numberBases, caption: "The set bits' place values (64 + 8 + 4 + 1) add up to 77; group the eight bits into two nibbles and you can read the hex 0x4D straight off."),
+            .heading("Binary: place values are powers of two"),
+            .paragraph("Decimal columns are worth 1, 10, 100… (powers of ten). Binary columns are worth 1, 2, 4, 8, 16, 32, 64, 128 — powers of two. To read a binary byte, add up the place values wherever there's a 1. `01001101` = 64 + 8 + 4 + 1 = 77. To go the other way, subtract the biggest power of two that fits, and repeat."),
+            .keyPoints([
+                "A bit is one 0/1 digit; 8 bits make a byte, which holds 0–255.",
+                "Place values double left-to-right: 128 64 32 16 8 4 2 1.",
+                "Read binary → decimal by summing the place values under each 1.",
+                "The high bit (128s place) is why a signed byte flips to negative — 'two's complement'."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "python3 -c \"print(bin(77), hex(77), int('0x4d',16))\"",
+                      output: """
+0b1001101 0x4d 77
+# bin() and hex() convert from decimal; int(s,16) parses hex back
+"""),
+            .heading("Hex: base-16, the bridge to bytes"),
+            .paragraph("Hex uses sixteen digits: `0`–`9` then `a`–`f` (where `a`=10 … `f`=15). Its superpower is that **one hex digit is exactly four bits** (a *nibble*), so **one byte is exactly two hex digits**. That clean mapping is why hashes, MAC addresses, memory dumps and colour codes are all written in hex — it's binary you can actually read."),
+            .definition(term: "Nibble", meaning: "Half a byte — 4 bits — which represents exactly one hexadecimal digit (0–f). Two nibbles make a byte, so `0x4D` is the nibble `4` (0100) followed by the nibble `D` (1101)."),
+            .callout(.tip, "The `0x` prefix means 'what follows is hex' (and `0b` means binary). When you see `#FF6600` in CSS, `de:ad:be:ef` in a MAC, or a 64-character SHA-256, you're reading hex — pairs of digits, each pair one byte."),
+            .heading("Endianness: how bytes sit in memory"),
+            .paragraph("Once a value is more than one byte, a second question appears: in what *order* are the bytes stored? **Big-endian** writes the most-significant byte first (the way we write numbers); **little-endian** — used by x86 and most ARM — writes the least-significant byte first. It's why a 4-byte integer often looks 'backwards' in a hex dump, and why you write shellcode addresses in reverse."),
+            .animation(.endianness, caption: "0x1A2B3C4D stored big-endian reads 1A 2B 3C 4D low-to-high; little-endian flips it to 4D 3C 2B 1A."),
+            .callout(.warning, "Byte order trips up everyone once. Network protocols use big-endian ('network byte order'); your laptop's CPU is almost certainly little-endian. When a captured value looks reversed, suspect endianness before assuming corruption."),
+            .checkpoint(QuizQuestion(
+                "What is the decimal value of the binary byte `00101010`?",
+                options: ["21", "42", "84", "168"],
+                correct: 1,
+                why: "The 1s sit in the 32, 8 and 2 columns: 32 + 8 + 2 = 42. (In hex that byte is 0x2A.)"))
+        ],
+        quiz: [
+            QuizQuestion(
+                "Why is hexadecimal the natural way to write raw bytes?",
+                options: [
+                    "Hex numbers are always smaller",
+                    "One hex digit maps to exactly 4 bits, so one byte is exactly two hex digits",
+                    "Computers store data in hex",
+                    "Hex can't represent letters"
+                ],
+                correct: 1,
+                why: "A hex digit encodes 4 bits (a nibble), so two hex digits encode one byte with no loss — a clean, compact view of binary that decimal can't give."),
+            QuizQuestion(
+                "A little-endian CPU stores the 32-bit value 0x1A2B3C4D starting at the lowest address as…",
+                options: ["1A 2B 3C 4D", "4D 3C 2B 1A", "2B 1A 4D 3C", "4D 1A 2B 3C"],
+                correct: 1,
+                why: "Little-endian writes the least-significant byte (4D) first, so the bytes appear reversed: 4D 3C 2B 1A. Big-endian would keep the human order 1A 2B 3C 4D."),
+            QuizQuestion(
+                "How many bits are in one hexadecimal digit?",
+                options: ["2", "4", "8", "16"],
+                correct: 1,
+                why: "One hex digit represents 4 bits (a nibble), covering values 0–15 (0–f). Eight bits — a byte — therefore need two hex digits.")
+        ]
     )
 
     private static let bitwiseLesson = Lesson(
@@ -38,6 +100,8 @@ enum FundamentalsContent {
                 "XOR (^) — 1 if the bits differ. Self-inverse: a ^ b ^ b == a.",
                 "NOT (~) — flips every bit. Shifts (<< >>) move bits left/right, multiplying or dividing by powers of two."
             ]),
+            .animation(.booleanLogic, caption: "Every input pair run through AND, OR, XOR and NOT — the truth tables you'll apply to permission bits, TCP flags and cipher keystreams."),
+            .callout(.info, "Worked example — masking: a packet's flags byte is `0b0101_0011`. To test only the 'SYN' bit (value 0x02) you AND with the mask: `0b0101_0011 & 0b0000_0010 = 0b0000_0010` — non-zero, so SYN is set. To *clear* it, AND with the inverted mask (`& ~0x02`). AND reads and clears bits; OR sets them."),
             .heading("Why XOR is everywhere in crypto"),
             .paragraph("XOR has a magical property: applying the same value twice cancels out. So if you XOR plaintext with a key to get ciphertext, XOR-ing the ciphertext with the *same* key returns the plaintext. That single fact is the heart of stream ciphers, one-time pads, and a thousand CTF challenges."),
             .animation(.xorCipher, caption: "Plaintext XOR key gives ciphertext; XOR-ing again with the same key reverses it perfectly back to the original byte."),
@@ -246,7 +310,7 @@ backup.env:c2VjcmV0LXRva2VuLXZhbHVlLWRvLW5vdC1jb21t
         title: "Systems & the Shell",
         summary: "The Linux command line is the cockpit of security work — learn to move, inspect and control a system from the terminal.",
         systemImage: "terminal",
-        lessons: [linuxLesson]
+        lessons: [linuxLesson, permissionsLesson]
     )
 
     private static let linuxLesson = Lesson(
@@ -340,6 +404,80 @@ drwxr-xr-x 133 root root 12288 Jun  9 10:02 .
                 ],
                 correct: 1,
                 why: "`find <path> -name <pattern>` walks a directory tree searching by filename. grep searches *inside* files for text; ls and cat only act on paths you already know.")
+        ]
+    )
+
+    private static let permissionsLesson = Lesson(
+        id: "fund-permissions",
+        title: "Linux Permissions & Ownership",
+        subtitle: "The rwx bits that decide who reads your secrets — and how one wrong bit becomes root.",
+        minutes: 11,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Who can do what, to what"),
+            .paragraph("On Linux, every file and directory carries permissions for three classes of user: the **owner**, the **group**, and **everyone else** ('other'). Each class gets three bits — **read (r)**, **write (w)** and **execute (x)**. That's the `-rwxr-xr--` string `ls -l` shows. Reading it fluently is one of the highest-value skills on a box: misconfigured permissions are the single most common way a low-privilege foothold quietly becomes root."),
+            .animation(.filePermissions, caption: "Score each rwx triple — r=4, w=2, x=1 — and -rwxr-xr-- becomes the octal 754 you'd hand to chmod."),
+            .heading("Reading the ten characters"),
+            .paragraph("The first character is the *type* (`-` file, `d` directory, `l` symlink). The next nine are three rwx triples — owner, group, other. On a **directory**, the bits mean something subtly different: `x` means 'may enter/traverse', and `w` means 'may add or delete files inside' — which is why a world-writable directory is dangerous even if the files in it aren't."),
+            .keyPoints([
+                "Order is always owner → group → other, each r w x.",
+                "Octal shorthand: r=4, w=2, x=1, summed per triple. rwx=7, rw-=6, r-x=5, r--=4.",
+                "So -rwxr-xr-- = 754; -rw-r--r-- = 644; -rwx------ = 700.",
+                "chmod changes permissions; chown changes owner; chgrp changes group.",
+                "On a directory, x = 'can cd into it', w = 'can create/delete files within'."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "ls -l secret.txt && chmod 640 secret.txt && ls -l secret.txt",
+                      output: """
+-rw-r--r-- 1 alice alice  57 Jul  9 10:02 secret.txt
+-rw-r----- 1 alice alice  57 Jul  9 10:02 secret.txt
+# 640 = owner rw-, group r--, other --- : others can no longer read it
+"""),
+            .heading("The special bits: SUID, SGID & sticky"),
+            .paragraph("Beyond rwx there are three special bits, and the first one is a hacker's favourite. **SUID** (`s` in the owner's execute slot) makes a program run with the *owner's* privileges, not the caller's. That's legitimate for tools like `passwd` (which must edit root-owned files), but a SUID binary that shouldn't be one — or one that can be tricked into running a shell — is a textbook privilege-escalation path."),
+            .definition(term: "SUID / SGID", meaning: "Set-User-ID / Set-Group-ID bits. An executable with SUID root runs as root no matter who launches it. Enumerating unexpected SUID binaries (`find / -perm -4000`) is one of the first things a Red Teamer does on a foothold — GTFOBins catalogs which ones can be abused into a root shell."),
+            .terminal(prompt: "kali@lab",
+                      command: "find / -perm -4000 -type f 2>/dev/null",
+                      output: """
+/usr/bin/sudo
+/usr/bin/passwd
+/usr/bin/pkexec
+/usr/local/bin/backup      <-- custom SUID root binary — investigate!
+"""),
+            .callout(.danger, "Two classic privesc wins: (1) a **SUID binary** you can abuse (check it against GTFOBins), and (2) a **world-writable file** that a privileged process trusts — a writable cron script, a writable `/etc/passwd`, or a writable directory in root's PATH. Permissions are where 'I'm just a normal user' turns into 'I'm root'."),
+            .callout(.tip, "New files don't get their permissions from thin air — the **umask** subtracts bits from the default. A umask of 022 turns default 666 files into 644 and 777 directories into 755. If you find a service creating world-writable files, a loose umask is often the cause."),
+            .checkpoint(QuizQuestion(
+                "A file shows `-rw-rw-r--`. What is its octal permission?",
+                options: ["644", "664", "666", "764"],
+                correct: 1,
+                why: "owner rw- = 6, group rw- = 6, other r-- = 4 → 664. (r=4, w=2, x=1, summed per triple.)"))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does the octal permission 750 mean?",
+                options: [
+                    "owner rwx, group r-x, other ---",
+                    "owner rwx, group rwx, other r--",
+                    "owner rw-, group r--, other ---",
+                    "everyone can read, write and execute"
+                ],
+                correct: 0,
+                why: "7 = rwx (owner), 5 = r-x (group), 0 = --- (other). So the owner has full access, the group can read and execute, and others get nothing."),
+            QuizQuestion(
+                "Why is a SUID-root binary interesting to an attacker?",
+                options: [
+                    "It runs faster",
+                    "It executes with root's privileges regardless of who launches it, so abusing it can yield a root shell",
+                    "It can't be deleted",
+                    "It encrypts its output"
+                ],
+                correct: 1,
+                why: "SUID makes a program run as its owner (often root). If such a binary can be coerced into running arbitrary commands, the caller gains the owner's privileges — a direct path to privilege escalation."),
+            QuizQuestion(
+                "On a directory, which permission lets a user create and delete files inside it?",
+                options: ["read (r)", "write (w)", "execute (x)", "the SUID bit"],
+                correct: 1,
+                why: "On directories, write (w) governs adding and removing entries; execute (x) lets you traverse into it; read (r) lets you list its contents. That's why a world-writable directory is risky.")
         ]
     )
 
@@ -619,7 +757,71 @@ Cookie: session=8f3b...   <-- plaintext over HTTP!
         title: "Data & Encoding",
         summary: "Bits, bytes, hex and Base64 — how data is dressed up for transport, and why recognizing an encoding is a daily hacking skill.",
         systemImage: "number",
-        lessons: [encodingLesson, stegoLesson]
+        lessons: [encodingLesson, charsetsLesson, stegoLesson]
+    )
+
+    private static let charsetsLesson = Lesson(
+        id: "fund-charsets",
+        title: "Characters: ASCII, Unicode & UTF-8",
+        subtitle: "How letters, emoji and every script on earth become bytes — and the attacks that hide in the gaps.",
+        minutes: 9,
+        difficulty: .foundational,
+        blocks: [
+            .heading("A character is not a byte"),
+            .paragraph("It's tempting to think the letter `A` *is* a byte. It isn't. There are three separate ideas here, and security bugs love to hide between them: the **character** (an abstract letter or symbol), its **code point** (the number Unicode assigns it — `A` is U+0041), and the **encoding** that turns that number into actual bytes on disk or the wire. Confusing the three is how filters get bypassed and how 'the same' username sneaks past a uniqueness check."),
+            .animation(.charEncoding, caption: "Each character maps to a Unicode code point, which UTF-8 then encodes into bytes: 'A' fits in one, 'é' needs two, '→' needs three."),
+            .heading("ASCII: the original 128"),
+            .paragraph("**ASCII** is the granddaddy: it assigns the numbers 0–127 to English letters, digits, punctuation and a handful of control characters. `A` = 65, `a` = 97, `0` = 48, space = 32. Because 127 fits in 7 bits, every ASCII character is one byte with the top bit clear. This is the table behind `chr()`/`ord()`, and behind the classic trick of adding 32 to flip a letter's case."),
+            .keyPoints([
+                "Uppercase A–Z = 65–90; lowercase a–z = 97–122 (exactly 32 apart).",
+                "Digits '0'–'9' = 48–57 — note '0' is 48, not 0.",
+                "Bytes 0–31 are non-printable control characters (newline = 10, tab = 9, NUL = 0).",
+                "'Printable ASCII' (32–126) is what strings, passwords and CTF flags usually live in."
+            ]),
+            .terminal(prompt: "kali@lab",
+                      command: "python3 -c \"print(ord('A'), chr(0x41), 'A'.encode('utf-8'), '→'.encode('utf-8'))\"",
+                      output: """
+65 A b'A' b'\\xe2\\x86\\x92'
+# 'A' is one byte (0x41); '→' is three UTF-8 bytes
+"""),
+            .heading("Unicode & UTF-8: room for everything"),
+            .paragraph("ASCII's 128 slots can't hold Chinese, Arabic, emoji or `→`. **Unicode** fixes that by giving every character on earth a unique code point (over a million possible). **UTF-8** is the encoding that turns those code points into bytes — and its genius is being *backwards-compatible*: code points 0–127 encode as a single byte identical to ASCII, while higher ones use 2–4 bytes. That's why English text is the same size in ASCII and UTF-8, but an emoji is four bytes."),
+            .definition(term: "Code point vs encoding", meaning: "A code point is the abstract number Unicode assigns a character (U+2192 for '→'). An encoding (UTF-8, UTF-16) is the concrete rule for storing that number as bytes. One code point can be many byte-sequences depending on the encoding — so 'length' means different things for characters vs bytes."),
+            .callout(.danger, "Character handling is a real attack surface. **Homoglyphs** — а Cyrillic 'а' that looks identical to Latin 'a' — defeat look-alike domain and username checks. **Overlong / malformed UTF-8** once smuggled `../` past path filters that only checked for the ASCII bytes. **Unicode normalization** can turn a safe-looking string into a dangerous one after the check has passed. Validate and normalize on the code-point level, not by eyeballing glyphs."),
+            .callout(.tip, "When a payload won't land, check the encoding layer. A `%` -sprinkled string is URL-encoded; `\\uXXXX` is a JSON/JS unicode escape; `&#65;` is an HTML entity for 'A'. Decoding to the real code points often reveals the filter bypass — the same character wearing a costume the blocklist didn't recognize."),
+            .checkpoint(QuizQuestion(
+                "The character 'A' is code point U+0041. How many bytes does it take in UTF-8?",
+                options: ["One", "Two", "Four", "It depends on the font"],
+                correct: 0,
+                why: "Code points 0–127 (all of ASCII, including U+0041) encode as a single UTF-8 byte identical to their ASCII value. Only higher code points need 2–4 bytes."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What is the difference between a Unicode code point and UTF-8?",
+                options: [
+                    "They are two names for the same thing",
+                    "A code point is the number assigned to a character; UTF-8 is a rule for encoding that number as bytes",
+                    "UTF-8 is older than Unicode",
+                    "A code point is always one byte"
+                ],
+                correct: 1,
+                why: "Unicode assigns each character an abstract number (its code point); UTF-8 is one way to serialize that number into 1–4 bytes. The same code point encodes differently under UTF-8 vs UTF-16."),
+            QuizQuestion(
+                "Why is UTF-8 backwards-compatible with ASCII?",
+                options: [
+                    "It ignores non-English text",
+                    "Code points 0–127 encode as a single byte identical to their ASCII value",
+                    "It stores everything in four bytes",
+                    "ASCII was redesigned to match UTF-8"
+                ],
+                correct: 1,
+                why: "UTF-8 encodes the first 128 code points as one byte with the same value as ASCII, so any pure-ASCII file is already valid UTF-8 — a key reason UTF-8 won."),
+            QuizQuestion(
+                "A phishing domain uses a Cyrillic 'а' that looks exactly like a Latin 'a'. This attack is called…",
+                options: ["Overflow", "A homoglyph (look-alike) attack", "Base64 smuggling", "A hash collision"],
+                correct: 1,
+                why: "Different code points can render as visually identical glyphs (homoglyphs). Attackers exploit this to register look-alike domains/usernames that pass a human's eye but are a different string underneath.")
+        ]
     )
 
     private static let stegoLesson = Lesson(
@@ -883,6 +1085,14 @@ ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f  -
 """),
             .heading("So why do passwords still leak?"),
             .paragraph("Because humans reuse weak passwords and attackers don't reverse the hash — they *guess*. They hash millions of candidate passwords and compare. Worse, identical passwords produce identical hashes, so attackers precompute giant lookup tables (rainbow tables). The defense is a **salt**: a unique random value mixed into each password before hashing, so the same password yields a different hash for every user — killing precomputation."),
+            .animation(.saltHashing, caption: "Alice and Bob both pick 'hunter2': unsalted their hashes are identical (crack one, crack both); a unique salt each makes the digests diverge."),
+            .terminal(prompt: "kali@lab",
+                      command: "# same password, a unique random salt per user\nsha256('hunter2' + 'f3a9')   # alice\nsha256('hunter2' + '7c1e')   # bob",
+                      output: """
+alice → 1a2f…9c   (salt f3a9)
+bob   → b833…40   (salt 7c1e)
+# identical passwords, different salts → different hashes
+"""),
             .keyPoints([
                 "Salt — unique random data per user; defeats rainbow tables and reveals nothing if two users share a password.",
                 "Slow hashes — bcrypt, scrypt, Argon2 are deliberately expensive, so guessing is painfully slow.",
@@ -1628,6 +1838,206 @@ Encoded: $argon2id$v=19$m=65536,t=3,p=1$NWE3Y2…$Jt0c…hash…
                 ],
                 correct: 1,
                 why: "Only a cryptographically secure RNG provides the unpredictability keys require. General-purpose rand()/Math.random() are predictable and must never be used for secrets.")
+        ]
+    )
+
+    // MARK: F2.5 — Core security concepts
+
+    private static let core = Module(
+        id: "fund-core",
+        title: "Core Security Concepts",
+        summary: "The vocabulary every conversation in security assumes: what we're protecting (the CIA triad), who we're protecting it from, and how to actually learn this field.",
+        systemImage: "shield.checkerboard",
+        lessons: [ciaLesson, threatActorsLesson, journeyLesson]
+    )
+
+    private static let ciaLesson = Lesson(
+        id: "fund-cia",
+        title: "The CIA Triad",
+        subtitle: "The three properties every security control exists to protect — your mental compass for the whole field.",
+        minutes: 8,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Three letters that organise everything"),
+            .paragraph("Ask what 'security' actually means and the answer is the **CIA triad**: Confidentiality, Integrity and Availability. Every threat attacks one of these, and every control defends one of them. It has nothing to do with the agency — it's the compass that lets you reason about any security question by asking 'which property is at risk here?'"),
+            .animation(.ciaTriad, caption: "Each property in turn — the attack that breaks it and the control that protects it. Every security decision traces back to one of the three."),
+            .keyPoints([
+                "Confidentiality — only authorised people can read the data. Defended by encryption, access control, least privilege.",
+                "Integrity — data is accurate and unaltered. Defended by hashing, digital signatures, validation.",
+                "Availability — the system is up when it's needed. Defended by redundancy, backups, DoS protection.",
+                "Every attack maps to one: data theft breaks C, tampering breaks I, ransomware/DoS breaks A.",
+                "The three trade off — locking something down (C) too hard can hurt availability (A); good security balances them."
+            ]),
+            .definition(term: "Non-repudiation & authenticity", meaning: "Two properties often added alongside the triad. Authenticity means a message really is from who it claims; non-repudiation means the sender can't later deny it. Digital signatures provide both — which is why they show up everywhere from TLS to secure email."),
+            .callout(.tip, "When you meet any new attack in this app, pause and ask: which of C, I or A does it break? Phishing → confidentiality (steals credentials). Ransomware → availability (and now confidentiality too). SQL injection → all three. It instantly frames what's at stake."),
+            .callout(.info, "The opposite of the triad is sometimes called the DAD triad — Disclosure, Alteration, Destruction — the three things attackers want to do. Defenders protect C/I/A; attackers pursue D/A/D. Same coin, two sides."),
+            .checkpoint(QuizQuestion(
+                "A ransomware attack encrypts a hospital's files so staff can't open them. Which CIA property is most directly attacked?",
+                options: ["Confidentiality", "Integrity", "Availability", "Authenticity"],
+                correct: 2,
+                why: "Locking legitimate users out of data they need is an attack on Availability. (Modern ransomware also steals data first, adding a Confidentiality hit — 'double extortion'.)"))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What does the CIA triad stand for?",
+                options: [
+                    "Central Intelligence Agency",
+                    "Confidentiality, Integrity, Availability",
+                    "Control, Identify, Authorize",
+                    "Cipher, Identity, Access"
+                ],
+                correct: 1,
+                why: "The triad is Confidentiality, Integrity and Availability — the three core properties security exists to protect, and the lens for reasoning about any threat."),
+            QuizQuestion(
+                "Tampering with a bank transfer's amount in transit is an attack on which property?",
+                options: ["Confidentiality", "Integrity", "Availability", "None"],
+                correct: 1,
+                why: "Altering data so it's no longer accurate breaks Integrity. Hashing and digital signatures detect such tampering, which is why they protect transactions."),
+            QuizQuestion(
+                "Why can over-tightening confidentiality hurt a system?",
+                options: [
+                    "It can't",
+                    "Excessive locking-down can reduce availability — legitimate users struggle to get the access they need",
+                    "It improves availability",
+                    "It removes the need for backups"
+                ],
+                correct: 1,
+                why: "The triad's properties trade off. Controls so strict that authorised users can't work undermine Availability, so good security balances all three rather than maximising one.")
+        ]
+    )
+
+    private static let threatActorsLesson = Lesson(
+        id: "fund-threat-actors",
+        title: "Threat Actors & Motivations",
+        subtitle: "Who attacks, why they do it, and why naming your adversary changes how you defend.",
+        minutes: 8,
+        difficulty: .foundational,
+        blocks: [
+            .heading("Know your adversary"),
+            .paragraph("'Hackers' is far too broad to be useful. Defenders think in **threat actors** — categories of attacker defined by their capability, resources and, above all, **motivation**. Who is likely to target you shapes everything: a hobby blog and a defence contractor face completely different adversaries and need completely different defences."),
+            .animation(.threatActors, caption: "The spectrum from script kiddies to nation-state APTs — capability and resources climb, and the motive shifts from kicks to money to espionage."),
+            .keyPoints([
+                "Script kiddies — low skill, run others' tools for thrills or notoriety. High volume, low sophistication.",
+                "Hacktivists — driven by ideology; defacement, leaks and DoS to make a statement.",
+                "Cybercriminals — in it for money: ransomware, fraud, data theft. The largest everyday threat to most orgs.",
+                "Insiders — employees or contractors with legitimate access and a grievance (or who are bribed/tricked).",
+                "Nation-state / APTs — Advanced Persistent Threats: extremely well-resourced, patient, after espionage or sabotage."
+            ]),
+            .definition(term: "APT (Advanced Persistent Threat)", meaning: "A well-funded, highly capable adversary — usually nation-state-backed — that targets a specific organisation and stays hidden for a long time to achieve a strategic goal. 'Advanced' = sophisticated tooling, 'Persistent' = patient and goal-driven, 'Threat' = a real, directed human adversary, not opportunistic malware."),
+            .callout(.tip, "Threat modeling starts with this question: who would realistically attack us, and what do they want? Defending a small business against opportunistic ransomware looks very different from defending a bank against a nation-state. Match the defence to the adversary."),
+            .callout(.info, "Vocabulary worth separating: a threat actor is the who; a threat is a possible bad event; a vulnerability is the weakness; an exploit is the technique that uses it; and risk is the likelihood and impact of it all combining. You'll see these terms throughout the app."),
+            .checkpoint(QuizQuestion(
+                "What best characterises a nation-state APT compared to a cybercriminal?",
+                options: [
+                    "They only use off-the-shelf tools",
+                    "They are well-resourced and patient, targeting specific victims for espionage or sabotage rather than quick money",
+                    "They are less skilled",
+                    "They never stay hidden"
+                ],
+                correct: 1,
+                why: "APTs are defined by resources, patience and strategic goals — persistent, targeted intrusions for espionage/sabotage — whereas most cybercriminals optimise for fast financial return at scale."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What primarily distinguishes one threat actor category from another?",
+                options: [
+                    "Their programming language",
+                    "Their capability, resources and motivation",
+                    "The country they live in",
+                    "The time of day they attack"
+                ],
+                correct: 1,
+                why: "Threat actors are grouped by how capable and resourced they are and what motivates them — which is what lets defenders anticipate who might target them and how."),
+            QuizQuestion(
+                "What motivates most cybercriminals?",
+                options: ["Ideology", "Money", "Curiosity", "Espionage"],
+                correct: 1,
+                why: "Cybercriminals are financially motivated — ransomware, fraud and data theft for profit. (Ideology drives hacktivists; espionage drives nation-states.)"),
+            QuizQuestion(
+                "In the standard vocabulary, what is a 'vulnerability'?",
+                options: [
+                    "The attacker",
+                    "A weakness that could be exploited",
+                    "The technique used to attack",
+                    "The likelihood of an attack"
+                ],
+                correct: 1,
+                why: "A vulnerability is the weakness itself. An exploit is the technique that abuses it, a threat actor is the who, and risk is the likelihood × impact of it all coming together.")
+        ]
+    )
+
+    private static let journeyLesson = Lesson(
+        id: "fund-journey",
+        title: "How to Learn Cyber: Your Roadmap",
+        subtitle: "Turn curiosity into skill — how to actually study this field, build a lab, and practise legally.",
+        minutes: 9,
+        difficulty: .foundational,
+        blocks: [
+            .heading("The field is huge — that's good news"),
+            .paragraph("Cybersecurity is vast, which can feel overwhelming, but it means there's a place for every kind of mind — breakers and builders, generalists and deep specialists. You don't learn it all at once. You build a foundation, pick a direction, and go deep through **practice**. This lesson is the meta-skill: how to learn the rest."),
+            .heading("Follow a path, don't wander"),
+            .paragraph("The fastest way to stall is to bounce between random topics. Pick a **learning path** that matches where you want to go and follow it in order — each lesson builds on the last. Breadth first (the fundamentals), then depth in a direction that excites you: web, red team, blue team, networks or cloud."),
+            .keyPoints([
+                "Foundations first — networking, the shell, how the web works, and core concepts like the CIA triad.",
+                "Pick a direction — offensive (red), defensive (blue), or a specialism like web or cloud. You can switch later.",
+                "Learn by doing — reading is not enough; you only really learn security by getting hands-on.",
+                "Build in public — write up what you learn; teaching cements it and builds a portfolio.",
+                "Consistency beats intensity — a little every day (hello, streaks) outperforms occasional cramming."
+            ]),
+            .callout(.lab, "Build a home lab. A couple of virtual machines (a Kali attacker and a deliberately vulnerable target) on free tools like VirtualBox give you a safe, legal place to try everything in this app. Snapshots let you break things and roll back."),
+            .heading("Practise legally — this matters"),
+            .paragraph("Everything offensive in this app is for **authorized testing only**. Never point a tool at a system you don't own or have explicit written permission to test — that's a crime in most of the world, regardless of intent. The good news: there are endless legal playgrounds built exactly for this."),
+            .keyPoints([
+                "Capture The Flag (CTF) events — gamified challenges; the fastest, safest way to drill skills.",
+                "Practice platforms — TryHackMe (guided, beginner-friendly) and Hack The Box (less hand-holding).",
+                "Your own lab — VMs you own, or intentionally-vulnerable apps like OWASP Juice Shop and Metasploitable.",
+                "Bug bounty programs — once you're skilled, get paid to find real bugs, strictly within a program's scope.",
+                "Certifications — signposts, not the goal: CompTIA Security+ (broad start), then role-specific ones (OSCP for pentest, BTL1/blue for defense)."
+            ]),
+            .callout(.tip, "Imposter syndrome is universal in this field — everyone is googling things constantly. The experts aren't the ones who know everything; they're the ones who've gotten comfortable not knowing and figuring it out. Curiosity and persistence beat raw talent."),
+            .callout(.danger, "One rule above all: get authorization in writing before testing anything you don't own. 'I was just learning' is not a legal defence. Keep your practice to labs, CTFs and platforms built for it — and your skills stay an asset, never a liability."),
+            .checkpoint(QuizQuestion(
+                "You want to practise the web attacks from this app. Which is the safe, legal way to do it?",
+                options: [
+                    "Try them on a popular website to see if they work",
+                    "Use a platform built for it (TryHackMe, Hack The Box) or your own vulnerable VM",
+                    "Test a friend's site without telling them",
+                    "Scan random IP addresses"
+                ],
+                correct: 1,
+                why: "Only practise on systems you own or are explicitly authorised to test. Purpose-built platforms and your own lab VMs give you legal targets; touching anything else without written permission is a crime."))
+        ],
+        quiz: [
+            QuizQuestion(
+                "What's the most effective overall approach to learning cybersecurity?",
+                options: [
+                    "Memorise as many tools as possible",
+                    "Build foundations, follow a path in order, and learn by doing — consistently",
+                    "Jump straight to advanced exploits",
+                    "Only read, never practise"
+                ],
+                correct: 1,
+                why: "Structured progression (foundations → a chosen path) plus hands-on practice, done consistently, is what builds durable skill. Random tool-collecting and pure reading don't stick."),
+            QuizQuestion(
+                "Where should you practise offensive techniques?",
+                options: [
+                    "On any website you find interesting",
+                    "On platforms built for it (CTFs, TryHackMe, Hack The Box) or systems you own",
+                    "On your employer's production systems without asking",
+                    "On public Wi-Fi networks"
+                ],
+                correct: 1,
+                why: "Authorized, purpose-built environments and your own lab are the only legal places to practise. Testing systems you don't own or have permission for is illegal regardless of intent."),
+            QuizQuestion(
+                "How should you think about certifications?",
+                options: [
+                    "They are the entire goal",
+                    "They're useful signposts and door-openers, but skill from practice is what matters",
+                    "They're worthless",
+                    "You need them all before learning anything"
+                ],
+                correct: 1,
+                why: "Certs (Security+, OSCP, blue-team tracks) help structure learning and pass HR filters, but they signpost skill rather than replace it — hands-on ability is the real currency.")
         ]
     )
 }

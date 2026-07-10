@@ -42,6 +42,9 @@ struct LessonBlockView: View {
         case .animation(let id, let caption):
             AnimationView(id: id, caption: caption)
 
+        case .interactiveLab(let lab):
+            InteractiveLabView(lab: lab, accent: accent)
+
         case .checkpoint(let question):
             InlineCheckpoint(question: question, accent: accent)
         }

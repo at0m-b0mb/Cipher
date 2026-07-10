@@ -94,6 +94,19 @@ struct AnimationView: View {
         case .nistCsf:             NistCsfView()
         case .riskMatrix:          RiskMatrixView()
         case .yaraMatch:           YaraMatchView()
+        // Expansion wave 7
+        case .ciaTriad:            CiaTriadView()
+        case .threatActors:        ThreatActorsView()
+        // Expansion wave 8
+        case .socialEngineering:   SocialEngineeringView()
+        case .logAnalysis:         LogAnalysisView()
+        // Expansion wave 9
+        case .numberBases:         NumberBasesView()
+        case .endianness:          EndiannessView()
+        case .charEncoding:        CharEncodingView()
+        case .filePermissions:     FilePermissionsView()
+        case .booleanLogic:        BooleanLogicView()
+        case .saltHashing:         SaltHashingView()
         case .symmetricEncryption: SymmetricEncryptionView()
         case .publicKeyExchange:   PublicKeyExchangeView()
         case .hashing:             HashingView()
@@ -174,13 +187,13 @@ enum AnimationCatalog {
         .reverseEngineering, .paddingOracle, .dnsTunneling, .supplyChain, .aitmProxy, .promptInjection,
         .clickjacking, .cachePoisoning, .bleAttack, .rfidClone, .ddosAmplification,
         .passwordSpray, .nosqlInjection, .adcsEsc1, .ssrfAttack, .corsMisconfig, .bucketExposure,
-        .badusbInject, .dllHijack
+        .badusbInject, .dllHijack, .socialEngineering
     ]
     private static let blueIDs: Set<AnimationID> = [
         .defenseInDepth, .siemPipeline, .incidentResponse, .mitreAttack, .threatHunting,
         .adTiering, .threatIntel, .zeroTrust, .emailAuth, .honeyToken,
         .idsDetection, .secureSdlc, .purpleTeam, .threatModeling, .ransomwareRecovery,
-        .soarPlaybook, .secretsVault, .nistCsf, .riskMatrix, .yaraMatch
+        .soarPlaybook, .secretsVault, .nistCsf, .riskMatrix, .yaraMatch, .logAnalysis
     ]
     private static let networkIDs: Set<AnimationID> = [
         .internetMap, .ipAddressing, .subnetMask, .dnsResolution, .defaultGateway,
@@ -265,6 +278,17 @@ enum AnimationCatalog {
         case .compilePipeline, .badusbInject, .yaraMatch: return 286
         case .entropyRng:                   return 280
         case .nistCsf:                      return 262
+        // Expansion wave 7
+        case .ciaTriad, .threatActors:      return 286
+        // Expansion wave 8
+        case .socialEngineering:            return 290
+        case .logAnalysis:                  return 286
+        // Expansion wave 9
+        case .numberBases:                  return 274
+        case .endianness, .charEncoding:    return 268
+        case .filePermissions:              return 268
+        case .saltHashing:                  return 262
+        case .booleanLogic:                 return 258
         default:                            return 250
         }
     }
@@ -337,6 +361,16 @@ enum AnimationCatalog {
         case .nistCsf:             return "The five continuous functions of the NIST CSF — Identify, Protect, Detect, Respond, Recover — as a cycle."
         case .riskMatrix:          return "Plot each risk by likelihood × impact; the top-right (likely and damaging) is what you fix first."
         case .yaraMatch:           return "A rule of strings plus a condition scans a file — match enough patterns and it's flagged as malware."
+        case .ciaTriad:            return "Confidentiality, Integrity, Availability — the three properties every security control ultimately protects."
+        case .threatActors:        return "From script kiddies to nation-state APTs — the spectrum of attackers and what each is really after."
+        case .socialEngineering:   return "Recon, a believable pretext, borrowed authority and urgency — the human hands over what no exploit could reach."
+        case .logAnalysis:         return "Spotting the one line that matters: failed logins then a success from a foreign IP resolve into a brute-force compromise."
+        case .numberBases:         return "One value dressed three ways — the binary place values that sum to 77, grouped into nibbles to read off the hex 0x4D."
+        case .endianness:          return "The same 32-bit value stored two ways: big-endian writes the top byte first, little-endian (x86/ARM) reverses it."
+        case .charEncoding:        return "A character is a code point, then encoded into bytes — 'A' takes 1 UTF-8 byte, 'é' takes 2, '→' takes 3."
+        case .filePermissions:     return "Turn the -rwxr-xr-- string into the octal 754 by scoring each rwx triple r=4, w=2, x=1."
+        case .booleanLogic:        return "Cycle every input pair through AND, OR, XOR and NOT — the four operations under every bitmask and cipher."
+        case .saltHashing:         return "Two users, one weak password: unsalted hashes match (crack one, crack both); a per-user salt makes them diverge."
         case .symmetricEncryption: return "One shared key turns plaintext to ciphertext and back."
         case .publicKeyExchange:   return "A public key locks a message that only the private key can open."
         case .hashing:             return "A one-way fingerprint where a tiny change avalanches the output."
