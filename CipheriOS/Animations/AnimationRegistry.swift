@@ -202,6 +202,16 @@ enum AnimationCatalog {
         .bgpRouting, .emailFlow, .quicHandshake, .proxyFlow, .webSocketUpgrade, .vlanTagging
     ]
 
+    /// Which track an animation belongs to. The accent sets above are already the
+    /// authoritative answer, so deriving from them keeps the gallery, the accents
+    /// and the content from ever disagreeing.
+    static func track(_ id: AnimationID) -> TrackKind {
+        if redIDs.contains(id) { return .redTeam }
+        if blueIDs.contains(id) { return .blueTeam }
+        if networkIDs.contains(id) { return .networking }
+        return .fundamentals
+    }
+
     static func accent(_ id: AnimationID) -> Color {
         if redIDs.contains(id) { return Theme.red }
         if blueIDs.contains(id) { return Theme.blue }

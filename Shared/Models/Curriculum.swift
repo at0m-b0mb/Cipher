@@ -400,16 +400,55 @@ enum LessonBlock {
 /// through ordered steps, choosing the right command/action at each; a simulated
 /// terminal builds up as they go, so they *do* the technique instead of just
 /// reading it. Pure data — the iOS `InteractiveLabView` renders and drives it.
-struct InteractiveLab {
+struct InteractiveLab: Identifiable {
+    let id: String                 // stable slug, e.g. "lab-nmap-enum" — drives lab progress
     let title: String
     let goal: String
+    let track: TrackKind           // which side of the craft this drills
+    let difficulty: Difficulty
+    let minutes: Int
+    let scenario: String           // the briefing: who you are, what you've been handed
+    let debrief: String            // what it meant, and how the other side sees it
+    let tools: [String]            // real tools exercised, shown as chips in the hub
+    let relatedLessonID: String?   // the lesson that teaches the theory, if any
     let steps: [LabStep]
+
+    init(id: String,
+         title: String,
+         goal: String,
+         track: TrackKind = .fundamentals,
+         difficulty: Difficulty = .intermediate,
+         minutes: Int = 6,
+         scenario: String = "",
+         debrief: String = "",
+         tools: [String] = [],
+         relatedLessonID: String? = nil,
+         steps: [LabStep]) {
+        self.id = id
+        self.title = title
+        self.goal = goal
+        self.track = track
+        self.difficulty = difficulty
+        self.minutes = minutes
+        self.scenario = scenario
+        self.debrief = debrief
+        self.tools = tools
+        self.relatedLessonID = relatedLessonID
+        self.steps = steps
+    }
 }
 
 struct LabStep: Identifiable {
     let id = UUID()
     let instruction: String        // what to accomplish at this step
+    let hint: String               // nudge shown on demand, so a stuck learner isn't forced to guess
     let options: [LabOption]
+
+    init(instruction: String, hint: String = "", options: [LabOption]) {
+        self.instruction = instruction
+        self.hint = hint
+        self.options = options
+    }
 }
 
 struct LabOption: Identifiable {
@@ -483,7 +522,7 @@ extension Lesson {
     }
 }
 
-enum TrackKind: String {
+enum TrackKind: String, CaseIterable {
     case fundamentals, networking, redTeam, blueTeam
 
     var title: String {

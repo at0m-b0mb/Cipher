@@ -51,14 +51,18 @@ struct EthicsGateView: View {
                     Button {
                         progress.acceptEthics()
                     } label: {
-                        Text("Enter Cipher")
-                            .font(Theme.rounded(17, .bold)).foregroundStyle(.black)
+                        Text(agree ? "Enter Cipher" : "Accept to continue")
+                            // Black reads on the teal fill but is invisible on the dark
+                            // disabled surface, so the label follows the background.
+                            .font(Theme.rounded(17, .bold))
+                            .foregroundStyle(agree ? .black : Theme.textDim)
                             .frame(maxWidth: .infinity).padding(.vertical, 15)
                             .background(agree ? Theme.teal : Theme.surfaceHi, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(agree ? .clear : Theme.stroke, lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     .disabled(!agree)
-                    .opacity(agree ? 1 : 0.6)
                 }
                 .padding(24)
                 .padding(.bottom, 30)

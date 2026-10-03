@@ -8,8 +8,16 @@ import UIKit
 struct InteractiveLabView: View {
     let lab: InteractiveLab
     var accent: Color = Theme.teal
+    /// Drop the title/goal from the lab's own header. The standalone lab screen
+    /// already shows both above it, so repeating them here says the same thing
+    /// three times on one screen.
+    var compact: Bool = false
+    /// Called once the learner finishes, so a host screen can reveal a debrief.
+    var onComplete: (() -> Void)? = nil
 
+    @EnvironmentObject private var progress: ProgressStore
     @State private var stepIndex = 0
+    @State private var hintShown = false
     @State private var transcript: [(cmd: String, out: String)] = []
     @State private var wrongPick: UUID? = nil
     @State private var feedback: (text: String, correct: Bool)? = nil
@@ -27,6 +35,7 @@ struct InteractiveLabView: View {
                 ForEach(current.options) { opt in
                     optionButton(opt)
                 }
+                if !current.hint.isEmpty { hintRow(current) }
             }
             if let feedback {
                 HStack(alignment: .top, spacing: 8) {
@@ -65,10 +74,12 @@ struct InteractiveLabView: View {
                             .font(Theme.mono(9, .bold)).foregroundStyle(Theme.textDim)
                     }
                 }
-                Text(lab.title).font(Theme.rounded(16, .bold)).foregroundStyle(Theme.textPrimary)
-                Label(lab.goal, systemImage: "target")
-                    .font(Theme.mono(10)).foregroundStyle(Theme.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if !compact {
+                    Text(lab.title).font(Theme.rounded(16, .bold)).foregroundStyle(Theme.textPrimary)
+                    Label(lab.goal, systemImage: "target")
+                        .font(Theme.mono(10)).foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }
@@ -178,8 +189,11 @@ struct InteractiveLabView: View {
                 transcript.append((cmd: opt.command, out: opt.output))
                 feedback = (opt.feedback, true)
                 wrongPick = nil
+                hintShown = false
                 if stepIndex >= lab.steps.count - 1 {
                     finished = true
+                    progress.markLabComplete(lab.id)
+                    onComplete?()
                 } else {
                     stepIndex += 1
                 }
@@ -198,6 +212,30 @@ struct InteractiveLabView: View {
             wrongPick = nil
             feedback = nil
             finished = false
+            hintShown = false
+        }
+    }
+
+    // MARK: Hint
+
+    @ViewBuilder private func hintRow(_ step: LabStep) -> some View {
+        if hintShown {
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "lightbulb.fill").font(.system(size: 12)).foregroundStyle(Theme.amber)
+                Text(step.hint.inlineMarkdown)
+                    .font(.system(size: 12.5)).foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .padding(10)
+            .background(Theme.amber.opacity(0.09), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .transition(.opacity)
+        } else {
+            Button { withAnimation(.easeOut(duration: 0.2)) { hintShown = true } } label: {
+                Label("Need a hint?", systemImage: "lightbulb")
+                    .font(Theme.mono(11, .semibold)).foregroundStyle(Theme.amber)
+            }
+            .buttonStyle(.plain)
         }
     }
 }

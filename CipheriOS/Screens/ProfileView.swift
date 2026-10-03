@@ -27,7 +27,7 @@ struct ProfileView: View {
             Button("Reset", role: .destructive) { progress.resetAll() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This clears completed lessons, quiz scores and your streak. It can't be undone.")
+            Text("This clears completed lessons, finished labs, saved lessons, quiz scores and your streak. It can't be undone.")
         }
     }
 
@@ -80,6 +80,10 @@ struct ProfileView: View {
                       caption: "CURRENT STREAK", systemImage: "flame.fill", color: Theme.amber)
             StatBadge(value: "\(progress.longestStreak)d",
                       caption: "LONGEST STREAK", systemImage: "trophy.fill", color: Theme.green)
+            StatBadge(value: "\(progress.completedLabs.count)/\(Labs.count)",
+                      caption: "LABS DONE", systemImage: "flask.fill", color: Theme.green)
+            StatBadge(value: "\(progress.bookmarked.count)",
+                      caption: "SAVED LESSONS", systemImage: "bookmark.fill", color: Theme.blue)
         }
     }
 
