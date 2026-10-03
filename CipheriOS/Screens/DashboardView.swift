@@ -3,6 +3,7 @@ import SwiftUI
 struct DashboardView: View {
     var goToLearn: () -> Void = {}
     var goToPaths: () -> Void = {}
+    var goToLabs: () -> Void = {}
     @EnvironmentObject private var progress: ProgressStore
 
     private var featuredAnimationID: AnimationID {
@@ -19,6 +20,7 @@ struct DashboardView: View {
                     statsRow
                     continueCard
                     pathsSection
+                    labsSection
                     tracksSection
                     termOfDay
                     featured
@@ -152,6 +154,40 @@ struct DashboardView: View {
                 .padding(.horizontal, 1).padding(.bottom, 4)
             }
         }
+    }
+
+    // MARK: Hands-on labs
+
+    private var labsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                SectionHeader(title: "Hands-on labs", systemImage: "flask.fill", accent: Theme.green)
+                Button(action: goToLabs) {
+                    Text("All").font(Theme.mono(11, .bold)).foregroundStyle(Theme.green)
+                }
+            }
+            Text("\(progress.completedLabs.count) of \(Labs.count) done — practise the decisions, not just the commands.")
+                .font(.system(size: 12.5)).foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(suggestedLabs) { lab in
+                        NavigationLink(value: CipherRoute.lab(lab.id)) {
+                            LabMiniCard(lab: lab, completed: progress.isLabComplete(lab.id))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 1).padding(.bottom, 4)
+            }
+        }
+    }
+
+    /// Unfinished labs first (easiest-first), topped up with finished ones so the
+    /// carousel is never empty once the learner has done them all.
+    private var suggestedLabs: [InteractiveLab] {
+        let todo = Labs.all.filter { !progress.isLabComplete($0.id) }
+        return Array((todo + Labs.all.filter { progress.isLabComplete($0.id) }).prefix(6))
     }
 
     // MARK: Tracks

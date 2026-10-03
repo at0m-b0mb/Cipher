@@ -118,8 +118,16 @@ enum RedTeamContent {
             .definition(term: "Banner grabbing", meaning: "Reading the identifying text a service announces on connect (e.g. an SMTP or SSH banner). Versions map directly to known vulnerabilities via CVE databases and searchsploit."),
             .callout(.warning, "A full -p- scan is loud — it lights up IDS/IPS instantly. On a real engagement you balance thoroughness against stealth; in a lab, go loud and complete."),
             .interactiveLab(InteractiveLab(
+                id: "lab-nmap-enum",
                 title: "Enumerate a target with nmap",
                 goal: "Find the open ports on 10.10.10.5, then identify an exploitable service.",
+                track: .redTeam,
+                difficulty: .intermediate,
+                minutes: 6,
+                scenario: "You have a signed scope with exactly one host in it: 10.10.10.5. No credentials, no documentation. Everything you learn from here, you learn by asking the host questions.",
+                debrief: "Enumeration is not a phase you rush to get to exploitation — it *is* the engagement. A version string turned into a CVE, and a CVE turned into a path to code execution, all without sending a single exploit.",
+                tools: ["nmap", "searchsploit"],
+                relatedLessonID: "red-scanning",
                 steps: [
                     LabStep(instruction: "You've got one host: `10.10.10.5`. Which scan gives you a thorough view of what's listening?", options: [
                         LabOption("ping 10.10.10.5", output: "Request timed out. (host may just be blocking ICMP)", feedback: "A ping only tells you if ICMP is answered — many hosts block it, and it reveals no services. You need a port scan."),
@@ -527,8 +535,16 @@ SELECT * FROM users WHERE user='admin'-- ' AND pass='x'
             .callout(.danger, "The fix is not “filter bad words.” It's **parameterized queries (prepared statements)**, which send code and data on separate channels so input can never be parsed as SQL. Input validation and least-privilege DB accounts are defense in depth on top."),
             .definition(term: "Parameterized query", meaning: "A query where placeholders (?) are bound to values by the driver, never concatenated into the SQL string. The database treats bound values as pure data — structurally immune to injection."),
             .interactiveLab(InteractiveLab(
+                id: "lab-sqli-bypass",
                 title: "Bypass a login with SQLi",
                 goal: "Log in as admin without knowing the password.",
+                track: .redTeam,
+                difficulty: .intermediate,
+                minutes: 6,
+                scenario: "A customer portal has a plain username/password form. You have no account. The developer concatenated your input straight into a SQL string — you just do not know it yet.",
+                debrief: "You never learned the password, because you never needed it. You changed the *meaning* of the query instead of answering it. That is the whole of injection, and it is why parameterized queries — not input filtering — are the fix.",
+                tools: ["browser", "burp"],
+                relatedLessonID: "red-sqli",
                 steps: [
                     LabStep(instruction: "The login runs `SELECT * FROM users WHERE user='$u' AND pass='$p'`. First, probe whether the username field is injectable. What do you enter?", options: [
                         LabOption("admin", output: "Login failed: incorrect password.", feedback: "That's an ordinary login attempt — you still need the password. Probe for injection instead."),
@@ -4923,8 +4939,16 @@ Access-Control-Allow-Credentials: true
             .definition(term: "Pretexting, phishing, vishing, baiting", meaning: "The delivery methods: pretexting is the invented scenario; phishing is by email, vishing by voice call, smishing by SMS; baiting leaves a tempting lure (a malicious USB, a free download). All ride the same psychological levers — only the channel changes."),
             .callout(.danger, "Social engineering underlies most real breaches — the majority start with phishing or a manipulated human, not a zero-day. Attackers target people because it works, it's cheap, and it bypasses millions of dollars of security tooling."),
             .interactiveLab(InteractiveLab(
+                id: "lab-vishing-defense",
                 title: "Survive a vishing call",
                 goal: "You're an employee. A caller is trying to social-engineer you — don't get played.",
+                track: .redTeam,
+                difficulty: .foundational,
+                minutes: 5,
+                scenario: "Your desk phone rings at 16:50 on a Friday. The caller knows your manager's name, your office location, and that payroll closes today. None of that is secret.",
+                debrief: "Every pressure the caller applied — authority, urgency, a closing window — was manufactured. The defense was never cleverness; it was a process that does not bend to tone of voice: hang up and call back on a number you looked up yourself.",
+                tools: ["phone", "verification process"],
+                relatedLessonID: "red-social-engineering",
                 steps: [
                     LabStep(instruction: "Your phone rings: *\"Hi, this is Dave from IT Security. We've detected a breach on your account and need to act fast.\"* What do you do first?", options: [
                         LabOption("Give him your username so he can 'check'", output: "Caller: \"Great, and your password to verify it's really you?\"", feedback: "Urgency + authority is the classic pressure combo. Handing over any detail keeps the con rolling — slow down."),

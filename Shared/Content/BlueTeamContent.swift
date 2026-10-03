@@ -1808,8 +1808,16 @@ rule SuspiciousDropper {
             ]),
             .definition(term: "Baseline", meaning: "A documented picture of normal activity — who logs in when, which processes run, typical traffic volumes. Detection is fundamentally deviation from a baseline, so the better you know normal, the faster the abnormal jumps out. Without a baseline, every log looks equally suspicious (or equally fine)."),
             .interactiveLab(InteractiveLab(
+                id: "lab-authlog-triage",
                 title: "Triage the auth log",
                 goal: "Read the log, find the compromise, and take the right first response.",
+                track: .blueTeam,
+                difficulty: .intermediate,
+                minutes: 7,
+                scenario: "You are on shift. An alert fires for a spike in failed SSH authentications on a jump host. You have the log, a shell, and no idea yet whether anyone actually got in.",
+                debrief: "The finding that mattered was not the thousand failures — it was the one success buried after them. Brute-force noise is the question; the successful line is the answer, and containment comes before cleanup.",
+                tools: ["grep", "journalctl", "lastlog"],
+                relatedLessonID: "blue-log-analysis",
                 steps: [
                     LabStep(instruction: "You're handed `auth.log`. Which line is the real problem?", options: [
                         LabOption("10:03  auth ok    bob    10.0.0.9", output: "Normal internal login from a known host.", feedback: "A successful login from an internal IP during work hours is routine — that's your baseline, not an incident."),

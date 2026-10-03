@@ -43,6 +43,7 @@ final class ProgressStore: ObservableObject {
 
     @Published private(set) var completedLessons: Set<String> = []
     @Published private(set) var bookmarked: Set<String> = []          // lessonIDs saved for later
+    @Published private(set) var completedLabs: Set<String> = []       // labIDs finished end to end
     @Published private(set) var bestQuizScore: [String: Int] = [:]   // lessonID → best %
     @Published private(set) var streak: Int = 0
     @Published private(set) var longestStreak: Int = 0
@@ -70,6 +71,7 @@ final class ProgressStore: ObservableObject {
                     "fund-encryption", "red-osint", "red-scanning", "red-phishing", "blue-defense-in-depth"]
         completedLessons = Set(demo)
         bookmarked = ["red-sqli", "fund-cia", "blue-log-analysis"]
+        completedLabs = ["lab-nmap-enum", "lab-sqli-bypass", "lab-authlog-triage"]
         for id in demo { bestQuizScore[id] = [80, 90, 100][id.count % 3] }
         streak = 6
         longestStreak = 9
@@ -82,7 +84,8 @@ final class ProgressStore: ObservableObject {
     var xp: Int {
         let lessonXP = completedLessons.count * 100
         let quizXP = bestQuizScore.values.reduce(0) { $0 + Int(Double($1) * 0.5) }
-        return lessonXP + quizXP
+        let labXP = completedLabs.count * 75
+        return lessonXP + quizXP + labXP
     }
 
     var rank: Rank { Rank.current(for: xp) }
@@ -117,6 +120,23 @@ final class ProgressStore: ObservableObject {
 
     func isBookmarked(_ lessonID: String) -> Bool { bookmarked.contains(lessonID) }
 
+    func isLabComplete(_ labID: String) -> Bool { completedLabs.contains(labID) }
+
+    /// Share of all hands-on labs finished — drives the Labs hub progress ring.
+    var labCompletion: Double {
+        let total = Labs.count
+        guard total > 0 else { return 0 }
+        return Double(completedLabs.intersection(Set(Labs.all.map(\.id))).count) / Double(total)
+    }
+
+    /// Labs finished within one track, for the per-track counters in the hub.
+    func labsCompleted(in track: TrackKind) -> Int {
+        Labs.labs(for: track).filter { completedLabs.contains($0.id) }.count
+    }
+
+    /// The next unfinished lab, easiest-first — powers "Continue practising".
+    var nextLab: InteractiveLab? { Labs.all.first { !completedLabs.contains($0.id) } }
+
     /// Bookmarked lessons in curriculum order — powers the "Saved" list.
     var savedLessons: [Lesson] { Curriculum.allLessons.filter { bookmarked.contains($0.id) } }
 
@@ -130,6 +150,15 @@ final class ProgressStore: ObservableObject {
 
     func markComplete(_ lessonID: String) {
         completedLessons.insert(lessonID)
+        touchToday()
+        save()
+    }
+
+    /// Called once the learner reaches the final step of a lab. Idempotent, so
+    /// replaying a lab for practice never double-counts XP.
+    func markLabComplete(_ labID: String) {
+        guard !labID.isEmpty, !completedLabs.contains(labID) else { return }
+        completedLabs.insert(labID)
         touchToday()
         save()
     }
@@ -162,6 +191,7 @@ final class ProgressStore: ObservableObject {
     func resetAll() {
         completedLessons = []
         bookmarked = []
+        completedLabs = []
         bestQuizScore = [:]
         streak = 0
         longestStreak = 0
@@ -214,6 +244,7 @@ final class ProgressStore: ObservableObject {
         var lastActive: Date?
         var ethics: Bool
         var bookmarks: [String]?   // optional so older saved data still decodes
+        var labs: [String]?        // ditto — added with the Labs hub
     }
 
     private func save() {
@@ -223,7 +254,8 @@ final class ProgressStore: ObservableObject {
                             longest: longestStreak,
                             lastActive: lastActiveDay,
                             ethics: hasAcceptedEthics,
-                            bookmarks: Array(bookmarked))
+                            bookmarks: Array(bookmarked),
+                            labs: Array(completedLabs))
         if let data = try? JSONEncoder().encode(snap) {
             defaults.set(data, forKey: key)
         }
@@ -234,6 +266,7 @@ final class ProgressStore: ObservableObject {
               let snap = try? JSONDecoder().decode(Snapshot.self, from: data) else { return }
         completedLessons = Set(snap.completed)
         bookmarked = Set(snap.bookmarks ?? [])
+        completedLabs = Set(snap.labs ?? [])
         bestQuizScore = snap.quiz
         streak = snap.streak
         longestStreak = snap.longest

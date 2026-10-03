@@ -5,6 +5,7 @@ enum CipherRoute: Hashable {
     case track(String)
     case lesson(String)
     case path(String)
+    case lab(String)
 }
 
 /// A NavigationStack pre-wired with the app's route destinations, so each tab
@@ -19,6 +20,7 @@ struct NavStack<Content: View>: View {
                     case .track(let id):  TrackDetailView(trackID: id)
                     case .lesson(let id): LessonView(lessonID: id)
                     case .path(let id):   PathDetailView(pathID: id)
+                    case .lab(let id):    LabDetailView(labID: id)
                     }
                 }
         }
@@ -30,10 +32,11 @@ struct RootView: View {
     @State private var tab = Int(ProcessInfo.processInfo.environment["CIPHER_TAB"] ?? "") ?? 0
     // Demo-only deep link (set via CIPHER_LESSON env) for screenshots/previews.
     @State private var demoLesson = ProcessInfo.processInfo.environment["CIPHER_LESSON"] ?? ""
+    @State private var demoLab = ProcessInfo.processInfo.environment["CIPHER_LAB"] ?? ""
 
     var body: some View {
         TabView(selection: $tab) {
-            NavStack { DashboardView(goToLearn: { tab = 2 }, goToPaths: { tab = 1 }) }
+            NavStack { DashboardView(goToLearn: { tab = 2 }, goToPaths: { tab = 1 }, goToLabs: { tab = 3 }) }
                 .tag(0)
                 .tabItem { Label("Home", systemImage: "house.fill") }
 
@@ -45,9 +48,9 @@ struct RootView: View {
                 .tag(2)
                 .tabItem { Label("Learn", systemImage: "books.vertical.fill") }
 
-            NavStack { AnimationGalleryView() }
+            NavStack { PracticeView() }
                 .tag(3)
-                .tabItem { Label("Animations", systemImage: "play.square.stack.fill") }
+                .tabItem { Label("Practice", systemImage: "flask.fill") }
 
             NavStack { ProfileView() }
                 .tag(4)
@@ -59,6 +62,13 @@ struct RootView: View {
             NavigationStack {
                 LessonView(lessonID: demoLesson)
                     .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Close") { demoLesson = "" } } }
+            }
+        }
+        .fullScreenCover(isPresented: Binding(get: { !demoLab.isEmpty },
+                                              set: { if !$0 { demoLab = "" } })) {
+            NavigationStack {
+                LabDetailView(labID: demoLab)
+                    .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Close") { demoLab = "" } } }
             }
         }
     }
